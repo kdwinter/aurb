@@ -22,9 +22,9 @@ module AurB
       $logger.debug('Parsing options')
       opts = OptionParser.new do |opts|
         opts.banner = "#{AurB.colorize(Name, :yellow)} v#{Version.join('.')}, a Ruby AUR utility."
+        opts.separator "Usage: #{AurB.colorize($0, :yellow)} [options] <command>"
 
         opts.separator ""
-        opts.separator "Usage: #{AurB.colorize($0, :yellow)} [options] <command>"
         opts.separator "where <command> is one of:"
 
         opts.on('-D', '--download', 'Install the package specified') do |s|
@@ -53,6 +53,7 @@ module AurB
 
         opts.separator ""
         opts.separator "other:"
+
         opts.on_tail('-h', '--help', 'Show this message') do
           $logger.debug('Showing help')
           puts opts
@@ -68,7 +69,7 @@ EOMHELP
     end
 
     unless $options[:download_dir]
-      $logger.warn('No download directory given, falling back')
+      $logger.warn('No download directory given, falling back to default')
       $options[:download_dir] = Pathname.new(Dir.pwd).realpath
     end
   end
