@@ -14,10 +14,6 @@ end
 module AurB
   Name         = 'AurB'
   Version      = [0, 0, 1]
-  Aur_Domain   = 'http://aur.archlinux.org'
-  Aur_Search   = "#{Aur_Domain}/rpc.php?type=search&arg=%s"
-  Aur_Info     = "#{Aur_Domain}/rpc.php?type=info&arg=%s"
-  Abs_Domain   = 'http://archlinux.org/packages/search/?category=all&limit=99000'
 
   class Opts
     $options = {}
@@ -30,7 +26,6 @@ module AurB
         opts.separator 'where <options> is one of:'
         opts.on('-D', '--download', 'Install the package specified') do |s|
           $options[:command] ||= :download
-          $options[:package] ||= s
         end
         # opts.on('-Q', '--query', 'Retrieve information for the package specified') do |q|
         # end
@@ -69,7 +64,7 @@ module AurB
     end
 
     if $options[:command] == :download
-      AurB.aur_download($options[:package])
+      AurB.aur_download(ARGV)
     end
   end
 end

@@ -5,6 +5,14 @@
 end
 
 module AurB
+  Aur_Domain   = 'http://aur.archlinux.org'
+  Aur_Search   = "#{Aur_Domain}/rpc.php?type=search&arg=%s"
+  Aur_Info     = "#{Aur_Domain}/rpc.php?type=info&arg=%s"
+  Abs_Domain   = 'http://archlinux.org/packages/search/?category=all&limit=99000'
+  Pacman_Sync  = '/var/lib/pacman/sync/%s'
+  Pacman_Cache = '/var/lib/pacman/local'
+  Pacman_Conf  = '/etc/pacman.conf'
+
   def self.json_open(url)
     $logger.debug('Opening JSON url')
     JSON.parse(open(url).read)
@@ -46,7 +54,7 @@ module AurB
                   puts "Found package #{colorize(pkg, :bold)} in the community repository. Handing this to pacman.."
                   exec "sudo pacman -S #{pkg}"
                 else
-                  puts "Found #{depend ? 'dependency' : 'package'} #{colorful(pkg, :bold)}! Downloading.."
+                  puts "Found #{depend ? 'dependency' : 'package'} #{colorize(pkg, :bold)}! Downloading.."
                   open("#{Aur_Domain}/#{info['URLPath']}") do |tar|
                     File.open("#{dir}/#{pkg}.tar.gz", 'wb') do |file|
                       file.write(tar.read)
@@ -76,7 +84,7 @@ module AurB
                   exit 1
                 end
               end
-              $logger.debug("Extracting #{pkg}.tar.gz", :blue)
+              $logger.debug("Extracting #{pkg}.tar.gz")
               tgz = Zlib::GzipReader.new(File.open("#{pkg}.tar.gz", 'rb'))
               Archive::Tar::Minitar.unpack(tgz, Dir.pwd)
 
