@@ -7,66 +7,72 @@ License: WTFPL <http://sam.zoy.org/wtfpl/>
 
 =end
 
-['optparse', 'pathname', 'lib/methods', 'lib/helpers'].each do |lib|
+['optparse', 'pathname', 'lib/methods', 'rubygems', 'facets/ansicode', 'logger'].each do |lib|
   require lib
 end
 
 module AurB
+  extend self
+
   Name         = 'AurB'
   Version      = [0, 0, 1]
 
-  class Opts
-    $options = {}
+  $logger = Logger.new($stdout)
+  $logger.level = Logger::DEBUG
+  $logger.debug('Created logger')
 
-    def self.parse(args)
-      $logger.debug('Parsing options')
-      opts = OptionParser.new do |opts|
-        opts.banner = "#{AurB.colorize(Name, :yellow)} v#{Version.join('.')}, a Ruby AUR utility."
-        opts.separator "Usage: #{AurB.colorize($0, :yellow)} [options] <command>"
+  def colorize(string, *effects)
+    colored = ' '
+    effects.each do |effect|
+      colored << ANSICode.send(effect)
+    end
+    colored << string << ANSICode.clear
+    colored[1..-1]
+  end
 
-        opts.separator ""
-        opts.separator "where <command> is one of:"
+  $options = {}
 
-        opts.on('-D', '--download', 'Install the package specified') do |s|
-          $options[:command] ||= :download
-        end
-        # opts.on('-Q', '--query', 'Retrieve information for the package specified') do |q|
-        # end
-        # opts.on('-R', '--remove', 'Remove the package specified') do |r|
-        # end
-        # opts.on('-U', '--upgrade', 'Install local *.pkg.tar.gz specified') do |u|
-        # end
+  def optparse(args)
+    $logger.debug('Parsing options')
+    opts = OptionParser.new do |opts|
+      opts.banner = "#{colorize(Name, :yellow)} v#{Version.join('.')}, a Ruby AUR utility."
+      opts.separator "Usage: #{colorize($0, :yellow)} [options] <command>"
 
-        opts.separator ""
-        opts.separator "where [options] is one of:"
+      opts.separator ""
+      opts.separator "where <command> is one of:"
 
-        opts.on('--save-to [PATH]', 'Directory to save to', 'Default: current directory') do |h|
-          h = (h[0...1] == '/' ? h : "#{Dir.pwd}/#{h}")
-          if File.exists?(h)
-            $options[:download_dir] = Pathname.new(h).realpath
-          else
-            $logger.fatal("Error: #{h} doesn't exist. Please choose an existing directory.")
-            puts "Error: #{h} doesn't exist. Please choose an existing directory."
-            exit 1
-          end
-        end
+      opts.on('-D', '--download', 'Install the package specified') do |s|
+        $options[:command] ||= :download
+      end
 
-        opts.separator ""
-        opts.separator "other:"
+      opts.separator ""
+      opts.separator "where [options] is one of:"
 
-        opts.on_tail('-h', '--help', 'Show this message') do
-          $logger.debug('Showing help')
-          puts opts
-          puts <<EOMHELP
-dependencies:
-    - package: rubygems
-    - gems: facets, json
-EOMHELP
-          exit
+      opts.on('--save-to [PATH]', 'Directory to save to', 'Default: current directory') do |h|
+        h = (h[0...1] == '/' ? h : "#{Dir.pwd}/#{h}")
+        if File.exists?(h)
+          $options[:download_dir] = Pathname.new(h).realpath
+        else
+          $logger.fatal("Error: #{h} doesn't exist. Please choose an existing directory.")
+          puts "Error: #{h} doesn't exist. Please choose an existing directory."
+          exit 1
         end
       end
-      opts.parse!(args)
-    end
+
+      opts.separator ""
+      opts.separator "other:"
+
+      opts.on_tail('-h', '--help', 'Show this message') do
+        $logger.debug('Showing help')
+        puts opts
+        puts <<EOMHELP
+dependencies:
+  - package: rubygems
+  - gems: facets, json
+EOMHELP
+        exit
+      end
+    end.parse!(args)
 
     unless $options[:download_dir]
       $logger.warn('No download directory given, falling back to default')
@@ -74,20 +80,20 @@ EOMHELP
     end
   end
 
-  def self.run
+  def run
     $logger.debug('Started AurB')
     trap(:INT) { exit 0 }
 
     begin
-      Opts.parse(ARGV)
+      optparse(ARGV)
     rescue OptionParser::InvalidOption => e
       $logger.debug('Invalid Option')
-      puts AurB.colorize("#{e.to_s.capitalize}. Please use only the following:", :red)
-      Opts.parse(['-h'])
+      puts colorize("#{e.to_s.capitalize}. Please use only the following:", :red)
+      optparse(['-h'])
     rescue OptionParser::AmbiguousOption => e
       $logger.debug('AmbigiousOption')
-      puts AurB.colorize("#{e.to_s.capitalize}. Please make sure that you have only one short argument, regardless of case.", :red)
-      Opts.parse(['-h'])
+      puts colorize("#{e.to_s.capitalize}. Please make sure that you have only one short argument, regardless of case.", :red)
+      optparse(['-h'])
     end
 
     if $options[:command] == :download
