@@ -22,8 +22,11 @@ module AurB
       $logger.debug('Parsing options')
       opts = OptionParser.new do |opts|
         opts.banner = "#{AurB.colorize(Name, :yellow)} v#{Version.join('.')}, a Ruby AUR utility."
-        opts.separator "Usage: #{AurB.colorize($0, :yellow)} <options>"
-        opts.separator 'where <options> is one of:'
+
+        opts.separator ""
+        opts.separator "Usage: #{AurB.colorize($0, :yellow)} [options] <command>"
+        opts.separator "where <command> is one of:"
+
         opts.on('-D', '--download', 'Install the package specified') do |s|
           $options[:command] ||= :download
         end
@@ -33,6 +36,10 @@ module AurB
         # end
         # opts.on('-U', '--upgrade', 'Install local *.pkg.tar.gz specified') do |u|
         # end
+
+        opts.separator ""
+        opts.separator "where [options] is one of:"
+
         opts.on('--save-to [PATH]', 'Directory to save to', 'Default: current directory') do |h|
           h = (h[0...1] == '/' ? h : "#{Dir.pwd}/#{h}")
           if File.exists?(h)
@@ -43,8 +50,17 @@ module AurB
             exit 1
           end
         end
+
+        opts.separator ""
+        opts.separator "other:"
         opts.on_tail('-h', '--help', 'Show this message') do
+          $logger.debug('Showing help')
           puts opts
+          puts <<EOMHELP
+dependencies:
+    - package: rubygems
+    - gems: facets, json
+EOMHELP
           exit
         end
       end
