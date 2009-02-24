@@ -33,6 +33,16 @@ module AurB
         # end
         # opts.on('-U', '--upgrade', 'Install local *.pkg.tar.gz specified') do |u|
         # end
+        opts.on('--save-to [PATH]', 'Directory to save to', 'Default: current directory') do |h|
+          h = (h[0...1] == '/' ? h : "#{Dir.pwd}/#{h}")
+          if File.exists?(h)
+            $options[:download_dir] = Pathname.new(h).realpath
+          else
+            $logger.fatal("Error: #{h} doesn't exist. Please choose an existing directory.")
+            puts "Error: #{h} doesn't exist. Please choose an existing directory."
+            exit 1
+          end
+        end
         opts.on_tail('-h', '--help', 'Show this message') do
           puts opts
           exit

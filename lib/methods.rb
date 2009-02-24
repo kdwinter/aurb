@@ -51,9 +51,11 @@ module AurB
               begin
                 no_pkg = false
                 if in_pacman_sync?(pkg, 'community')
+                  $logger.debug("Found package #{pkg} in the community repository. Handing this to pacman..")
                   puts "Found package #{colorize(pkg, :bold)} in the community repository. Handing this to pacman.."
                   exec "sudo pacman -S #{pkg}"
                 else
+                  $logger.debug("Found #{depend ? 'dependency' : 'package'} #{pkg}! Downloading..")
                   puts "Found #{depend ? 'dependency' : 'package'} #{colorize(pkg, :bold)}! Downloading.."
                   open("#{Aur_Domain}/#{info['URLPath']}") do |tar|
                     File.open("#{dir}/#{pkg}.tar.gz", 'wb') do |file|
