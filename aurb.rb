@@ -32,7 +32,12 @@ module AurB
 
     trap(:INT) { exit 0 }
 
-    optparse(ARGV)
+    begin
+      optparse(ARGV)
+    rescue OptionParser::InvalidOption => ivo
+      $logger.warn("#{ivo}. Please only use the following:")
+      optparse(['-h'])
+    end
 
     case $options[:command]
     when :download

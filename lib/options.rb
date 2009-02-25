@@ -29,10 +29,10 @@ module AurB
       opts.separator ""
       opts.separator "where <command> is one of:"
 
-      opts.on('-S', '--sync', 'Download the package specified') do
+      opts.on('-D', '--download', 'Download the package specified') do
         $options[:command] ||= :download
       end
-      opts.on('-Ss', '--search', 'Search for the package specified') do
+      opts.on('-S', '--search', 'Search for the package specified') do
         $options[:command] ||= :search
       end
       opts.on('-Q', '--query', 'Retrieve information for the package specified') do

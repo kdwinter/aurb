@@ -37,10 +37,6 @@ module AurB
     colored[1..-1]
   end
 
-  def json_open(url)
-    JSON.parse(open(url).read)
-  end
-
   def in_pacman_sync?(name, repo)
     repo = Pacman_Sync % repo
     true if Dir["#{repo}/#{name}-*"].first
@@ -69,7 +65,7 @@ module AurB
   end
 
   def aur_list(name)
-    json = json_open(Aur_Search % CGI::escape(name))
+    json = JSON.parse(open(Aur_Search % CGI::escape(name)).read)
     list = []
 
     if json['type'] == 'error'
@@ -88,7 +84,7 @@ module AurB
     list = aur_list(keywords.join(' '))
     count = 0
     list.each do |values|
-      info = json_open(Aur_Info % values[1])
+      info = JSON.parse(open(Aur_Info % values[1]).read)
       unless info['type'] == 'error'
         info = info['results']
         next if in_pacman_sync?(info['Name'], 'community')
@@ -114,7 +110,7 @@ module AurB
         list = aur_list(pkg)
         list.each do |names|
           if names[0] == pkg
-            info = json_open(Aur_Info % names[1])['results']
+            info = JSON.parse(open(Aur_Info % names[1]).read)['results']
             puts "#{colorize('Warning', :red, :bold)}: you are about to download #{colorize(pkg, :bold)}, which has been flagged #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
             FileUtils.chdir($options[:download_dir]) do |dir|
               begin
@@ -179,7 +175,7 @@ module AurB
       $logger.debug("Retrieving package information for #{name}")
       aur_list(name).each do |pkg|
         if pkg[0] == name
-          json = json_open(Aur_Info % pkg[1])['results']
+          json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']
           not_ood = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
           inst_upg_info = "is #{colorize('not installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Not installed'
           inst_upg_info = "is #{colorize('installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Installed'
