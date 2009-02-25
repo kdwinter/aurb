@@ -34,6 +34,9 @@ module AurB
       opts.on('-D', '--download', 'Download the package specified') do
         $options[:command] ||= :download
       end
+      opts.on('-B', '--build', 'Download and build the package specified') do
+        $options[:command] ||= :build
+      end
       opts.on('-S', '--search', 'Search for the package specified') do
         $options[:command] ||= :search
       end

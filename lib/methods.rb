@@ -150,6 +150,12 @@ module AurB
               Archive::Tar::Minitar.unpack(tgz, Dir.pwd)
 
               FileUtils.rm("#{pkg}.tar.gz") if File.exists?("#{pkg}.tar.gz")
+
+              if $options[:command] == :build
+                FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
+                puts "Building #{colorize(pkg, :bold} with makepkg.."
+                exec 'makepkg'
+              end
             end
           end
         end
