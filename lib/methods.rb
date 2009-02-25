@@ -187,8 +187,7 @@ Description: #{json['Description']}
 Homepage:    #{json['URL']}
 License:     #{json['License']}
 Votes:       #{colorize(json['NumVotes'], :green)}
-OOD:         It #{not_ood} out of date.
-Status:      #{json['Name']} #{inst_upg_info}
+Status:      #{json['Name']} #{inst_upg_info}. It #{not_ood} out of date. 
 EOINFO
         end
       end
