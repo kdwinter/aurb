@@ -68,8 +68,7 @@ module AurB
     list = []
 
     if json['type'] == 'error'
-      $logger.fatal('JSON error')
-      puts colorize("Error: #{json['results']}", :red)
+      $logger.fatal("JSON error: #{json['results']}")
       exit 1
     end
     json['results'].each do |aurp|
@@ -115,11 +114,9 @@ module AurB
               begin
                 no_pkg = false
                 if in_pacman_sync?(pkg, 'community')
-                  $logger.debug("Found package #{pkg} in the community repository. Handing this to pacman..")
                   puts "Found package #{colorize(pkg, :bold)} in the community repository. Handing this to pacman.."
                   exec "sudo pacman -S #{pkg}"
                 else
-                  $logger.debug("Found #{depend ? 'dependency' : 'package'} #{pkg}! Downloading..")
                   puts "Found #{depend ? 'dependency' : 'package'} #{colorize(pkg, :bold)}! Downloading.."
                   open("#{Aur_Domain}/#{info['URLPath']}") do |tar|
                     File.open("#{dir}/#{pkg}.tar.gz", 'wb') do |file|
@@ -139,13 +136,11 @@ module AurB
                     end
                   rescue OpenURI::HTTPError => e
                     $logger.fatal("Error downloading #{pkg}: #{e.message}")
-                    puts colorize("Error downloading #{pkg}: #{e.message}", :red)
                     no_pkg = false
                     exit 1
                   end
                 else
                   $logger.fatal("Error downloading #{pkg}: #{e.message}")
-                  puts colorize("Error downloading #{pkg}: #{e.message}", :red)
                   no_pkg = false
                   exit 1
                 end
@@ -160,11 +155,11 @@ module AurB
         end
         if no_pkg and not depend
           $logger.fatal("Error: #{pkg} not found.")
-          puts colorize("Error: #{pkg} not found.", :red)
+          exit 1
         end
       else
         $logger.fatal("Error: #{$options[:download_dir]}/#{pkg} already exists.")
-        puts colorize("Error: #{$options[:download_dir]}/#{pkg} already exists.", :red)
+        exit 1
       end
     end
   end
@@ -181,12 +176,13 @@ module AurB
           inst_upg_info = "has an #{colorize('upgrade', :blue)} available" if pacman_cache_check(json['Name'], json['Version']) == 'Upgradable'
 
           puts <<EOINFO
-#{colorize("#{json['Name']} #{json['Version']}" , :yellow)}
-    #{json['Description']}
-    #{json['URL']}
-    #{json['License']}
-    #{colorize(json['NumVotes'], :green)} votes
-    It #{not_ood} out of date.
+Name:        #{colorize("#{json['Name']} #{json['Version']}" , :yellow)}
+Description: #{json['Description']}
+Homepage:    #{json['URL']}
+License:     #{json['License']}
+Votes:       #{colorize(json['NumVotes'], :green)}
+OOD:         It #{not_ood} out of date.
+Status:      #{json['Name']} #{inst_upg_info}
 EOINFO
         end
       end
