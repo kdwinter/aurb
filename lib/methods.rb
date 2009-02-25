@@ -1,10 +1,12 @@
 #!/usr/bin/env ruby
 
-['lib/helpers', 'rubygems', 'zlib', 'facets/version', 'facets/minitar', 'json', 'cgi', 'open-uri', 'fileutils'].each do |lib|
+['rubygems', 'zlib', 'facets/version', 'facets/minitar', 'json', 'cgi', 'open-uri', 'fileutils'].each do |lib|
   require lib
 end
 
 module AurB
+  extend self
+
   Aur_Domain   = 'http://aur.archlinux.org'
   Aur_Search   = "#{Aur_Domain}/rpc.php?type=search&arg=%s"
   Aur_Info     = "#{Aur_Domain}/rpc.php?type=info&arg=%s"
@@ -13,17 +15,17 @@ module AurB
   Pacman_Cache = '/var/lib/pacman/local'
   Pacman_Conf  = '/etc/pacman.conf'
 
-  def self.json_open(url)
+  def json_open(url)
     $logger.debug('Opening JSON url')
     JSON.parse(open(url).read)
   end
 
-  def self.in_pacman_sync?(name, repo)
+  def in_pacman_sync?(name, repo)
     repo = Pacman_Sync % repo
     true if Dir["#{repo}/#{name}-*"].first
   end
 
-  def self.aur_list(name)
+  def aur_list(name)
     json = json_open(Aur_Search % CGI::escape(name))
     list = []
 
@@ -38,7 +40,7 @@ module AurB
     list.sort
   end
 
-  def self.aur_download(packages, depend=false)
+  def aur_download(packages, depend=false)
     no_pkg = true
     packages.each do |pkg|
       unless File.exists?(File.join($options[:download_dir], pkg))
