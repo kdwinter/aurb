@@ -29,13 +29,13 @@ module AurB
       opts.separator ""
       opts.separator "where <command> is one of:"
 
-      opts.on('-D', '--download', 'Install the package specified') do
+      opts.on('-S', '--sync', 'Download the package specified') do
         $options[:command] ||= :download
       end
-      opts.on('-S', '--search', 'Search for the package specified') do
+      opts.on('-Ss', '--search', 'Search for the package specified') do
         $options[:command] ||= :search
       end
-      opts.on('-I', '--info', 'Retrieve information for the package specified') do
+      opts.on('-Q', '--query', 'Retrieve information for the package specified') do
         $options[:command] ||= :info
       end
 
@@ -48,7 +48,6 @@ module AurB
           $options[:download_dir] = Pathname.new(h).realpath
         else
           $logger.fatal("Error: #{h} doesn't exist. Please choose an existing directory.")
-          puts "Error: #{h} doesn't exist. Please choose an existing directory."
           exit 1
         end
       end
