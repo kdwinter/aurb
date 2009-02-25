@@ -57,6 +57,10 @@ module AurB
       opts.separator ""
       opts.separator "other:"
 
+      opts.on_tail('-v', '--version', 'Show AurB version') do
+        puts "#{colorize(Name, :yellow)} v#{Version.join('.')}"
+        exit
+      end
       opts.on_tail('-h', '--help', 'Show this message') do
         $logger.debug('Showing help')
         puts opts
