@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 =begin
 
-AurB is a Ruby AUR utility.
+AurB is a Ruby AUR utility, heavily inspired by `arson' and `yaourt'.
 Author: Gigamo <gigamo@gmail.com>
 License: WTFPL <http://sam.zoy.org/wtfpl/>
 
