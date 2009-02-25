@@ -160,7 +160,7 @@ module AurB
           end
         end
         if no_pkg and not depend
-          $logger.fatal("Error: #{pkg} not found.")
+          $logger.fatal("Error: package #{pkg} not found.")
           exit 1
         end
       else

@@ -13,7 +13,8 @@ License: WTFPL <http://sam.zoy.org/wtfpl/>
 
 =end
 
-['logger', File.dirname(__FILE__) + '/lib/methods', File.dirname(__FILE__) + '/lib/options'].each do |lib|
+['logger', File.dirname(__FILE__) + '/lib/methods',
+           File.dirname(__FILE__) + '/lib/options'].each do |lib|
   require lib
 end
 
@@ -57,4 +58,4 @@ module AurB
   end
 end
 
-AurB.run if $0 == __FILE__
+AurB.run #if $0 == __FILE__
