@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-['rubygems', 'zlib', 'facets/version', 'facets/minitar', 'json', 'cgi', 'open-uri', 'fileutils'].each do |lib|
+['rubygems', 'zlib', 'facets/version', 'facets/minitar', 'facets/ansicode', 'json', 'cgi', 'open-uri', 'fileutils'].each do |lib|
   require lib
 end
 
@@ -14,6 +14,15 @@ module AurB
   Pacman_Sync  = '/var/lib/pacman/sync/%s'
   Pacman_Cache = '/var/lib/pacman/local'
   Pacman_Conf  = '/etc/pacman.conf'
+
+  def colorize(string, *effects)
+    colored = ' '
+    effects.each do |effect|
+      colored << ANSICode.send(effect)
+    end
+    colored << string << ANSICode.clear
+    colored[1..-1]
+  end
 
   def json_open(url)
     JSON.parse(open(url).read)
