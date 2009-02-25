@@ -5,5 +5,5 @@ Its aim is to be simple yet functional.
 
 =Todo
 
-*Add a makepkg/build function for AUR packages
-*Add an upgrade (Syu-like) function for AUR packages
+* Add a makepkg/build function for AUR packages
+* Add an upgrade (Syu-like) function for AUR packages
