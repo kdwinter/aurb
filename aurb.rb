@@ -20,8 +20,8 @@ end
 module AurB
   extend self
 
-  Name         = 'AurB'
-  Version      = [0, 1, 1]
+  Name    = 'AurB'
+  Version = [0, 1, 1]
 
   $logger = Logger.new($stdout)
   $logger.level = Logger::DEBUG

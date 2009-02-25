@@ -42,7 +42,7 @@ module AurB
       opts.separator ""
       opts.separator "where [options] is one of:"
 
-      opts.on('--save-to [PATH]', 'Directory to save to', 'Default: current directory') do |h|
+      opts.on('--save-to [PATH]', 'Directory to save to') do |h|
         h = (h[0...1] == '/' ? h : "#{Dir.pwd}/#{h}")
         if File.exists?(h)
           $options[:download_dir] = Pathname.new(h).realpath
