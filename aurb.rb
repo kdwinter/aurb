@@ -13,7 +13,7 @@ License: WTFPL <http://sam.zoy.org/wtfpl/>
 
 =end
 
-['pathname', 'logger', File.dirname(__FILE__) + '/lib/methods', File.dirname(__FILE__) + '/lib/options'].each do |lib|
+['logger', File.dirname(__FILE__) + '/lib/methods', File.dirname(__FILE__) + '/lib/options'].each do |lib|
   require lib
 end
 

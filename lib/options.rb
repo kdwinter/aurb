@@ -13,7 +13,9 @@ License: WTFPL <http://sam.zoy.org/wtfpl/>
 
 =end
 
-require 'optparse'
+['pathname', 'optparse'].each do |lib|
+  require lib
+end
 
 module AurB
   extend self
@@ -47,7 +49,7 @@ module AurB
         if File.exists?(h)
           $options[:download_dir] = Pathname.new(h).realpath
         else
-          $logger.fatal("Error: #{h} doesn't exist. Please choose an existing directory.")
+          $logger.fatal("#{h} doesn't exist. Please choose an existing directory.")
           exit 1
         end
       end

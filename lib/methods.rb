@@ -26,7 +26,6 @@ module AurB
   Abs_Domain   = 'http://archlinux.org/packages/search/?category=all&limit=99000'
   Pacman_Sync  = '/var/lib/pacman/sync/%s'
   Pacman_Cache = '/var/lib/pacman/local'
-  Pacman_Conf  = '/etc/pacman.conf'
 
   def colorize(string, *effects)
     colored = ' '
