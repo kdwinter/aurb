@@ -69,8 +69,8 @@ module AurB
         puts opts
         puts <<EOMHELP
 dependencies:
-    - package: rubygems
-    - gems: facets, json
+    package: rubygems
+    gems: facets, json
 EOMHELP
         exit
       end

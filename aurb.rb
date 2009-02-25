@@ -37,6 +37,9 @@ module AurB
     rescue OptionParser::InvalidOption => ivo
       $logger.warn("#{ivo}. Please only use the following:")
       optparse(['-h'])
+    rescue OptionParser::AmbiguousOption => amo
+      $logger.warn("#{amo}. Please check argument syntax")
+      optparse(['-h'])
     end
 
     case $options[:command]
