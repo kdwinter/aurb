@@ -53,6 +53,9 @@ module AurB
       opts.on('-S', '--search', 'Search for the package specified') do
         $options[:command] ||= :search
       end
+      opts.on('-I', '--info', 'Retrieve information for the package specified') do
+        $options[:command] ||= :info
+      end
 
       opts.separator ""
       opts.separator "where [options] is one of:"
@@ -110,6 +113,8 @@ EOMHELP
       aur_download(ARGV)
     when :search
       aur_search(ARGV)
+    when :info
+      aur_info(ARGV)
     else
       $logger.fatal('Unrecognized command. See --help for info.')
     end

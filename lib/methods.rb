@@ -16,13 +16,34 @@ module AurB
   Pacman_Conf  = '/etc/pacman.conf'
 
   def json_open(url)
-    $logger.debug('Opening JSON url')
     JSON.parse(open(url).read)
   end
 
   def in_pacman_sync?(name, repo)
     repo = Pacman_Sync % repo
     true if Dir["#{repo}/#{name}-*"].first
+  end
+
+  def pacman_cache_check(name, version, cached=Pacman_Cache)
+    $logger.debug("Checking installation status of #{name} #{version}")
+    if File.exists?("#{cached}/#{name}-#{version}")
+      return 'Installed'
+    else
+      Dir.chdir(cached) do
+        installed = Dir["#{name}-*"].first
+        if installed
+          iv = VersionNumber.new(installed[name.length+1..-1])
+          pccv = VersionNumber.new(version)
+          if iv > pccv
+            return 'Installed'
+          elsif pccv > iv
+            return 'Upgradable'
+          end
+        else
+          return 'Not installed'
+        end
+      end
+    end
   end
 
   def aur_list(name)
@@ -38,6 +59,30 @@ module AurB
       list << [aurp['Name'], aurp['ID']]
     end
     list.sort
+  end
+
+  def aur_search(keywords)
+    $logger.debug("Searching for #{keywords.join(' & ')}")
+    list = aur_list(keywords.join(' '))
+    count = 0
+    list.each do |values|
+      info = json_open(Aur_Info % values[1])
+      unless info['type'] == 'error'
+        info = info['results']
+        next if in_pacman_sync?(info['Name'], 'community')
+        if keywords.any? do |keyword|
+            info['Name'].include?(keyword) or info['Description'].include?(keyword)
+          end
+        $logger.debug('Succesful match')
+        count += 1
+        puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
+        puts colorize("   #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
+        end
+      else
+        $logger.warn("Error: #{info['results']} for package #{values[0]}")
+      end
+    end
+    puts "Found #{colorize(count.to_s, :magenta)} results"
   end
 
   def aur_download(packages, depend=false)
@@ -103,6 +148,30 @@ module AurB
       else
         $logger.fatal("Error: #{$options[:download_dir]}/#{pkg} already exists.")
         puts colorize("Error: #{$options[:download_dir]}/#{pkg} already exists.", :red)
+      end
+    end
+  end
+
+  def aur_info(names)
+    names.each do |name|
+      $logger.debug("Retrieving package information for #{name}")
+      aur_list(name).each do |pkg|
+        if pkg[0] == name
+          json = json_open(Aur_Info % pkg[1])['results']
+          not_ood = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
+          inst_upg_info = "is #{colorize('not installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Not installed'
+          inst_upg_info = "is #{colorize('installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Installed'
+          inst_upg_info = "has an #{colorize('upgrade', :blue)} available" if pacman_cache_check(json['Name'], json['Version']) == 'Upgradable'
+
+          puts <<EOINFO
+#{colorize("#{json['Name']} #{json['Version']}" , :yellow)}
+    #{json['Description']}
+    #{json['URL']}
+    #{json['License']}
+    #{colorize(json['NumVotes'], :green)} votes
+    It #{not_ood} out of date.
+EOINFO
+        end
       end
     end
   end
