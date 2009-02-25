@@ -100,7 +100,7 @@ module AurB
         $logger.warn("Error: #{info['results']} for package #{values[0]}")
       end
     end
-    puts "Found #{colorize(count.to_s, :magenta)} results"
+    puts "\nFound #{colorize(count.to_s, :magenta)} results"
   end
 
   def aur_download(packages, depend=false)

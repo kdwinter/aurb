@@ -24,7 +24,7 @@ module AurB
   Version = [0, 1, 1]
 
   $logger = Logger.new($stdout)
-  $logger.level = Logger::DEBUG
+  $logger.level = Logger::WARN
   $logger.debug('Created logger')
 
   def run
