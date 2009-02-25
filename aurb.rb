@@ -47,8 +47,11 @@ module AurB
       opts.separator ""
       opts.separator "where <command> is one of:"
 
-      opts.on('-D', '--download', 'Install the package specified') do |s|
+      opts.on('-D', '--download', 'Install the package specified') do
         $options[:command] ||= :download
+      end
+      opts.on('-S', '--search', 'Search for the package specified') do
+        $options[:command] ||= :search
       end
 
       opts.separator ""
@@ -102,8 +105,13 @@ EOMHELP
       optparse(['-h'])
     end
 
-    if $options[:command] == :download
-      AurB.aur_download(ARGV)
+    case $options[:command]
+    when :download
+      aur_download(ARGV)
+    when :search
+      aur_search(ARGV)
+    else
+      $logger.fatal('Unrecognized command. See --help for info.')
     end
   end
 end
