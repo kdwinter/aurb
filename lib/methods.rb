@@ -73,10 +73,10 @@ module AurB
         if keywords.any? do |keyword|
             info['Name'].include?(keyword) or info['Description'].include?(keyword)
           end
-        $logger.debug('Succesful match')
-        count += 1
-        puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
-        puts colorize("   #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
+          $logger.debug('Succesful match')
+          count += 1
+          puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
+          puts colorize("   #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
         end
       else
         $logger.warn("Error: #{info['results']} for package #{values[0]}")
