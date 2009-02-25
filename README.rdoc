@@ -1,9 +1,7 @@
 =AurB
-
 AurB is a Ruby AUR helper.
 Its aim is to be simple yet functional.
 
-=Todo
-
+===Todo
 * Add a makepkg/build function for AUR packages
 * Add an upgrade (Syu-like) function for AUR packages
