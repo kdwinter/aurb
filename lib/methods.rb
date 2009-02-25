@@ -101,7 +101,7 @@ module AurB
     puts "\nFound #{colorize(count.to_s, :magenta)} results"
   end
 
-  def aur_download(packages, depend=false)
+  def aur_get(packages, depend=false)
     no_pkg = true
     packages.each do |pkg|
       unless File.exists?(File.join($options[:download_dir], pkg))
