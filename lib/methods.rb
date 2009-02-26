@@ -49,11 +49,11 @@ module AurB
       Dir.chdir(cached) do
         installed = Dir["#{name}-*"].first
         if installed
-          iv = VersionNumber.new(installed[name.length+1..-1])
-          pccv = VersionNumber.new(version)
-          if iv > pccv
+          installed_version = VersionNumber.new(installed[name.length+1..-1])
+          remote_version = VersionNumber.new(version)
+          if installed_version > remote_version
             return 'Installed'
-          elsif pccv > iv
+          elsif remote_version > installed_version
             return 'Upgradable'
           end
         else
@@ -68,7 +68,7 @@ module AurB
     list = []
 
     if json['type'] == 'error'
-      $logger.fatal("JSON error: #{json['results']}")
+      $logger.fatal("Fatal: JSON: #{json['results']}")
       exit 1
     end
     json['results'].each do |aurp|
@@ -109,7 +109,7 @@ module AurB
         list.each do |names|
           if names[0] == pkg
             info = JSON.parse(open(Aur_Info % names[1]).read)['results']
-            puts "#{colorize('Warning', :red, :bold)}: you are about to download #{colorize(pkg, :bold)}, which has been flagged #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
+            puts "#{colorize('Warning', :red, :bold)}: #{colorize(pkg, :bold)}is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
             FileUtils.chdir($options[:download_dir]) do |dir|
               begin
                 no_pkg = false
@@ -135,13 +135,13 @@ module AurB
                       end
                     end
                   rescue OpenURI::HTTPError => e
-                    $logger.fatal("Error downloading #{pkg}: #{e.message}")
                     no_pkg = false
+                    $logger.fatal("Error downloading #{pkg}: #{e.message}")
                     exit 1
                   end
                 else
-                  $logger.fatal("Error downloading #{pkg}: #{e.message}")
                   no_pkg = false
+                  $logger.fatal("Error downloading #{pkg}: #{e.message}")
                   exit 1
                 end
               end
@@ -160,11 +160,11 @@ module AurB
           end
         end
         if no_pkg and not depend
-          $logger.fatal("Error: package #{pkg} not found.")
+          $logger.fatal("Fatal: package #{pkg} not found.")
           exit 1
         end
       else
-        $logger.fatal("Error: #{$options[:download_dir]}/#{pkg} already exists.")
+        $logger.fatal("Fatal: #{$options[:download_dir]}/#{pkg} already exists.")
         exit 1
       end
     end
@@ -176,10 +176,10 @@ module AurB
       aur_list(name).each do |pkg|
         if pkg[0] == name
           json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']
-          not_ood = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
-          inst_upg_info = "is #{colorize('not installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Not installed'
-          inst_upg_info = "is #{colorize('installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Installed'
-          inst_upg_info = "has an #{colorize('upgrade', :blue)} available" if pacman_cache_check(json['Name'], json['Version']) == 'Upgradable'
+          ood_check = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
+          status_check = "is #{colorize('not installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Not installed'
+          status_check = "is #{colorize('installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Installed'
+          status_check = "has an #{colorize('upgrade', :blue)} available" if pacman_cache_check(json['Name'], json['Version']) == 'Upgradable'
 
           puts <<EOINFO
 Name:        #{colorize("#{json['Name']} #{json['Version']}" , :yellow)}
@@ -187,7 +187,7 @@ Description: #{json['Description']}
 Homepage:    #{json['URL']}
 License:     #{json['License']}
 Votes:       #{colorize(json['NumVotes'], :green)}
-Status:      #{json['Name']} #{inst_upg_info}. It #{not_ood} out of date. 
+Status:      #{json['Name']} #{status_check}. It #{ood_check} out of date. 
 EOINFO
         end
       end
