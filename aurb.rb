@@ -28,13 +28,13 @@ module AurB
   Log.level = Logger::WARN
   Log.debug('Created logger')
 
-  def run
-    Log.debug('Started AurB')
+  def run!(args)
+    Log.info('Started AurB')
 
     trap(:INT) { exit 0 }
 
     begin
-      optparse(ARGV)
+      optparse(args)
     rescue OptionParser::InvalidOption => ivo
       Log.warn("#{ivo}. Please only use the following:")
       optparse(['-h'])
@@ -62,4 +62,4 @@ module AurB
   end
 end
 
-AurB.run #if $0 == __FILE__
+AurB.run! ARGV #if $0 == __FILE__
