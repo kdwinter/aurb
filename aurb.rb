@@ -44,7 +44,9 @@ module AurB
     end
 
     case $options[:command]
-    when :download || :build
+    when :download
+      aur_get(ARGV)
+    when :build
       aur_get(ARGV)
     when :search
       aur_search(ARGV)
