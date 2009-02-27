@@ -186,11 +186,11 @@ module AurB
           status_check = "has an #{colorize('upgrade', :blue)} available" if in_pacman_cache?(json['Name'], json['Version']) == 'Upgradable'
 
           puts <<EOINFO
-       #{colorize('Name:', :white)} #{colorize("#{json['Name']} #{json['Version']}" , :yellow)}
+       #{colorize('Name:', :white)} #{json['Name']} #{json['Version']}
 #{colorize('Description:', :white)} #{json['Description']}
    #{colorize('Homepage:', :white)} #{json['URL']}
     #{colorize('License:', :white)} #{json['License']}
-      #{colorize('Votes:', :white)} #{colorize(json['NumVotes'], :green)}
+      #{colorize('Votes:', :white)} #{json['NumVotes']}
      #{colorize('Status:', :white)} #{json['Name']} #{status_check}. It #{ood_check} out of date. 
 EOINFO
         end
