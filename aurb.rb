@@ -22,7 +22,7 @@ module AurB
   extend self
 
   Name    = 'AurB'
-  Version = [0, 2, 2]
+  Version = [0, 2, 3]
 
   Log = Logger.new(STDOUT)
   Log.level = Logger::WARN
