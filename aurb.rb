@@ -39,7 +39,7 @@ module AurB
       $logger.warn("#{ivo}. Please only use the following:")
       optparse(['-h'])
     rescue OptionParser::AmbiguousOption => amo
-      $logger.warn("#{amo}. Please check argument syntax")
+      $logger.warn("#{amo}. Please check argument syntax.")
       optparse(['-h'])
     end
 
@@ -53,7 +53,8 @@ module AurB
     when :info
       aur_info(ARGV)
     else
-      $logger.fatal('Unrecognized command. See --help for info.')
+      $logger.warn('Unrecognized command.')
+      optparse(['-h'])
     end
   end
 end
