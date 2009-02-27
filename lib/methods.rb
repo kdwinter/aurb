@@ -186,7 +186,8 @@ module AurB
           status_check = "has an #{colorize('upgrade', :blue)} available" if in_pacman_cache?(json['Name'], json['Version']) == 'Upgradable'
 
           puts <<EOINFO
-       #{colorize('Name:', :white)} #{json['Name']} #{json['Version']}
+       #{colorize('Name:', :white)} #{json['Name']}
+    #{colorize('Version:', :white)} #{json['Version']}
 #{colorize('Description:', :white)} #{json['Description']}
    #{colorize('Homepage:', :white)} #{json['URL']}
     #{colorize('License:', :white)} #{json['License']}
