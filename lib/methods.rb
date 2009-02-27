@@ -109,7 +109,7 @@ module AurB
         list.each do |names|
           if names[0] == pkg
             info = JSON.parse(open(Aur_Info % names[1]).read)['results']
-            puts "#{colorize('Warning', :red, :bold)}: #{colorize(pkg, :bold)}is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
+            puts "#{colorize('Warning', :red, :bold)}: #{colorize(pkg, :bold)} is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
             FileUtils.chdir($options[:download_dir]) do |dir|
               begin
                 no_pkg = false
