@@ -22,9 +22,9 @@ module AurB
   extend self
 
   Name    = 'AurB'
-  Version = [0, 2, 1]
+  Version = [0, 2, 2]
 
-  $logger = Logger.new($stdout)
+  $logger = Logger.new(STDOUT)
   $logger.level = Logger::WARN
   $logger.debug('Created logger')
 
