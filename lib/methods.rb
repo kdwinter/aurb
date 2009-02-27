@@ -42,7 +42,7 @@ module AurB
   end
 
   def in_pacman_cache?(name, version, cached=Pacman_Cache)
-    $logger.debug("Checking installation status of #{name} #{version}")
+    Log.debug("Checking installation status of #{name} #{version}")
     if File.exists?("#{cached}/#{name}-#{version}")
       return 'Installed'
     else
@@ -68,7 +68,7 @@ module AurB
     list = []
 
     if json['type'] == 'error'
-      $logger.fatal("Fatal: JSON: #{json['results']}")
+      Log.fatal("Fatal: JSON: #{json['results']}")
       exit 1
     end
     json['results'].each do |aurp|
@@ -78,7 +78,7 @@ module AurB
   end
 
   def aur_search(keywords)
-    $logger.debug("Searching for #{keywords.join(' & ')}")
+    Log.debug("Searching for #{keywords.join(' & ')}")
     list = aur_list(keywords.join(' '))
     count = 0
     list.each do |values|
@@ -89,13 +89,13 @@ module AurB
         if keywords.any? do |keyword|
             info['Name'].include?(keyword) or info['Description'].include?(keyword)
           end
-          $logger.debug('Succesful match')
+          Log.debug('Succesful match')
           count += 1
           puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
           puts colorize("    #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
         end
       else
-        $logger.warn("Error: #{info['results']} for package #{values[0]}")
+        Log.warn("Error: #{info['results']} for package #{values[0]}")
       end
     end
     puts "\nFound #{colorize(count.to_s, :magenta)} results"
@@ -128,7 +128,7 @@ module AurB
                 if e.message.include?('404')
                   begin
                     no_pkg = false
-                    $logger.debug("404 Error downloading #{pkg}, trying pattern")
+                    Log.debug("404 Error downloading #{pkg}, trying pattern")
                     open("#{Aur_Domain}/packages/#{pkg}/#{pkg}.tar.gz") do |tar|
                       File.open("#{dir}/#{pkg}.tar.gz", 'wb') do |file|
                         file.write(tar.read)
@@ -136,16 +136,16 @@ module AurB
                     end
                   rescue OpenURI::HTTPError => e
                     no_pkg = false
-                    $logger.fatal("Error downloading #{pkg}: #{e.message}")
+                    Log.fatal("Error downloading #{pkg}: #{e.message}")
                     exit 1
                   end
                 else
                   no_pkg = false
-                  $logger.fatal("Error downloading #{pkg}: #{e.message}")
+                  Log.fatal("Error downloading #{pkg}: #{e.message}")
                   exit 1
                 end
               end
-              $logger.debug("Extracting #{pkg}.tar.gz")
+              Log.debug("Extracting #{pkg}.tar.gz")
               tgz = Zlib::GzipReader.new(File.open("#{pkg}.tar.gz", 'rb'))
               Archive::Tar::Minitar.unpack(tgz, Dir.pwd)
 
@@ -160,11 +160,11 @@ module AurB
           end
         end
         if no_pkg and not depend
-          $logger.fatal("Fatal: package #{pkg} not found.")
+          Log.fatal("Fatal: package #{pkg} not found.")
           exit 1
         end
       else
-        $logger.fatal("Fatal: #{$options[:download_dir]}/#{pkg} already exists.")
+        Log.fatal("Fatal: #{$options[:download_dir]}/#{pkg} already exists.")
         exit 1
       end
     end
@@ -172,7 +172,7 @@ module AurB
 
   def aur_info(names)
     names.each do |name|
-      $logger.debug("Retrieving package information for #{name}")
+      Log.debug("Retrieving package information for #{name}")
       aur_list(name).each do |pkg|
         if pkg[0] == name
           json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']

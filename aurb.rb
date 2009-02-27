@@ -24,23 +24,26 @@ module AurB
   Name    = 'AurB'
   Version = [0, 2, 2]
 
-  $logger = Logger.new(STDOUT)
-  $logger.level = Logger::WARN
-  $logger.debug('Created logger')
+  Log = Logger.new(STDOUT)
+  Log.level = Logger::WARN
+  Log.debug('Created logger')
 
   def run
-    $logger.debug('Started AurB')
+    Log.debug('Started AurB')
 
     trap(:INT) { exit 0 }
 
     begin
       optparse(ARGV)
     rescue OptionParser::InvalidOption => ivo
-      $logger.warn("#{ivo}. Please only use the following:")
+      Log.warn("#{ivo}. Please only use the following:")
       optparse(['-h'])
     rescue OptionParser::AmbiguousOption => amo
-      $logger.warn("#{amo}. Please check argument syntax.")
+      Log.warn("#{amo}. Please check argument syntax.")
       optparse(['-h'])
+    rescue Exception => exp
+      Log.fatal('Something bad just happened.')
+      Log.fatal(exp)
     end
 
     case $options[:command]
@@ -53,7 +56,7 @@ module AurB
     when :info
       aur_info(ARGV)
     else
-      $logger.warn('Unrecognized command.')
+      Log.warn('Unrecognized command.')
       optparse(['-h'])
     end
   end
