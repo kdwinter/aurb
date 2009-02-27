@@ -103,6 +103,10 @@ module AurB
   end
 
   def aur_get(packages, depend=false)
+    unless $options[:download_dir]
+      Log.warn('No download directory given, falling back to default')
+      $options[:download_dir] = Pathname.new(Dir.pwd).realpath
+    end
     no_pkg = true
     packages.each do |pkg|
       unless File.exists?(File.join($options[:download_dir], pkg))

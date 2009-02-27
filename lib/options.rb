@@ -76,10 +76,5 @@ EOMHELP
         exit
       end
     end.parse!(args)
-
-    unless $options[:download_dir]
-      Log.warn('No download directory given, falling back to default')
-      $options[:download_dir] = Pathname.new(Dir.pwd).realpath
-    end
   end
 end
