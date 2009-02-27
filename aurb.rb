@@ -49,13 +49,13 @@ module AurB
 
     case $options[:command]
     when :download
-      aur_get(ARGV)
+      aur_get(args)
     when :build
-      aur_get(ARGV)
+      aur_get(args)
     when :search
-      aur_search(ARGV)
+      aur_search(args)
     when :info
-      aur_info(ARGV)
+      aur_info(args)
     else
       Log.warn('Unrecognized command.')
       optparse(['-h'])
