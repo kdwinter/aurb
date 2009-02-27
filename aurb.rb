@@ -32,7 +32,10 @@ module AurB
   def run!(args)
     Log.info('Started AurB')
 
-    trap(:INT) { exit 0 }
+    trap('SIGINT') do
+      Log.fatal('Received SIGINT, exiting.')
+      exit 0
+    end
 
     begin
       optparse(args)
