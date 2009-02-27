@@ -41,7 +41,7 @@ module AurB
     true if Dir["#{repo}/#{name}-*"].first
   end
 
-  def pacman_cache_check(name, version, cached=Pacman_Cache)
+  def in_pacman_cache?(name, version, cached=Pacman_Cache)
     $logger.debug("Checking installation status of #{name} #{version}")
     if File.exists?("#{cached}/#{name}-#{version}")
       return 'Installed'
@@ -177,17 +177,17 @@ module AurB
         if pkg[0] == name
           json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']
           ood_check = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
-          status_check = "is #{colorize('not installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Not installed'
-          status_check = "is #{colorize('installed', :green)}" if pacman_cache_check(json['Name'], json['Version']) == 'Installed'
-          status_check = "has an #{colorize('upgrade', :blue)} available" if pacman_cache_check(json['Name'], json['Version']) == 'Upgradable'
+          status_check = "is #{colorize('not installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Not installed'
+          status_check = "is #{colorize('installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Installed'
+          status_check = "has an #{colorize('upgrade', :blue)} available" if in_pacman_cache?(json['Name'], json['Version']) == 'Upgradable'
 
           puts <<EOINFO
-Name:        #{colorize("#{json['Name']} #{json['Version']}" , :yellow)}
-Description: #{json['Description']}
-Homepage:    #{json['URL']}
-License:     #{json['License']}
-Votes:       #{colorize(json['NumVotes'], :green)}
-Status:      #{json['Name']} #{status_check}. It #{ood_check} out of date. 
+       #{colorize('Name:', :white)} #{colorize("#{json['Name']} #{json['Version']}" , :yellow)}
+#{colorize('Description:', :white)} #{json['Description']}
+   #{colorize('Homepage:', :white)} #{json['URL']}
+    #{colorize('License:', :white)} #{json['License']}
+      #{colorize('Votes:', :white)} #{colorize(json['NumVotes'], :green)}
+     #{colorize('Status:', :white)} #{json['Name']} #{status_check}. It #{ood_check} out of date. 
 EOINFO
         end
       end
