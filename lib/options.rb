@@ -14,7 +14,7 @@
 
 =end
 
-['pathname', 'optparse'].each do |lib|
+%w(pathname optparse).each do |lib|
   require lib
 end
 

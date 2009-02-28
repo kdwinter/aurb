@@ -14,7 +14,7 @@
 
 =end
 
-['rubygems', 'zlib', 'facets/version', 'facets/minitar', 'facets/ansicode', 'json', 'cgi', 'open-uri', 'fileutils'].each do |lib|
+%w(rubygems zlib facets/version facets/minitar facets/ansicode json cgi open-uri fileutils).each do |lib|
   require lib
 end
 

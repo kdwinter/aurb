@@ -14,8 +14,7 @@
 
 =end
 
-['logger', File.dirname(__FILE__) + '/lib/methods',
-           File.dirname(__FILE__) + '/lib/options'].each do |lib|
+%w(logger lib/options lib/methods).each do |lib|
   require lib
 end
 
