@@ -192,7 +192,7 @@ module AurB
    #{colorize('Homepage:', :white)} #{json['URL']}
     #{colorize('License:', :white)} #{json['License']}
       #{colorize('Votes:', :white)} #{json['NumVotes']}
-     #{colorize('Status:', :white)} #{json['Name']} #{status_check}. It #{ood_check} out of date. 
+     #{colorize('Status:', :white)} It #{status_check} and #{ood_check} out of date. 
 EOINFO
         end
       end
