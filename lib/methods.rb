@@ -84,7 +84,7 @@ module AurB
     count = 0
     threads = []
     list.each do |values|
-      threads << Thread.new(values) do |values|
+      threads << Thread.new(values) do
         info = JSON.parse(open(Aur_Info % values[1]).read)
         unless info['type'] == 'error'
           info = info['results']
@@ -181,7 +181,7 @@ module AurB
   def aur_info(names)
     threads = []
     names.each do |name|
-      threads << Thread.new(name) do |name|
+      threads << Thread.new(name) do
         Log.debug("Retrieving package information for #{name}")
         aur_list(name).each do |pkg|
           if pkg[0] == name
