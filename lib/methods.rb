@@ -179,27 +179,32 @@ module AurB
   end
 
   def aur_info(names)
+    threads = []
     names.each do |name|
-      Log.debug("Retrieving package information for #{name}")
-      aur_list(name).each do |pkg|
-        if pkg[0] == name
-          json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']
-          ood_check = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
-          status_check = "is #{colorize('not installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Not installed'
-          status_check = "is #{colorize('installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Installed'
-          status_check = "has an #{colorize('upgrade', :blue)} available" if in_pacman_cache?(json['Name'], json['Version']) == 'Upgradable'
+      threads << Thread.new(name) do |name|
+        Log.debug("Retrieving package information for #{name}")
+        aur_list(name).each do |pkg|
+          if pkg[0] == name
+            json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']
+            ood_check = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
+            status_check = "is #{colorize('not installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Not installed'
+            status_check = "is #{colorize('installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Installed'
+            status_check = "has an #{colorize('upgrade', :blue)} available" if in_pacman_cache?(json['Name'], json['Version']) == 'Upgradable'
 
-          puts <<EOINFO
+            puts <<EOINFO
        #{colorize('Name:', :white)} #{json['Name']}
     #{colorize('Version:', :white)} #{json['Version']}
 #{colorize('Description:', :white)} #{json['Description']}
    #{colorize('Homepage:', :white)} #{json['URL']}
     #{colorize('License:', :white)} #{json['License']}
       #{colorize('Votes:', :white)} #{json['NumVotes']}
-     #{colorize('Status:', :white)} It #{status_check} and #{ood_check} out of date. 
+     #{colorize('Status:', :white)} It #{status_check} and #{ood_check} out of date.
+
 EOINFO
+          end
         end
       end
     end
+    threads.each { |t| t.join }
   end
 end
