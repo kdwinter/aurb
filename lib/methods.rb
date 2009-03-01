@@ -82,23 +82,27 @@ module AurB
     Log.debug("Searching for #{keywords.join(' & ')}")
     list = aur_list(keywords.join(' '))
     count = 0
+    threads = []
     list.each do |values|
-      info = JSON.parse(open(Aur_Info % values[1]).read)
-      unless info['type'] == 'error'
-        info = info['results']
-        next if in_pacman_sync?(info['Name'], 'community')
-        if keywords.any? do |keyword|
-            info['Name'].include?(keyword) or info['Description'].include?(keyword)
+      threads << Thread.new(values) do |values|
+        info = JSON.parse(open(Aur_Info % values[1]).read)
+        unless info['type'] == 'error'
+          info = info['results']
+          next if in_pacman_sync?(info['Name'], 'community')
+          if keywords.any? do |keyword|
+              info['Name'].include?(keyword) or info['Description'].include?(keyword)
+            end
+            Log.debug('Succesful match')
+            count += 1
+            puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
+            puts colorize("    #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
           end
-          Log.debug('Succesful match')
-          count += 1
-          puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
-          puts colorize("    #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
+        else
+          Log.warn("Error: #{info['results']} for package #{values[0]}")
         end
-      else
-        Log.warn("Error: #{info['results']} for package #{values[0]}")
       end
     end
+    threads.each { |t| t.join }
     puts "\nFound #{colorize(count.to_s, :magenta)} results"
   end
 
