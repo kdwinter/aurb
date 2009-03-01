@@ -28,7 +28,7 @@ module AurB
   Log.level = Logger::WARN
   Log.debug('Created logger')
 
-  def run!(args)
+  def run!(args=ARGV)
     Log.info('Started AurB')
 
     trap('SIGINT') do
@@ -65,4 +65,4 @@ module AurB
   end
 end
 
-AurB.run! ARGV #if $0 == __FILE__
+AurB.run! #if $0 == __FILE__
