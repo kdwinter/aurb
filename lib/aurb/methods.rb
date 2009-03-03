@@ -179,6 +179,11 @@ module AurB
     unless `which rsync`.strip == ''
       Dir.chdir($options[:download_dir]) if $options[:download_dir]
       `/usr/bin/rsync -mrt --no-motd --delete-after rsync.archlinux.org::abs/i686/#{repo}/#{pkg} .`
+      if $options[:command] == :build
+        FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
+        puts "Building #{colorize(pkg, :bold)} with makepkg.."
+        exec 'makepkg'
+      end
     else
       STDOUT.puts "ERROR: rsync is not installed"
     end

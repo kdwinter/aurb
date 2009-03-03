@@ -18,7 +18,7 @@ module AurB
   extend self
 
   Name    = 'AurB'
-  Version = [0, 5, 1]
+  Version = [0, 5, 2]
 
   def run!(args=ARGV)
     trap('SIGINT') do
