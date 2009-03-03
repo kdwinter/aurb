@@ -180,8 +180,8 @@ module AurB
       Dir.chdir($options[:download_dir]) if $options[:download_dir]
       `/usr/bin/rsync -mrt --no-motd --delete-after rsync.archlinux.org::abs/i686/#{repo}/#{pkg} .`
       if $options[:command] == :build
-        FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
-        puts "Building #{colorize(pkg, :bold)} with makepkg.."
+        FileUtils.chdir("#{pkg}")
+        puts "Building #{pkg} with makepkg.."
         exec 'makepkg'
       end
     else
