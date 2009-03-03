@@ -1,6 +1,27 @@
-=AurB
-AurB is a Ruby AUR helper.
-Its aim is to be simple yet functional.
+=A Ruby AUR helper.
+* Download packages from aur and automatically extract them (and optionally
+  build them)
+* Search the AUR
+* Get information for a specific package
 
-===Todo
-* Add an upgrade (Syu-like) function for AUR packages
+Base commands:
+
+*-D, --download*:: Downloads and extracts the package
+*-B, --build*:: Downloads, extracts and builds the package
+*-S, --search*:: Searches for the package
+*-Q, --query*:: Looks up information of the package
+
+Other options:
+
+*--save-to*:: Specify the directory where the package will be saved to
+
+== Installation
+
+To install, see <tt>ruby setup.rb --help</tt>.
+
+    # ruby setup.rb all
+
+OR
+
+    # ruby setup.rb config
+    # ruby setup.rb install
