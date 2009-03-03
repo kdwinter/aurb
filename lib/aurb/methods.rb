@@ -159,7 +159,7 @@ module AurB
             end
             if $options[:command] == :build
               FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
-              puts "Building #{colorize(pkg, :bold)} with makepkg.."
+              puts "Building #{pkg} with makepkg.."
               exec 'makepkg'
             end
           end
@@ -175,14 +175,21 @@ module AurB
     end
   end
 
-  def abs_get(repo, pkg)
+  def abs_get(repo, packages)
     unless `which rsync`.strip == ''
-      Dir.chdir($options[:download_dir]) if $options[:download_dir]
-      `/usr/bin/rsync -mrt --no-motd --delete-after rsync.archlinux.org::abs/i686/#{repo}/#{pkg} .`
-      if $options[:command] == :build
-        FileUtils.chdir("#{pkg}")
-        puts "Building #{pkg} with makepkg.."
-        exec 'makepkg'
+      unless $options[:download_dir]
+        STDOUT.puts 'WARNING: No download directory given, falling back to default (current)'
+        $options[:download_dir] = Pathname.new(Dir.pwd).realpath
+      end
+      packages.each do |pkg|
+        FileUtils.chdir($options[:download_dir]) do |dir|
+          `/usr/bin/rsync -mrt --no-motd --delete-after rsync.archlinux.org::abs/i686/#{repo}/#{pkg} #{dir}`
+        end
+        if $options[:command] == :build
+          FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
+          puts "Building #{pkg} with makepkg.."
+          exec 'makepkg'
+        end
       end
     else
       STDOUT.puts "ERROR: rsync is not installed"
