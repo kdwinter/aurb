@@ -19,7 +19,6 @@ module AurB
   $options = {}
 
   def optparse(args)
-    Log.debug('Parsing options')
     opts = OptionParser.new do |opts|
       opts.banner = "#{colorize(Name, :yellow)} v#{Version.join('.')}, a Ruby AUR utility."
       opts.separator "Usage: #{colorize($0, :yellow)} [options] <command>"
@@ -48,7 +47,7 @@ module AurB
         if File.exists?(h)
           $options[:download_dir] = Pathname.new(h).realpath
         else
-          Log.fatal("#{h} doesn't exist. Please choose an existing directory.")
+          STDOUT.puts "ERROR: #{h} doesn't exist. Please choose an existing directory."
           exit 1
         end
       end
@@ -61,7 +60,6 @@ module AurB
         exit
       end
       opts.on_tail('-h', '--help', 'Show this message') do
-        Log.debug('Showing help')
         puts opts
         puts <<EOMHELP
 dependencies:

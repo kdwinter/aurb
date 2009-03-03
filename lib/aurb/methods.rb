@@ -45,7 +45,6 @@ module AurB
   end
 
   def in_pacman_cache?(name, version, cached=Pacman_Cache)
-    Log.debug("Checking installation status of #{name} #{version}")
     if File.exists?("#{cached}/#{name}-#{version}")
       return 'Installed'
     else
@@ -71,7 +70,7 @@ module AurB
     list = []
 
     if json['type'] == 'error'
-      Log.fatal("Fatal: JSON: #{json['results']}")
+      STDOUT.puts "ERROR: JSON: #{json['results']}"
       exit 1
     end
     json['results'].each do |aurp|
@@ -81,7 +80,6 @@ module AurB
   end
 
   def aur_search(keywords)
-    Log.debug("Searching for #{keywords.join(' & ')}")
     list = aur_list(keywords.join(' '))
     count = 0
     threads = []
@@ -94,13 +92,12 @@ module AurB
           if keywords.any? do |keyword|
               info['Name'].include?(keyword) or info['Description'].include?(keyword)
             end
-            Log.debug('Succesful match')
             count += 1
             puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
             puts colorize("    #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
           end
         else
-          Log.warn("Error: #{info['results']} for package #{values[0]}")
+          STDOUT.puts "WARNING: #{info['results']} for package #{values[0]}"
         end
       end
     end
@@ -110,7 +107,7 @@ module AurB
 
   def aur_get(packages, depend=false)
     unless $options[:download_dir]
-      Log.warn('No download directory given, falling back to default')
+      STDOUT.puts 'WARNING: No download directory given, falling back to default (current)'
       $options[:download_dir] = Pathname.new(Dir.pwd).realpath
     end
     no_pkg = true
@@ -120,7 +117,7 @@ module AurB
         list.each do |names|
           if names[0] == pkg
             info = JSON.parse(open(Aur_Info % names[1]).read)['results']
-            puts "#{colorize('Warning', :red, :bold)}: #{colorize(pkg, :bold)} is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
+            puts "WARNING: #{colorize(pkg, :bold)} is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
             FileUtils.chdir($options[:download_dir]) do |dir|
               begin
                 no_pkg = false
@@ -139,7 +136,6 @@ module AurB
                 if e.message.include?('404')
                   begin
                     no_pkg = false
-                    Log.debug("404 Error downloading #{pkg}, trying pattern")
                     open("#{Aur_Domain}/packages/#{pkg}/#{pkg}.tar.gz") do |tar|
                       File.open("#{dir}/#{pkg}.tar.gz", 'wb') do |file|
                         file.write(tar.read)
@@ -147,16 +143,15 @@ module AurB
                     end
                   rescue OpenURI::HTTPError => e
                     no_pkg = false
-                    Log.fatal("Error downloading #{pkg}: #{e.message}")
+                    STDOUT.puts "ERROR downloading #{pkg}: #{e.message}"
                     exit 1
                   end
                 else
                   no_pkg = false
-                  Log.fatal("Error downloading #{pkg}: #{e.message}")
+                  STDOUT.puts "ERROR downloading #{pkg}: #{e.message}"
                   exit 1
                 end
               end
-              Log.debug("Extracting #{pkg}.tar.gz")
               tgz = Zlib::GzipReader.new(File.open("#{pkg}.tar.gz", 'rb'))
               Archive::Tar::Minitar.unpack(tgz, Dir.pwd)
 
@@ -170,11 +165,11 @@ module AurB
           end
         end
         if no_pkg and not depend
-          Log.fatal("Fatal: package #{pkg} not found.")
+          STDOUT.puts "ERROR: package #{pkg} not found."
           exit 1
         end
       else
-        Log.fatal("Fatal: #{$options[:download_dir]}/#{pkg} already exists.")
+        STDOUT.puts "ERROR: #{$options[:download_dir]}/#{pkg} already exists."
         exit 1
       end
     end
@@ -184,7 +179,6 @@ module AurB
     threads = []
     names.each do |name|
       threads << Thread.new(name) do
-        Log.debug("Retrieving package information for #{name}")
         aur_list(name).each do |pkg|
           if pkg[0] == name
             json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']
