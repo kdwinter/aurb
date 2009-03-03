@@ -6,10 +6,10 @@
 
 Base commands:
 
-*-D, --download*:: Downloads and extracts the package
-*-B, --build*:: Downloads, extracts and builds the package
-*-S, --search*:: Searches for the package
-*-Q, --query*:: Looks up information of the package
+*--download*:: Downloads and extracts the package
+*--build*:: Downloads, extracts and builds the package
+*--search*:: Searches for the package
+*--query*:: Looks up information of the package
 
 Other options:
 
