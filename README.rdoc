@@ -14,6 +14,7 @@ Base functionality:
 Other options:
 
 *SaveTo*:: Specify the directory where the package will be saved to
+*Source*:: Search core/extra/testing repo's
 
 For more information, see <tt>aurb --help</tt>.
 

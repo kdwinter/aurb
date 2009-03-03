@@ -175,6 +175,15 @@ module AurB
     end
   end
 
+  def abs_get(repo, pkg)
+    unless `which rsync`.strip == ''
+      Dir.chdir($options[:download_dir]) if $options[:download_dir]
+      `/usr/bin/rsync -mrt --no-motd --delete-after rsync.archlinux.org::abs/i686/#{repo}/#{pkg} .`
+    else
+      STDOUT.puts "ERROR: rsync is not installed"
+    end
+  end
+
   def aur_info(names)
     threads = []
     names.each do |name|

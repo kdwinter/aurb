@@ -51,6 +51,16 @@ module AurB
           exit 1
         end
       end
+      opts.on('--source [SRC]', 'Search another source than AUR') do |s|
+        if s == 'core' or s == 'extra' or s == 'testing'
+          $options[:source] = s
+        elsif s == 'aur' or s == 'community'
+          $options[:source] = nil
+        else
+          STDOUT.puts "ERROR: Unknown source #{s}."
+          exit 1
+        end
+      end
 
       opts.separator ""
       opts.separator "other:"

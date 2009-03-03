@@ -18,7 +18,7 @@ module AurB
   extend self
 
   Name    = 'AurB'
-  Version = [0, 4, 1]
+  Version = [0, 5, 1]
 
   def run!(args=ARGV)
     trap('SIGINT') do
@@ -38,9 +38,9 @@ module AurB
 
     case $options[:command]
     when :download
-      aur_get(args)
+      $options[:source] ? abs_get($options[:source], args) : aur_get(args)
     when :build
-      aur_get(args)
+      $options[:source] ? abs_get($options[:source], args) : aur_get(args)
     when :search
       aur_search(args)
     when :info
