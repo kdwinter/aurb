@@ -4,16 +4,18 @@
 * Search the AUR
 * Get information for a specific package
 
-Base commands:
+Base functionality:
 
-*--download*:: Downloads and extracts the package
-*--build*:: Downloads, extracts and builds the package
-*--search*:: Searches for the package
-*--query*:: Looks up information of the package
+*Download*:: Downloads and extracts the package
+*Build*:: Downloads, extracts and builds the package
+*Search*:: Searches for the package
+*Query*:: Looks up information of the package
 
 Other options:
 
-*--save-to*:: Specify the directory where the package will be saved to
+*SaveTo*:: Specify the directory where the package will be saved to
+
+For more information, see <tt>aurb --help</tt>.
 
 == Installation
 
