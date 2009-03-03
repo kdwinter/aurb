@@ -161,11 +161,6 @@ module AurB
               FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
               puts "Building #{pkg} with makepkg.."
               exec 'makepkg'
-              STDOUT.puts "Do you want to install #{pkg}?\n"
-              answer = STDIN.gets
-              if answer.downcase == 'y'
-                exec "sudo pacman -U #{pkg}.pkg.tar.gz"
-              end
             end
           end
         end
@@ -194,11 +189,6 @@ module AurB
           FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
           puts "Building #{pkg} with makepkg.."
           exec 'makepkg'
-          STDOUT.puts "Do you want to install #{pkg}?\n"
-          answer = STDIN.gets
-          if answer.downcase == 'y'
-            exec "sudo pacman -U #{pkg}.pkg.tar.gz"
-          end
         end
       end
     else
