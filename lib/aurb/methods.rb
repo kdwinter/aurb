@@ -183,7 +183,7 @@ module AurB
       end
       packages.each do |pkg|
         FileUtils.chdir($options[:download_dir]) do |dir|
-          `/usr/bin/rsync -mrt --no-motd --delete-after rsync.archlinux.org::abs/i686/#{repo}/#{pkg} #{dir}`
+          exec "/usr/bin/rsync -mrt --no-motd --delete-after rsync.archlinux.org::abs/i686/#{repo}/#{pkg} #{dir}"
         end
         if $options[:command] == :build
           FileUtils.chdir("#{$options[:download_dir]}/#{pkg}")
