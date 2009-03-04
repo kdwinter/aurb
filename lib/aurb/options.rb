@@ -47,7 +47,7 @@ module AurB
         if File.exists?(h)
           $options[:download_dir] = Pathname.new(h).realpath
         else
-          STDOUT.puts "ERROR: #{h} doesn't exist. Please choose an existing directory."
+          STDOUT.puts "#{colorize('ERROR', :on_red)}: #{h} doesn't exist. Please choose an existing directory."
           exit 1
         end
       end
@@ -57,7 +57,7 @@ module AurB
         elsif s == 'aur' or s == 'community'
           $options[:source] = nil
         else
-          STDOUT.puts "ERROR: Unknown source #{s}."
+          STDOUT.puts "#{colorize('ERROR', :on_red)}: Unknown source #{s}."
           exit 1
         end
       end

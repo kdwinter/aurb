@@ -22,17 +22,17 @@ module AurB
 
   def run!(args=ARGV)
     trap('SIGINT') do
-      STDOUT.puts 'ERROR: Received SIGINT, exiting.'
+      STDOUT.puts "#{colorize('ERROR', :on_red)}: Received SIGINT, exiting."
       exit 0
     end
 
     begin
       optparse(args)
     rescue OptionParser::InvalidOption => ivo
-      STDOUT.puts "WARNING: #{ivo}. Please only use the following:"
+      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{ivo}. Please only use the following:"
       optparse(['-h'])
     rescue OptionParser::AmbiguousOption => amo
-      STDOUT.puts "WARNING: #{amo}. Please check argument syntax."
+      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{amo}. Please check argument syntax."
       optparse(['-h'])
     end
 
@@ -46,7 +46,7 @@ module AurB
     when :info
       aur_info(args)
     else
-      STDOUT.puts "WARNING: #{args}: Unrecognized command."
+      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{args}: Unrecognized command."
       optparse(['-h'])
     end
   end

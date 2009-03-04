@@ -70,7 +70,7 @@ module AurB
     list = []
 
     if json['type'] == 'error'
-      STDOUT.puts "ERROR: JSON: #{json['results']}"
+      STDOUT.puts "#{colorize('ERROR', :on_red)}: JSON: #{json['results']}"
       exit 1
     end
     json['results'].each do |aurp|
@@ -97,7 +97,7 @@ module AurB
             puts colorize("    #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
           end
         else
-          STDOUT.puts "WARNING: #{info['results']} for package #{values[0]}"
+          STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{info['results']} for package #{values[0]}"
         end
       end
     end
@@ -107,7 +107,7 @@ module AurB
 
   def aur_get(packages, depend=false)
     unless $options[:download_dir]
-      STDOUT.puts 'WARNING: No download directory given, falling back to default (current)'
+      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: No download directory given, falling back to default (current)"
       $options[:download_dir] = Pathname.new(Dir.pwd).realpath
     end
     no_pkg = true
@@ -117,7 +117,7 @@ module AurB
         list.each do |names|
           if names[0] == pkg
             info = JSON.parse(open(Aur_Info % names[1]).read)['results']
-            puts "WARNING: #{colorize(pkg, :bold)} is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
+            puts "#{colorize('WARNING', :black, :on_yellow)}: #{colorize(pkg, :bold)} is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
             FileUtils.chdir($options[:download_dir]) do |dir|
               begin
                 no_pkg = false
@@ -143,12 +143,12 @@ module AurB
                     end
                   rescue OpenURI::HTTPError => e
                     no_pkg = false
-                    STDOUT.puts "ERROR downloading #{pkg}: #{e.message}"
+                    STDOUT.puts "#{colorize('ERROR', :on_red)} downloading #{pkg}: #{e.message}"
                     exit 1
                   end
                 else
                   no_pkg = false
-                  STDOUT.puts "ERROR downloading #{pkg}: #{e.message}"
+                  STDOUT.puts "#{colorize('ERROR', :on_red)} downloading #{pkg}: #{e.message}"
                   exit 1
                 end
               end
@@ -165,11 +165,11 @@ module AurB
           end
         end
         if no_pkg and not depend
-          STDOUT.puts "ERROR: package #{pkg} not found."
+          STDOUT.puts "#{colorize('ERROR', :on_red)}: package #{pkg} not found."
           exit 1
         end
       else
-        STDOUT.puts "ERROR: #{$options[:download_dir]}/#{pkg} already exists."
+        STDOUT.puts "#{colorize('ERROR', :on_red)}: #{$options[:download_dir]}/#{pkg} already exists."
         exit 1
       end
     end
@@ -178,7 +178,7 @@ module AurB
   def abs_get(repo, packages)
     unless `which rsync`.strip == ''
       unless $options[:download_dir]
-        STDOUT.puts 'WARNING: No download directory given, falling back to default (current)'
+        STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: No download directory given, falling back to default (current)"
         $options[:download_dir] = Pathname.new(Dir.pwd).realpath
       end
       packages.each do |pkg|
@@ -192,7 +192,7 @@ module AurB
         end
       end
     else
-      STDOUT.puts 'ERROR: rsync is not installed'
+      STDOUT.puts "#{colorize('ERROR', :on_red)}: rsync is not installed"
     end
   end
 
