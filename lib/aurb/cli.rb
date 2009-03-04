@@ -22,7 +22,7 @@ module AurB
 
   def run!(args=ARGV)
     trap('SIGINT') do
-      Log.fatal('Received SIGINT, exiting.')
+      STDOUT.puts 'ERROR: Received SIGINT, exiting.'
       exit 0
     end
 
