@@ -51,7 +51,7 @@ module AurB
           exit 1
         end
       end
-      opts.on('--source [SRC]', 'Search another source than AUR') do |s|
+      opts.on('--source [SRC]', 'Download/Build from another source than AUR') do |s|
         if s == 'core' or s == 'extra' or s == 'testing'
           $options[:source] = s
         elsif s == 'aur' or s == 'community'

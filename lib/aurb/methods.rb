@@ -192,7 +192,7 @@ module AurB
         end
       end
     else
-      STDOUT.puts "ERROR: rsync is not installed"
+      STDOUT.puts 'ERROR: rsync is not installed'
     end
   end
 
