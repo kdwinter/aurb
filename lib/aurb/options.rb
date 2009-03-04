@@ -20,8 +20,8 @@ module AurB
 
   def optparse(args)
     opts = OptionParser.new do |opts|
-      opts.banner = "#{colorize(Name, :yellow)} v#{Version.join('.')}, a Ruby AUR utility."
-      opts.separator "Usage: #{colorize($0, :yellow)} [options] <command>"
+      opts.banner = "#{colorize(Name, :green, :blink)} v#{colorize(Version.join('.'), :underline)}, a Ruby AUR utility."
+      opts.separator "Usage: #{colorize($0, :green)} [options] <command>"
 
       opts.separator ""
       opts.separator "where <command> is one of:"
@@ -66,7 +66,7 @@ module AurB
       opts.separator "other:"
 
       opts.on_tail('-v', '--version', 'Show AurB version') do
-        puts "#{colorize(Name, :yellow)} v#{Version.join('.')}"
+        puts "#{colorize(Name, :green, :blink)} v#{colorize(Version.join('.'), :underline)}"
         exit
       end
       opts.on_tail('-h', '--help', 'Show this message') do
