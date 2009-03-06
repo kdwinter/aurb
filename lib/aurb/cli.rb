@@ -21,6 +21,8 @@ module AurB
   Version = [0, 5, 3]
 
   def run!(args=ARGV)
+    STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: Running as root is dangerous." if ENV['USER'] == 'root'
+
     trap('SIGINT') do
       STDOUT.puts "#{colorize('ERROR', :on_red)}: Received SIGINT, exiting."
       exit 0
@@ -35,6 +37,7 @@ module AurB
       STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{amo}. Please check argument syntax."
       optparse(['-h'])
     end
+
 
     case $options[:command]
     when :download
