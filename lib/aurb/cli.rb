@@ -21,23 +21,22 @@ module AurB
   Version = [0, 5, 3]
 
   def run!(args=ARGV)
-    STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: Running as root is dangerous." if ENV['USER'] == 'root'
+    STDOUT.puts "#{Util.colorize('WARNING', :black, :on_yellow)}: Running as root is dangerous." if ENV['USER'] == 'root'
 
     trap('SIGINT') do
-      STDOUT.puts "#{colorize('ERROR', :on_red)}: Received SIGINT, exiting."
+      STDOUT.puts "#{Util.colorize('ERROR', :on_red)}: Received SIGINT, exiting."
       exit 0
     end
 
     begin
-      optparse(args)
+      Opts.parse(args)
     rescue OptionParser::InvalidOption => ivo
-      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{ivo}. Please only use the following:"
-      optparse(['-h'])
+      STDOUT.puts "#{Util.colorize('WARNING', :black, :on_yellow)}: #{ivo}. Please only use the following:"
+      Opts.parse(['-h'])
     rescue OptionParser::AmbiguousOption => amo
-      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{amo}. Please check argument syntax."
-      optparse(['-h'])
+      STDOUT.puts "#{Util.colorize('WARNING', :black, :on_yellow)}: #{amo}. Please check argument syntax."
+      Opts.parse(['-h'])
     end
-
 
     case $options[:command]
     when :download
@@ -49,8 +48,8 @@ module AurB
     when :info
       aur_info(args)
     else
-      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{args}: Unrecognized command."
-      optparse(['-h'])
+      STDOUT.puts "#{Util.colorize('WARNING', :black, :on_yellow)}: #{args}: Unrecognized command."
+      Opts.parse(['-h'])
     end
   end
 end

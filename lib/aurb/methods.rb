@@ -30,13 +30,15 @@ module AurB
   Pacman_Sync  = '/var/lib/pacman/sync/%s'
   Pacman_Cache = '/var/lib/pacman/local'
 
-  def colorize(string, *effects)
-    colored = ' '
-    effects.each do |effect|
-      colored << ANSICode.send(effect)
+  class Util
+    def Util.colorize(string, *effects)
+      colored = ' '
+      effects.each do |effect|
+        colored << ANSICode.send(effect)
+      end
+      colored << string << ANSICode.clear
+      colored[1..-1]
     end
-    colored << string << ANSICode.clear
-    colored[1..-1]
   end
 
   def in_pacman_sync?(name, repo)
@@ -70,7 +72,7 @@ module AurB
     list = []
 
     if json['type'] == 'error'
-      STDOUT.puts "#{colorize('ERROR', :on_red)}: JSON: #{json['results']}"
+      STDOUT.puts "#{Util.colorize('ERROR', :on_red)}: JSON: #{json['results']}"
       exit 1
     end
     json['results'].each do |aurp|
@@ -93,21 +95,21 @@ module AurB
               info['Name'].include?(keyword) or info['Description'].include?(keyword)
             end
             count += 1
-            puts colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
-            puts colorize("    #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
+            puts Util.colorize("aur/#{info['Name']} #{info['Version']}", :yellow)
+            puts Util.colorize("    #{info['Description']}", (info['OutOfDate'] == '1' ? :red : :bold))
           end
         else
-          STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: #{info['results']} for package #{values[0]}"
+          STDOUT.puts "#{Util.colorize('WARNING', :black, :on_yellow)}: #{info['results']} for package #{values[0]}"
         end
       end
     end
     threads.each { |t| t.join }
-    puts "\nFound #{colorize(count.to_s, :magenta)} results"
+    puts "\nFound #{Util.colorize(count.to_s, :magenta)} results"
   end
 
   def aur_get(packages, depend=false)
     unless $options[:download_dir]
-      STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: No download directory given, falling back to default (current)"
+      STDOUT.puts "#{Util.colorize('WARNING', :black, :on_yellow)}: No download directory given, falling back to default (current)"
       $options[:download_dir] = Pathname.new(Dir.pwd).realpath
     end
     no_pkg = true
@@ -117,15 +119,15 @@ module AurB
         list.each do |names|
           if names[0] == pkg
             info = JSON.parse(open(Aur_Info % names[1]).read)['results']
-            puts "#{colorize('WARNING', :black, :on_yellow)}: #{colorize(pkg, :bold)} is #{colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
+            puts "#{Util.colorize('WARNING', :black, :on_yellow)}: #{Util.colorize(pkg, :bold)} is #{Util.colorize('out of date', :magenta)}!" if info['OutOfDate'] == '1'
             FileUtils.chdir($options[:download_dir]) do |dir|
               begin
                 no_pkg = false
                 if in_pacman_sync?(pkg, 'community')
-                  puts "Found package #{colorize(pkg, :bold)} in the community repository. Handing this to pacman.."
+                  puts "Found package #{Util.colorize(pkg, :bold)} in the community repository. Handing this to pacman.."
                   exec "sudo pacman -S #{pkg}"
                 else
-                  puts "Found #{depend ? 'dependency' : 'package'} #{colorize(pkg, :bold)}! Downloading.."
+                  puts "Found #{depend ? 'dependency' : 'package'} #{Util.colorize(pkg, :bold)}! Downloading.."
                   open("#{Aur_Domain}/#{info['URLPath']}") do |tar|
                     File.open("#{dir}/#{pkg}.tar.gz", 'wb') do |file|
                       file.write(tar.read)
@@ -143,12 +145,12 @@ module AurB
                     end
                   rescue OpenURI::HTTPError => e
                     no_pkg = false
-                    STDOUT.puts "#{colorize('ERROR', :on_red)} downloading #{pkg}: #{e.message}"
+                    STDOUT.puts "#{Util.colorize('ERROR', :on_red)} downloading #{pkg}: #{e.message}"
                     exit 1
                   end
                 else
                   no_pkg = false
-                  STDOUT.puts "#{colorize('ERROR', :on_red)} downloading #{pkg}: #{e.message}"
+                  STDOUT.puts "#{Util.colorize('ERROR', :on_red)} downloading #{pkg}: #{e.message}"
                   exit 1
                 end
               end
@@ -165,11 +167,11 @@ module AurB
           end
         end
         if no_pkg and not depend
-          STDOUT.puts "#{colorize('ERROR', :on_red)}: package #{pkg} not found."
+          STDOUT.puts "#{Util.colorize('ERROR', :on_red)}: package #{pkg} not found."
           exit 1
         end
       else
-        STDOUT.puts "#{colorize('ERROR', :on_red)}: #{$options[:download_dir]}/#{pkg} already exists."
+        STDOUT.puts "#{Util.colorize('ERROR', :on_red)}: #{$options[:download_dir]}/#{pkg} already exists."
         exit 1
       end
     end
@@ -178,7 +180,7 @@ module AurB
   def abs_get(repo, packages)
     unless `which rsync`.strip == ''
       unless $options[:download_dir]
-        STDOUT.puts "#{colorize('WARNING', :black, :on_yellow)}: No download directory given, falling back to default (current)"
+        STDOUT.puts "#{Util.colorize('WARNING', :black, :on_yellow)}: No download directory given, falling back to default (current)"
         $options[:download_dir] = Pathname.new(Dir.pwd).realpath
       end
       packages.each do |pkg|
@@ -192,7 +194,7 @@ module AurB
         end
       end
     else
-      STDOUT.puts "#{colorize('ERROR', :on_red)}: rsync is not installed"
+      STDOUT.puts "#{Util.colorize('ERROR', :on_red)}: rsync is not installed"
     end
   end
 
@@ -203,19 +205,19 @@ module AurB
         aur_list(name).each do |pkg|
           if pkg[0] == name
             json = JSON.parse(open(Aur_Info % pkg[1]).read)['results']
-            ood_check = (json['OutOfDate'] == '0' ? 'is not' : colorize('is', :red))
-            status_check = "is #{colorize('not installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Not installed'
-            status_check = "is #{colorize('installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Installed'
-            status_check = "has an #{colorize('upgrade', :blue)} available" if in_pacman_cache?(json['Name'], json['Version']) == 'Upgradable'
+            ood_check = (json['OutOfDate'] == '0' ? 'is not' : Util.colorize('is', :red))
+            status_check = "is #{Util.colorize('not installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Not installed'
+            status_check = "is #{Util.colorize('installed', :green)}" if in_pacman_cache?(json['Name'], json['Version']) == 'Installed'
+            status_check = "has an #{Util.colorize('upgrade', :blue)} available" if in_pacman_cache?(json['Name'], json['Version']) == 'Upgradable'
 
             puts <<EOINFO
-       #{colorize('Name:', :white)} #{json['Name']}
-    #{colorize('Version:', :white)} #{json['Version']}
-#{colorize('Description:', :white)} #{json['Description']}
-   #{colorize('Homepage:', :white)} #{json['URL']}
-    #{colorize('License:', :white)} #{json['License']}
-      #{colorize('Votes:', :white)} #{json['NumVotes']}
-     #{colorize('Status:', :white)} It #{status_check} and #{ood_check} out of date.
+       #{Util.colorize('Name:', :white)} #{json['Name']}
+    #{Util.colorize('Version:', :white)} #{json['Version']}
+#{Util.colorize('Description:', :white)} #{json['Description']}
+   #{Util.colorize('Homepage:', :white)} #{json['URL']}
+    #{Util.colorize('License:', :white)} #{json['License']}
+      #{Util.colorize('Votes:', :white)} #{json['NumVotes']}
+     #{Util.colorize('Status:', :white)} It #{status_check} and #{ood_check} out of date.
 
 EOINFO
           end

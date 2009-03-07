@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#! /usr/bin/ruby
 
 # AurB is a Ruby AUR utility, heavily inspired by `arson' and `yaourt'.
 # Author: Gigamo <gigamo@gmail.com>
