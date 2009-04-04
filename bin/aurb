@@ -6,7 +6,7 @@ end
 
 module Aurb
   Config = Struct.new(:search, :info, :sync, :cache, :dir)
-  Version = [0, 1, 1]
+  Version = [0, 2, 1]
 
   def self.aur
     @aur ||= Aur.new
@@ -23,6 +23,7 @@ module Aurb
                            'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
                            '/var/lib/pacman/sync/%s',
                            '/var/lib/pacman/local',
+                           # Change this to reflect your personal download path
                            File.join(ENV['HOME'], 'abs'))
       @opts = Opts.new(ARGV)
 
@@ -31,14 +32,7 @@ module Aurb
 
     def start
       begin
-        case @opts[:cmd]
-        when :dl
-          download(@opts[:pkg])
-        when :ss
-          search(@opts[:pkg])
-        when :vs
-          puts "Aurb v#{Version*'.'}"
-        end
+        instance_eval(@opts[:cmd])
       rescue AurbError => e
         puts e.message
       end
@@ -139,17 +133,12 @@ module Aurb
 
   private
     def parse(args)
-      op = OptionParser.new do |op|
+      OptionParser.new do |op|
         op.on('-D', '--download pkg', 'Download +pkg+') do |p| 
-          self[:cmd] ||= :dl
-          self[:pkg] ||= p
+          self[:cmd] = "download('#{p}')"
         end
         op.on('-S', '--search pkg', 'Search for +pkg+') do |p|
-          self[:cmd] ||= :ss;
-          self[:pkg] ||= p
-        end
-        op.on('-v') do
-          self[:cmd] ||= :vs
+          self[:cmd] = "search('#{p}')"
         end
       end.parse!(args)
     end
