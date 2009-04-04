@@ -136,12 +136,16 @@ module Aurb
   private
     def parse(args)
       OptionParser.new do |op|
-        op.on('-D', '--download pkg', 'Download +pkg+') do |p| 
+        op.on('-D', '--download=PKG', 'Download +PKG+') do |p| 
           self[:cmd] = "download('#{p}')"
         end
-        op.on('-S', '--search pkg', 'Search for +pkg+') do |p|
+        op.on('-S', '--search=PKG', 'Search for +PKG+') do |p|
           self[:cmd] = "search('#{p}')"
         end
+
+        op.version = Version*'.'
+        op.program_name = 'Aurb'
+        op.release = '2009-04-04'
       end.parse!(args)
     end
   end
