@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-libraries = %w[rubygems zlib facets/minitar facets/ansicode json cgi open-uri fileutils optparse]
+libraries = %w[rubygems zlib facets/minitar facets/ansicode json cgi open-uri optparse]
 for library in libraries do
   require library
 end
@@ -148,7 +148,7 @@ module Aurb
 end
 
 at_exit do
-  unless defined? Test::Unit
+  if __FILE__ == $0
     raise $! if $!
     Aurb.aur.start
   end
