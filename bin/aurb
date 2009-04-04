@@ -18,7 +18,7 @@ module Aurb
   class Aur
     attr_accessor :config
 
-    def initialize(&b)
+    def initialize
       @config = Config.new('http://aur.archlinux.org/rpc.php?type=search&arg=%s',
                            'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
                            '/var/lib/pacman/sync/%s',
@@ -26,8 +26,6 @@ module Aurb
                            # Change this to reflect your personal download path
                            File.join(ENV['HOME'], 'abs'))
       @opts = Opts.new(ARGV)
-
-      instance_eval(&b) if block_given?
     end
 
     def start
