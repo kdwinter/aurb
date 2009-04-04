@@ -32,7 +32,11 @@ module Aurb
 
     def start
       begin
-        instance_eval(@opts[:cmd])
+        if @opts[:cmd]
+          instance_eval(@opts[:cmd])
+        else
+          puts "#{color('Fatal', :on_red)}: no option given, see --help"
+        end
       rescue AurbError => e
         puts e.message
       end
