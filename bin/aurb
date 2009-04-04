@@ -1,4 +1,4 @@
-#! /usr/bin/ruby
+#!/usr/bin/env ruby
 libraries = %w[rubygems zlib facets/minitar facets/ansicode json cgi open-uri fileutils optparse]
 for library in libraries do
   require library
@@ -75,17 +75,14 @@ module Aurb
     def search(package)
       threads = []
       count = 0
-
       for name in list(package) do
         threads << Thread.new do
           result = JSON.parse(open(@config.info % name[1]).read)
-
           if result['type'] == 'error'
             raise AurbError, "#{color('Fatal', :on_red)}: no results"
           else
             result = result['results']
             next if in_sync? result['Name'], 'community'
-
             if package.any? do |pac|
                 result['Name'].include? pac or result['Description'].include? pac
               end
