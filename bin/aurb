@@ -114,19 +114,12 @@ module Aurb
       return true if Dir["#{repo}/#{package}-*"].first
     end
 
-    def in_cache?(package)
-      cached = @config.cache
-      return true if Dir["#{cached}/#{package}-*"].first
-    end
-
     def list(package)
       info = JSON.parse(open(@config.search % CGI::escape(package)).read)
       list = []
-
       if info['type'] == 'error'
         raise AurbError, "#{color('Fatal', :on_red)}: #{info['results']}"
       end
-
       for result in info['results'] do
         list << [result['Name'], result['ID']]
       end
