@@ -1,4 +1,3 @@
-#! /usr/bin/ruby
 libraries = %w[rubygems zlib facets/minitar facets/ansicode json cgi open-uri fileutils optparse]
 for library in libraries do
   require library
@@ -6,7 +5,6 @@ end
 
 module Aurb
   Config = Struct.new(:search, :info, :sync, :cache, :dir)
-  Version = [0, 1, 1]
 
   def self.aur
     @aur ||= Aur.new
@@ -34,9 +32,7 @@ module Aurb
       when :dl
         download(@opts[:pkg])
       when :ss
-        search(@opts[:pkg])
-      when :hl
-        puts "Aurb v#{Version*'.'}"
+        puts search(@opts[:pkg])
       end
     end
 
@@ -98,7 +94,7 @@ module Aurb
       end
       threads.each { |t| t.join }
 
-      puts "\nFound #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}."
+      return "\nFound #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}."
     end
 
   private
@@ -148,7 +144,6 @@ module Aurb
       OptionParser.new do |op|
         op.on('-D pkg') { |p| self[:cmd] = :dl; self[:pkg] ||= p }
         op.on('-S pkg') { |p| self[:cmd] = :ss; self[:pkg] ||= p }
-        op.on('-v')     { self[:cmd] = :hl }
       end.parse!(args)
     end
   end

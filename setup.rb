@@ -675,7 +675,7 @@ module FileOperations
     }
   end
 
-  DIR_REJECT = %w( . .. CVS SCCS RCS CVS.adm .svn )
+  DIR_REJECT = %w( . .. CVS SCCS RCS CVS.adm .svn .git )
 
   def directories_of(dir)
     Dir.open(dir) {|d|

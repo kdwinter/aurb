@@ -11,4 +11,4 @@
 #   http://sam.zoy.org/wtfpl/COPYING for more details.
 
 dir="$(dirname "$0")"
-ruby -I "$dir/lib" "$dir/bin/aurb" "$@"
+ruby "$dir/bin/aurb" "$@"
