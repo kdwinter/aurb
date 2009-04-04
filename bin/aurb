@@ -30,13 +30,17 @@ module Aurb
     end
 
     def start
-      case @opts[:cmd]
-      when :dl
-        download(@opts[:pkg])
-      when :ss
-        search(@opts[:pkg])
-      when :hl
-        puts "Aurb v#{Version*'.'}"
+      begin
+        case @opts[:cmd]
+        when :dl
+          download(@opts[:pkg])
+        when :ss
+          search(@opts[:pkg])
+        when :vs
+          puts "Aurb v#{Version*'.'}"
+        end
+      rescue AurbError => e
+        puts e.message
       end
     end
 
@@ -88,7 +92,7 @@ module Aurb
               end
               count += 1
 
-              puts "#{color(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
+              puts "[#{result['OutOfDate'] == '1' ? color('✘', :red) : color('✔', :green)}] #{color(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
             end
           end
         end
@@ -135,10 +139,18 @@ module Aurb
 
   private
     def parse(args)
-      OptionParser.new do |op|
-        op.on('-D pkg') { |p| self[:cmd] = :dl; self[:pkg] ||= p }
-        op.on('-S pkg') { |p| self[:cmd] = :ss; self[:pkg] ||= p }
-        op.on('-v')     { self[:cmd] = :hl }
+      op = OptionParser.new do |op|
+        op.on('-D', '--download pkg', 'Download +pkg+') do |p| 
+          self[:cmd] ||= :dl
+          self[:pkg] ||= p
+        end
+        op.on('-S', '--search pkg', 'Search for +pkg+') do |p|
+          self[:cmd] ||= :ss;
+          self[:pkg] ||= p
+        end
+        op.on('-v') do
+          self[:cmd] ||= :vs
+        end
       end.parse!(args)
     end
   end
