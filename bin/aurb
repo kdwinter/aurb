@@ -12,9 +12,16 @@ module Aurb
     @aur ||= Aur.new
   end
 
+  module Util
+    def color(text, effect)
+      return ANSICode.send(effect) << text << ANSICode.clear
+    end
+  end
+
   class AurbError < Exception; end
 
   class Aur
+    include Aurb::Util
     attr_accessor :config
 
     def initialize
@@ -118,10 +125,6 @@ module Aurb
     end
 
   private
-    def color(text, effect)
-      return ANSICode.send(effect) << text << ANSICode.clear
-    end
-
     def in_sync?(package, repo)
       repo = @config.sync % repo
       return true if Dir["#{repo}/#{package}-*"].first
