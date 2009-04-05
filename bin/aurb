@@ -104,7 +104,7 @@ module Aurb
     end
 
     def check_upgrade
-      threads, found = [], false
+      threads, found, upcount = [], false, 0
       puts "#{color('==>', :yellow)} Checking for upgrades."
 
       `pacman -Qm`.each_line do |line|
@@ -114,14 +114,21 @@ module Aurb
           if result === Hash && result['Version'] != version
             found = true
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-              puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'])}"
+              puts "#{color(name, :blue)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
+              upcount += 1
             end
+          else
+            puts "#{color(name, :blue)} is up to date"
           end
         end
       end
       threads.each { |t| t.join }
 
-      puts "#{color('==>', :yellow)} All packages are up-to-date." unless found
+      if found
+        puts "#{color('==>', :yellow)} Found #{upcount.to_s} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
+      else
+        puts "#{color('==>', :yellow)} All packages are up-to-date."
+      end
     end
 
   private
