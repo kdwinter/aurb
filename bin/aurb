@@ -106,10 +106,7 @@ module Aurb
           result = JSON.parse(open(@config.info % name).read)
           if result === Hash && result['Version'] != version
             found = true
-            iver = VersionNumber.new(version)
-            aver = VersionNumber.new(result['Version'])
-
-            if aver > iver
+            if VersionNumber.new(result['Version']) > VersionNumber.new(version)
               puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'])}"
             end
           end
