@@ -19,12 +19,14 @@ module Aurb
     attr_accessor :config
 
     def initialize
-      @config = Config.new('http://aur.archlinux.org/rpc.php?type=search&arg=%s',
-                           'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
-                           '/var/lib/pacman/sync/%s',
-                           '/var/lib/pacman/local',
-                           # Change this to reflect your personal download path
-                           File.join(ENV['HOME'], 'abs'))
+      @config = Config.new(
+        'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
+        'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
+        '/var/lib/pacman/sync/%s',
+        '/var/lib/pacman/local',
+        # Change this to reflect your personal download path
+        File.join(ENV['HOME'], 'abs')
+      )
       @opts = Opts.new(ARGV)
     end
 
@@ -45,16 +47,14 @@ module Aurb
         for names in list(package) do
           if names.first == package
             Dir.chdir(@config.dir) do |dir|
-              begin
-                if in_sync? package, 'community'
-                  puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
-                  exec "sudo pacman -S #{package}"
-                else
-                  puts "#{color('==>', :yellow)} Downloading #{package}."
-                  open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
-                    File.open("#{dir}/#{package}.tar.gz", 'wb') do |file|
-                      file.write(remote.read)
-                    end
+              if in_sync? package, 'community'
+                puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
+                exec "sudo pacman -S #{package}"
+              else
+                puts "#{color('==>', :yellow)} Downloading #{package}."
+                open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
+                  File.open("#{dir}/#{package}.tar.gz", 'wb') do |file|
+                    file.write(remote.read)
                   end
                 end
               end
@@ -135,17 +135,17 @@ module Aurb
 
   private
     def parse(args)
-      OptionParser.new do |op|
-        op.on('-D', '--download=PKG', 'Download +PKG+') do |p| 
+      OptionParser.new do |o|
+        o.version = Version*'.'
+        o.program_name = 'Aurb'
+        o.release = '2009-04-04'
+
+        o.on('-D', '--download=PKG', 'Download +PKG+') do |p| 
           self[:cmd] = "download('#{p}')"
         end
-        op.on('-S', '--search=PKG', 'Search for +PKG+') do |p|
+        o.on('-S', '--search=PKG', 'Search for +PKG+') do |p|
           self[:cmd] = "search('#{p}')"
         end
-
-        op.version = Version*'.'
-        op.program_name = 'Aurb'
-        op.release = '2009-04-04'
       end.parse!(args)
     end
   end
