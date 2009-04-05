@@ -125,9 +125,9 @@ module Aurb
       threads.each { |t| t.join }
 
       if found
-        puts "#{color('==>', :yellow)} Found #{upcount.to_s} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
+        puts "\n#{color('==>', :yellow)} Found #{upcount.to_s} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
       else
-        puts "#{color('==>', :yellow)} All packages are up to date."
+        puts "\n#{color('==>', :yellow)} All packages are up to date."
       end
     end
 
