@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
-libraries = %w[rubygems zlib facets/minitar facets/ansicode json cgi open-uri optparse]
+libraries = %w[rubygems zlib facets/version facets/minitar facets/ansicode json cgi open-uri optparse]
 for library in libraries do
   require library
 end
 
 module Aurb
   Config = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 2, 2]
+  Version = [0, 3, 1]
 
   def self.aur
     @aur ||= Aur.new
@@ -93,7 +93,31 @@ module Aurb
       end
       threads.each { |t| t.join }
 
-      puts "\nFound #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}."
+      puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}."
+    end
+
+    def check_upgrade
+      threads, found = [], false
+      puts "#{color('==>', :yellow)} Checking for upgrades."
+
+      `pacman -Qm`.each_line do |line|
+        threads << Thread.new do
+          name, version = line.chomp.split
+          result = JSON.parse(open(@config.info % name).read)
+          if result === Hash && result['Version'] != version
+            found = true
+            iver = VersionNumber.new(version)
+            aver = VersionNumber.new(result['Version'])
+
+            if aver > iver
+              puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'])}"
+            end
+          end
+        end
+      end
+      threads.each { |t| t.join }
+
+      puts "#{color('==>', :yellow)} All packages are up-to-date." unless found
     end
 
   private
@@ -136,6 +160,9 @@ module Aurb
         end
         o.on('-S', '--search=PKG', 'Search for +PKG+') do |p|
           self[:cmd] = "search('#{p}')"
+        end
+        o.on('-U', '--upgrade', 'Check for upgrades') do
+          self[:cmd] = 'check_upgrade'
         end
       end.parse!(args)
     end
