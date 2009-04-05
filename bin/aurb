@@ -12,8 +12,7 @@ module Aurb
     @aur ||= Aur.new
   end
 
-  class AurbError < Exception
-  end
+  class AurbError < Exception; end
 
   class Aur
     attr_accessor :config
@@ -99,14 +98,8 @@ module Aurb
     end
 
   private
-    def color(text, *effects)
-      colored = ' '
-      for effect in effects do
-        colored << ANSICode.send(effect)
-      end
-      colored << text << ANSICode.clear
-
-      return colored[1..-1]
+    def color(text, effect)
+      return ANSICode.send(effect) << text << ANSICode.clear
     end
 
     def in_sync?(package, repo)
