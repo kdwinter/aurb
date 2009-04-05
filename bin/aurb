@@ -72,8 +72,7 @@ module Aurb
     end
 
     def search(package)
-      threads = []
-      count = 0
+      threads, count = [], 0
       for name in list(package) do
         threads << Thread.new do
           result = JSON.parse(open(@config.info % name[1]).read)
@@ -108,8 +107,7 @@ module Aurb
     end
 
     def list(package)
-      info = JSON.parse(open(@config.search % CGI::escape(package)).read)
-      list = []
+      info, list = JSON.parse(open(@config.search % CGI::escape(package)).read), []
       if info['type'] == 'error'
         raise AurbError, "#{color('Fatal', :on_red)}: #{info['results']}"
       end
