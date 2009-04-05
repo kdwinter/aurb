@@ -6,7 +6,7 @@ end
 
 module Aurb
   Config = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 2, 1]
+  Version = [0, 2, 2]
 
   def self.aur
     @aur ||= Aur.new
@@ -136,9 +136,9 @@ module Aurb
   private
     def parse(args)
       OptionParser.new do |o|
-        o.version = Version*'.'
+        o.version      = Version*'.'
         o.program_name = 'Aurb'
-        o.release = '2009-04-04'
+        o.release      = '2009-04-05'
 
         o.on('-D', '--download=PKG', 'Download +PKG+') do |p| 
           self[:cmd] = "download('#{p}')"
