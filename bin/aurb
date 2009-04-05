@@ -127,7 +127,7 @@ module Aurb
       if found
         puts "#{color('==>', :yellow)} Found #{upcount.to_s} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
       else
-        puts "#{color('==>', :yellow)} All packages are up-to-date."
+        puts "#{color('==>', :yellow)} All packages are up to date."
       end
     end
 
