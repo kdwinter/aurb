@@ -5,7 +5,7 @@ for library in libraries do
 end
 
 module Aurb
-  Config = Struct.new(:search, :info, :sync, :cache, :dir)
+  Config = Struct.new(:search, :info, :sync, :dir)
   Version = [0, 2, 1]
 
   def self.aur
@@ -23,7 +23,6 @@ module Aurb
         'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
         'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
         '/var/lib/pacman/sync/%s',
-        '/var/lib/pacman/local',
         # Change this to reflect your personal download path
         File.join(ENV['HOME'], 'abs')
       )
@@ -35,7 +34,7 @@ module Aurb
         if @opts[:cmd]
           instance_eval(@opts[:cmd])
         else
-          puts "#{color('Fatal', :on_red)}: no option given, see --help"
+          raise AurbError, "#{color('Fatal', :on_red)}: no option given, see --help"
         end
       rescue AurbError => e
         puts e.message
@@ -49,6 +48,7 @@ module Aurb
             Dir.chdir(@config.dir) do |dir|
               if in_sync? package, 'community'
                 puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
+                # exec will automatically terminate the script
                 exec "sudo pacman -S #{package}"
               else
                 puts "#{color('==>', :yellow)} Downloading #{package}."
