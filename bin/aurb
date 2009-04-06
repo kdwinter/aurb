@@ -36,45 +36,46 @@ module Aurb
     end
 
     def start
-      begin
-        if @opts[:cmd]
-          instance_eval(@opts[:cmd])
-        else
-          raise AurbError, "#{color('Fatal', :on_red)}: no option given, see --help"
-        end
-      rescue AurbError => e
-        puts e.message
+      if @opts[:cmd]
+        instance_eval(@opts[:cmd])
+      else
+        raise AurbError, "#{color('Fatal', :on_red)}: no option given, see --help"
       end
+    rescue AurbError => e
+      puts e.message
+      exit
     end
 
-    def download(package)
-      unless File.exists? File.join(@config.dir, package)
-        for names in list(package) do
-          if names.first == package
-            Dir.chdir(@config.dir) do |dir|
-              if in_sync? package, 'community'
-                puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
-                # exec will automatically terminate the script
-                exec "sudo pacman -S #{package}"
-              else
-                puts "#{color('==>', :yellow)} Downloading #{package}."
-                open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
-                  File.open("#{dir}/#{package}.tar.gz", 'wb') do |file|
-                    file.write(remote.read)
+    def download(*packages)
+      for package in packages do
+        unless File.exists? File.join(@config.dir, package)
+          for names in list(package) do
+            if names.first == package
+              Dir.chdir(@config.dir) do |dir|
+                if in_sync? package, 'community'
+                  puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
+                  # exec will automatically terminate the script
+                  exec "sudo pacman -S #{package}"
+                else
+                  puts "#{color('==>', :yellow)} Downloading #{package}."
+                  open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
+                    File.open("#{dir}/#{package}.tar.gz", 'wb') do |file|
+                      file.write(remote.read)
+                    end
                   end
                 end
-              end
 
-              puts "#{color('==>', :yellow)} Unpacking #{package}."
-              Archive::Tar::Minitar.unpack(
-                Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
-                Dir.pwd
-              )
+                puts "#{color('==>', :yellow)} Unpacking #{package}."
+                Archive::Tar::Minitar.unpack(
+                  Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
+                  Dir.pwd
+                )
+              end
             end
           end
+        else
+          raise AurbError, "#{color('Fatal', :on_red)}: directory already exists"
         end
-      else
-        raise AurbError, "#{color('Fatal', :on_red)}: directory already exists"
       end
     end
 
@@ -110,7 +111,6 @@ module Aurb
     def check_upgrade
       threads, found, upcount = [], false, 0
       puts "#{color('==>', :yellow)} Checking for upgrades."
-
       `pacman -Qm`.each_line do |line|
         threads << Thread.new do
           name, version = line.chomp.split
@@ -118,11 +118,11 @@ module Aurb
           if result === Hash && result['Version'] != version
             found = true
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-              puts "#{color(name, :blue)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
+              puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
               upcount += 1
             end
           else
-            puts "#{color(name, :blue)} is up to date"
+            puts "#{color(name, :bold)} is up to date"
           end
         end
       end
@@ -166,13 +166,14 @@ module Aurb
         o.program_name = 'Aurb'
         o.release      = '2009-04-05'
 
-        o.on('-D', '--download=PKG', 'Download +PKG+') do |p| 
-          self[:cmd] = "download('#{p}')"
+        o.on('-D', '--download P1,P2,...', Array, 'Download package(s)') do |d|
+          puts d
+          self[:cmd] = 'download("%s")' % d
         end
-        o.on('-S', '--search=PKG', 'Search for +PKG+') do |p|
-          self[:cmd] = "search('#{p}')"
+        o.on('-S', '--search PKG', 'Search for a package.') do |s|
+          self[:cmd] = 'search("%s")' % s
         end
-        o.on('-U', '--upgrade', 'Check for upgrades') do
+        o.on('-U', '--upgrade', 'Check for upgrades.') do
           self[:cmd] = 'check_upgrade'
         end
       end.parse!(args)
