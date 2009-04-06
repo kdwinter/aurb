@@ -6,7 +6,7 @@ end
 
 module Aurb
   Config = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 3, 1]
+  Version = [0, 4, 1]
 
   def self.aur
     @aur ||= Aur.new
@@ -22,7 +22,6 @@ module Aurb
 
   class Aur
     include Aurb::Util
-    attr_accessor :config
 
     def initialize
       @config = Config.new(
@@ -164,14 +163,13 @@ module Aurb
       OptionParser.new do |o|
         o.version      = Version*'.'
         o.program_name = 'Aurb'
-        o.release      = '2009-04-05'
+        o.release      = '2009-04-06'
 
-        o.on('-D', '--download P1,P2,...', Array, 'Download package(s)') do |d|
-          puts d
-          self[:cmd] = 'download("%s")' % d
+        o.on('-D', '--download P1,P2,...', Array, 'Download package(s). Separate by commas if multiple (no spaces).') do |d|
+          self[:cmd] = "download('#{d*'\', \''}')" # wow. ugly
         end
         o.on('-S', '--search PKG', 'Search for a package.') do |s|
-          self[:cmd] = 'search("%s")' % s
+          self[:cmd] = "search('#{s}')" % s
         end
         o.on('-U', '--upgrade', 'Check for upgrades.') do
           self[:cmd] = 'check_upgrade'
