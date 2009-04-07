@@ -84,9 +84,7 @@ module Aurb
       list(package).each do |names|
         threads << Thread.new do
           result = JSON.parse(open(@config.info % names[1]).read)
-          if result['type'] == 'error'
-            raise AurbError, "#{color('Fatal', :on_red)}: no results"
-          else
+          unless result['type'] == 'error'
             result = result['results']
             next if in_sync? result['Name'], 'community'
             if package.any? do |pac|
@@ -100,7 +98,7 @@ module Aurb
       end
       threads.each { |t| t.join }
 
-      puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}." if count > 0
+      puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}" if count > 0
     end
 
     def check_upgrade
@@ -125,7 +123,7 @@ module Aurb
       end
 
       if found
-        puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
+        puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}"
         uppkgs.each do |pkg|
           print "#{color('==>', :yellow)} Download '#{pkg}'? [y] "
           $stdin.gets.chomp =~ /^y/ ? download(pkg) : next
