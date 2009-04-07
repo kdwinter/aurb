@@ -1,12 +1,18 @@
 #!/usr/bin/env ruby
-libraries = %w[rubygems zlib facets/version facets/minitar facets/ansicode json cgi open-uri optparse]
-for library in libraries do
-  require library
-end
+require 'rubygems'
+require 'zlib'
+require 'facets/minitar'
+require 'facets/version'
+require 'facets/ansicode'
+require 'json'
+require 'cgi'
+require 'open-uri'
+require 'optparse'
+require 'pathname'
 
 module Aurb
   Config = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 4, 1]
+  Version = {:major => 0, :minor => 4, :tiny => 1}
 
   def self.aur
     @aur ||= Aur.new
@@ -29,12 +35,14 @@ module Aurb
         'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
         '/var/lib/pacman/sync/%s',
         # Change this to reflect your personal download path
-        File.join(ENV['HOME'], 'abs')
+        Pathname.new(File.join(ENV['HOME'], 'abs')).realpath
       )
       @opts = Opts.new(ARGV)
     end
 
     def start
+      trap(:INT) {raise AurbError, 'Catched SIGINT'}
+
       if @opts[:cmd]
         instance_eval(@opts[:cmd])
       else
@@ -46,9 +54,9 @@ module Aurb
     end
 
     def download(*packages)
-      for package in packages do
+      packages.each do |package|
         unless File.exists? File.join(@config.dir, package)
-          for names in list(package) do
+          list(package).each do |names|
             if names.first == package
               Dir.chdir(@config.dir) do |dir|
                 if in_sync? package, 'community'
@@ -80,9 +88,9 @@ module Aurb
 
     def search(package)
       threads, count = [], 0
-      for name in list(package) do
+      list(package).each do |names|
         threads << Thread.new do
-          result = JSON.parse(open(@config.info % name[1]).read)
+          result = JSON.parse(open(@config.info % names[1]).read)
           if result['type'] == 'error'
             raise AurbError, "#{color('Fatal', :on_red)}: no results"
           else
@@ -100,9 +108,7 @@ module Aurb
       end
       threads.each { |t| t.join }
 
-      if count == 0
-        raise AurbError, "#{color('Fatal', :on_red)}: no results"
-      else
+      if count > 0
         puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}."
       end
     end
@@ -114,10 +120,10 @@ module Aurb
         threads << Thread.new do
           name, version = line.chomp.split
           result = JSON.parse(open(@config.info % name).read)
-          if result === Hash && result['Version'] != version
-            found = true
+          if (result === Hash) && (result['Version'] != version)
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
               puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
+              found = true
               upcount += 1
             end
           else
@@ -137,7 +143,7 @@ module Aurb
   private
     def in_sync?(package, repo)
       repo = @config.sync % repo
-      return true if Dir["#{repo}/#{package}-*"].first
+      true if Dir["#{repo}/#{package}-*"].first
     end
 
     def list(package)
@@ -149,7 +155,7 @@ module Aurb
         list << [result['Name'], result['ID']]
       end
 
-      return list.sort
+      list.sort unless list.empty?
     end
   end
 
@@ -161,7 +167,7 @@ module Aurb
   private
     def parse(args)
       OptionParser.new do |o|
-        o.version      = Version*'.'
+        o.version      = '%s.%s.%s' % [:major, :minor, :tiny].map {|v| Version[v]}
         o.program_name = 'Aurb'
         o.release      = '2009-04-06'
 
@@ -169,7 +175,7 @@ module Aurb
           self[:cmd] = "download('#{d*'\', \''}')" # wow. ugly
         end
         o.on('-S', '--search PKG', 'Search for a package.') do |s|
-          self[:cmd] = "search('#{s}')" % s
+          self[:cmd] = "search('#{s}')"
         end
         o.on('-U', '--upgrade', 'Check for upgrades.') do
           self[:cmd] = 'check_upgrade'
