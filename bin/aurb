@@ -64,15 +64,11 @@ module Aurb
                 exec "sudo pacman -S #{package}"
               else
                 puts "#{color('==>', :yellow)} Downloading #{package}"
-                open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
-                  File.open("#{dir}/#{package}.tar.gz", 'wb') do |local|
-                    local.write(remote.read)
-                  end
-                end
+                fetch(package, dir)
               end
 
               puts "#{color('==>', :yellow)} Unpacking #{package}"
-              Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
+              untar(package)
             end
           end
         end
@@ -83,13 +79,13 @@ module Aurb
       threads, count = [], 0
       list(package).each do |names|
         threads << Thread.new do
-          result = JSON.parse(open(@config.info % names[1]).read)
+          result = json(@config.info % names[1])
           unless result['type'] == 'error'
             result = result['results']
             next if in_sync? result['Name'], 'community'
             if package.any? do |pac|
-                (result['Name'].include?(pac)) || (result['Description'].include?(pac))
-              end
+              (result['Name'].include?(pac)) || (result['Description'].include?(pac))
+            end
               count += 1
               puts "[#{result['OutOfDate'] == '1' ? color('✘', :red) : color('✔', :green)}] #{color(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
             end
@@ -102,19 +98,19 @@ module Aurb
     end
 
     def check_upgrade
-      uppkgs, found, upcount = [], false, 0
+      upgradable, found, count = [], false, 0
       puts "#{color('==>', :yellow)} Checking for upgrades"
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
-        result = JSON.parse(open(@config.info % name).read)
+        result = json(@config.info % name)
         unless result['type'] == 'error'
           result = result['results']
           if (result.is_a?(Hash)) && (result['Version'] != version)
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
               found = true
+              count += 1
+              upgradable << name
               puts "#{color(name, :bold)} (#{color(version, :red)}) can be upgraded to #{color(result['Version'], :green)}"
-              upcount += 1
-              uppkgs << name
             end
           else
             puts "#{color(name, :bold)} (#{color(version, :green)}) is up to date"
@@ -123,8 +119,8 @@ module Aurb
       end
 
       if found
-        puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}"
-        uppkgs.each do |pkg|
+        puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'upgrade' : 'upgrades'}"
+        upgradable.each do |pkg|
           print "#{color('==>', :yellow)} Download '#{pkg}'? [y] "
           $stdin.gets.chomp =~ /^y/ ? download(pkg) : next
         end
@@ -140,15 +136,30 @@ module Aurb
     end
 
     def list(package)
-      info, list = JSON.parse(open(@config.search % CGI::escape(package)).read), []
+      info, list = json(@config.search % CGI::escape(package)), []
       if info['type'] == 'error'
         raise AurbError, "#{color('Fatal', :on_red)}: no results"
       end
       for result in info['results'] do
         list << [result['Name'], result['ID']]
       end
-
       list.sort unless list.empty?
+    end
+
+    def fetch(package, dir)
+      open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
+        File.open("#{dir}/#{package}.tar.gz", 'wb') do |local|
+          local.write(remote.read)
+        end
+      end
+    end
+
+    def untar(package)
+      Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
+    end
+
+    def json(item)
+      JSON.parse(open(item).read)
     end
   end
 
