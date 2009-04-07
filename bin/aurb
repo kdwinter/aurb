@@ -73,10 +73,7 @@ module Aurb
                 end
 
                 puts "#{color('==>', :yellow)} Unpacking #{package}."
-                Archive::Tar::Minitar.unpack(
-                  Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
-                  Dir.pwd
-                )
+                Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
               end
             end
           end
@@ -98,10 +95,9 @@ module Aurb
             result = result['results']
             next if in_sync? result['Name'], 'community'
             if package.any? do |pac|
-                result['Name'].include? pac or result['Description'].include? pac
+                (result['Name'].include?(pac)) || (result['Description'].include?(pac))
               end
               count += 1
-
               puts "[#{result['OutOfDate'] == '1' ? color('✘', :red) : color('✔', :green)}] #{color(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
             end
           end
@@ -115,7 +111,7 @@ module Aurb
     end
 
     def check_upgrade
-      threads, found, upcount = [], false, 0
+      threads, uppkgs, found, upcount = [], [], false, 0
       puts "#{color('==>', :yellow)} Checking for upgrades."
       `pacman -Qm`.each_line do |line|
         threads << Thread.new do
@@ -126,6 +122,7 @@ module Aurb
               puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
               found = true
               upcount += 1
+              uppkgs << name
             end
           else
             puts "#{color(name, :bold)} is up to date"
@@ -136,6 +133,7 @@ module Aurb
 
       if found
         puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
+        prompt "Download these packages?" {download(uppkgs*"', '")}
       else
         puts "\n#{color('==>', :yellow)} All packages are up to date."
       end
@@ -145,6 +143,12 @@ module Aurb
     def in_sync?(package, repo)
       repo = @config.sync % repo
       true if Dir["#{repo}/#{package}-*"].first
+    end
+
+    def prompt(question, &block)
+      print "#{question.strip.capitalize} [y/n] "
+      answer = $stdin.gets.chomp
+      block.call if block_given? && answer ~= /^y/i
     end
 
     def list(package)
@@ -173,7 +177,7 @@ module Aurb
         o.release      = '2009-04-06'
 
         o.on('-D', '--download P1,P2,...', Array, 'Download package(s). Separate by commas if multiple (no spaces).') do |d|
-          self[:cmd] = "download('#{d*'\', \''}')" # wow. ugly
+          self[:cmd] = "download('#{d*"', '"}')" # wow. ugly
         end
         o.on('-S', '--search PKG', 'Search for a package.') do |s|
           self[:cmd] = "search('#{s}')"
