@@ -81,7 +81,8 @@ module Aurb
             end
           end
         else
-          raise AurbError, "#{color('Fatal', :on_red)}: directory already exists"
+          puts "#{color('Warning', :on_yellow)}: directory for #{name} already exists"
+          next
         end
       end
     end
