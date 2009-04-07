@@ -161,7 +161,7 @@ module Aurb
       OptionParser.new do |o|
         o.version      = '%s.%s.%s' % [:major, :minor, :tiny].map {|v| Version[v]}
         o.program_name = 'Aurb'
-        o.release      = '2009-04-06'
+        o.release      = '2009-04-07'
 
         o.on('-D', '--download P1,P2,...', Array, 'Download package(s). Separate by commas if multiple (no spaces).') do |d|
           self[:cmd] = "download('#{d*"', '"}')" # wow. ugly
