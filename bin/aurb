@@ -130,7 +130,8 @@ module Aurb
       if found
         puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
         uppkgs.each do |pkg|
-          prompt "#{color('==>', :yellow)} Download '#{pkg}'?" { download(pkg) }
+          print "#{color('==>', :yellow)} Download '#{pkg}'? [y/n] "
+          $stdin.gets.chomp ~= /^y/ ? download(pkg) : next
         end
       else
         puts "\n#{color('==>', :yellow)} All packages are up to date."
@@ -141,12 +142,6 @@ module Aurb
     def in_sync?(package, repo)
       repo = @config.sync % repo
       true if Dir["#{repo}/#{package}-*"].first
-    end
-
-    def prompt(question, &block)
-      print "#{question.strip.capitalize} [y/n] "
-      answer = $stdin.gets.chomp
-      block.call if block_given? && answer ~= /^y/i
     end
 
     def list(package)
