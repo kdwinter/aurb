@@ -108,16 +108,19 @@ module Aurb
       puts "#{color('==>', :yellow)} Checking for upgrades."
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
-        result = JSON.parse(open(@config.info % name).read)['results']
-        if (result.is_a?(Hash)) && (result['Version'] != version)
-          if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-            found = true
-            puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
-            upcount += 1
-            uppkgs << name
+        result = JSON.parse(open(@config.info % name).read)
+        unless result['type'] == 'error'
+          result = result['results']
+          if (result.is_a?(Hash)) && (result['Version'] != version)
+            if VersionNumber.new(result['Version']) > VersionNumber.new(version)
+              found = true
+              puts "#{color(name, :bold)} (#{color(version, :red)}) can be upgraded to #{color(result['Version'], :green)}"
+              upcount += 1
+              uppkgs << name
+            end
+          else
+            puts "#{color(name, :bold)} (#{color(version, :green)}) is up to date"
           end
-        else
-          puts "#{color(name, :bold)} is up to date"
         end
       end
 
