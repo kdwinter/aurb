@@ -20,7 +20,7 @@ module Aurb
 
   module Util
     def color(text, effect)
-      return ANSICode.send(effect) << text << ANSICode.clear
+      ANSICode.send(effect) << text << ANSICode.clear
     end
   end
 
