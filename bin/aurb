@@ -61,7 +61,6 @@ module Aurb
             Dir.chdir(@config.dir) do |dir|
               if in_sync? package, 'community'
                 puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
-                # exec will automatically terminate the script
                 exec "sudo pacman -S #{package}"
               else
                 puts "#{color('==>', :yellow)} Downloading #{package}."
@@ -101,9 +100,7 @@ module Aurb
       end
       threads.each { |t| t.join }
 
-      if count > 0
-        puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}."
-      end
+      puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}." if count > 0
     end
 
     def check_upgrade
@@ -111,11 +108,11 @@ module Aurb
       puts "#{color('==>', :yellow)} Checking for upgrades."
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
-        result = JSON.parse(open(@config.info % name).read)
-        if (result === Hash) && (result['Version'] != version)
+        result = JSON.parse(open(@config.info % name).read)['results']
+        if (result.is_a?(Hash)) && (result['Version'] != version)
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-            puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
             found = true
+            puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
             upcount += 1
             uppkgs << name
           end
@@ -127,7 +124,7 @@ module Aurb
       if found
         puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
         uppkgs.each do |pkg|
-          print "#{color('==>', :yellow)} Download '#{pkg}'? [y/n] "
+          print "#{color('==>', :yellow)} Download '#{pkg}'? [y] "
           $stdin.gets.chomp =~ /^y/ ? download(pkg) : next
         end
       else
