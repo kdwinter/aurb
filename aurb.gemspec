@@ -9,5 +9,5 @@ Gem::Specification.new do |s|
   s.rubyforge_project = 'aurb'
   s.has_rdoc = false
   s.authors = ['Gigamo']
-  s.files = ['bin/aurb', 'aurb.gemspec']
+  s.files = ['bin/aurb', 'aurb.gemspec', 'README']
 end

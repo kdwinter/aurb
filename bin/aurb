@@ -63,7 +63,7 @@ module Aurb
                 puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
                 exec "sudo pacman -S #{package}"
               else
-                puts "#{color('==>', :yellow)} Downloading #{package}."
+                puts "#{color('==>', :yellow)} Downloading #{package}"
                 open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
                   File.open("#{dir}/#{package}.tar.gz", 'wb') do |local|
                     local.write(remote.read)
@@ -71,7 +71,7 @@ module Aurb
                 end
               end
 
-              puts "#{color('==>', :yellow)} Unpacking #{package}."
+              puts "#{color('==>', :yellow)} Unpacking #{package}"
               Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
             end
           end
@@ -103,7 +103,7 @@ module Aurb
 
     def check_upgrade
       uppkgs, found, upcount = [], false, 0
-      puts "#{color('==>', :yellow)} Checking for upgrades."
+      puts "#{color('==>', :yellow)} Checking for upgrades"
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
         result = JSON.parse(open(@config.info % name).read)
