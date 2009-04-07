@@ -20,7 +20,7 @@ module Aurb
 
   module Util
     def color(text, effect)
-      ANSICode.send(effect) << text << ANSICode.clear
+      ANSICode.send(effect.to_sym) << text << ANSICode.clear
     end
   end
 
@@ -50,36 +50,32 @@ module Aurb
       end
     rescue AurbError => e
       puts e.message
-      exit
+      exit 1
     end
 
     def download(*packages)
       packages.each do |package|
-        unless File.exists? File.join(@config.dir, package)
-          list(package).each do |names|
-            if names.first == package
-              Dir.chdir(@config.dir) do |dir|
-                if in_sync? package, 'community'
-                  puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
-                  # exec will automatically terminate the script
-                  exec "sudo pacman -S #{package}"
-                else
-                  puts "#{color('==>', :yellow)} Downloading #{package}."
-                  open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
-                    File.open("#{dir}/#{package}.tar.gz", 'wb') do |file|
-                      file.write(remote.read)
-                    end
+        puts "#{color('Warning', :on_yellow)}: directory for '#{package}' already exists" if File.exists? File.join(@config.dir, package)
+        list(package).each do |names|
+          if names.first == package
+            Dir.chdir(@config.dir) do |dir|
+              if in_sync? package, 'community'
+                puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
+                # exec will automatically terminate the script
+                exec "sudo pacman -S #{package}"
+              else
+                puts "#{color('==>', :yellow)} Downloading #{package}."
+                open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
+                  File.open("#{dir}/#{package}.tar.gz", 'wb') do |local|
+                    local.write(remote.read)
                   end
                 end
-
-                puts "#{color('==>', :yellow)} Unpacking #{package}."
-                Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
               end
+
+              puts "#{color('==>', :yellow)} Unpacking #{package}."
+              Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
             end
           end
-        else
-          puts "#{color('Warning', :on_yellow)}: directory for #{name} already exists"
-          next
         end
       end
     end
@@ -133,7 +129,9 @@ module Aurb
 
       if found
         puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
-        prompt "Download these packages?" {download(uppkgs*"', '")}
+        uppkgs.each do |pkg|
+          prompt "#{color('==>', :yellow)} Download '#{pkg}'?" { download(pkg) }
+        end
       else
         puts "\n#{color('==>', :yellow)} All packages are up to date."
       end
