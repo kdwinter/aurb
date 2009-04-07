@@ -41,7 +41,7 @@ module Aurb
     end
 
     def start
-      trap(:INT) {raise AurbError, 'Catched SIGINT'}
+      trap(:INT) { raise AurbError, 'Catched SIGINT' }
 
       if @opts[:cmd]
         instance_eval(@opts[:cmd])
@@ -107,31 +107,28 @@ module Aurb
     end
 
     def check_upgrade
-      threads, uppkgs, found, upcount = [], [], false, 0
+      uppkgs, found, upcount = [], false, 0
       puts "#{color('==>', :yellow)} Checking for upgrades."
       `pacman -Qm`.each_line do |line|
-        threads << Thread.new do
-          name, version = line.chomp.split
-          result = JSON.parse(open(@config.info % name).read)
-          if (result === Hash) && (result['Version'] != version)
-            if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-              puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
-              found = true
-              upcount += 1
-              uppkgs << name
-            end
-          else
-            puts "#{color(name, :bold)} is up to date"
+        name, version = line.chomp.split
+        result = JSON.parse(open(@config.info % name).read)
+        if (result === Hash) && (result['Version'] != version)
+          if VersionNumber.new(result['Version']) > VersionNumber.new(version)
+            puts "#{color(name, :bold)}: #{color(version, :red)} -> #{color(result['Version'], :green)}"
+            found = true
+            upcount += 1
+            uppkgs << name
           end
+        else
+          puts "#{color(name, :bold)} is up to date"
         end
       end
-      threads.each { |t| t.join }
 
       if found
         puts "\n#{color('==>', :yellow)} Found #{color(upcount.to_s, :magenta)} #{upcount == 1 ? 'upgrade' : 'upgrades'}."
         uppkgs.each do |pkg|
           print "#{color('==>', :yellow)} Download '#{pkg}'? [y/n] "
-          $stdin.gets.chomp ~= /^y/ ? download(pkg) : next
+          $stdin.gets.chomp =~ /^y/ ? download(pkg) : next
         end
       else
         puts "\n#{color('==>', :yellow)} All packages are up to date."
