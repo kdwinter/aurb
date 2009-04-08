@@ -70,7 +70,7 @@ module Aurb
     end
 
     def search(package)
-      threads, count = [], 0
+      count, threads = 0, []
       list(package).each do |names|
         threads << Thread.new do
           result = json(@config.info % names[1])
@@ -92,7 +92,7 @@ module Aurb
     end
 
     def check_upgrade
-      upgradable, found, count = [], false, 0
+      found, count, upgradable = false, 0, []
       puts "#{color('==>', :yellow)} Checking for upgrades"
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
