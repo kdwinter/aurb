@@ -76,7 +76,7 @@ module Aurb
           result = json(@config.info % names[1])
           unless result['type'] == 'error'
             result = result['results']
-            next if in_sync? result['Name'], 'community'
+            next if in_sync? result['Name']
             if package.any? do |pac|
               (result['Name'].include?(pac)) || (result['Description'].include?(pac))
             end
