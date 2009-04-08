@@ -42,12 +42,7 @@ module Aurb
 
     def start
       trap(:INT) { exit 0 }
-
-      if @opts[:cmd]
-        instance_eval(@opts[:cmd])
-      else
-        raise AurbError, "#{color('Fatal', :on_red)}: no option given, see --help"
-      end
+      instance_eval(@opts[:cmd])
     rescue AurbError => e
       puts e.message
       exit 1
@@ -66,7 +61,6 @@ module Aurb
                 puts "#{color('==>', :yellow)} Downloading #{package}"
                 fetch(package, dir)
               end
-
               puts "#{color('==>', :yellow)} Unpacking #{package}"
               untar(package)
             end
@@ -164,19 +158,20 @@ module Aurb
   end
 
   class Opts < Hash
-    def initialize(args)
-      parse(args)
+    def initialize(args = ARGV)
+      @@args = args || ['-h']
+      parse
     end
 
   private
-    def parse(args)
+    def parse
       OptionParser.new do |o|
         o.version      = '%s.%s.%s' % [:major, :minor, :tiny].map {|v| Version[v]}
         o.program_name = 'Aurb'
         o.release      = '2009-04-07'
 
         o.on('-D', '--download P1,P2,...', Array, 'Download package(s). Separate by commas if multiple (no spaces).') do |d|
-          self[:cmd] = "download('#{d*"', '"}')" # wow. ugly
+          self[:cmd] = "download('#{d*"', '"}')"
         end
         o.on('-S', '--search PKG', 'Search for a package.') do |s|
           self[:cmd] = "search('#{s}')"
@@ -184,7 +179,7 @@ module Aurb
         o.on('-U', '--upgrade', 'Check for upgrades.') do
           self[:cmd] = 'check_upgrade'
         end
-      end.parse!(args)
+      end.parse!(@@args)
     end
   end
 end
