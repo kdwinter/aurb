@@ -158,7 +158,7 @@ module Aurb
 
   class Opts < Hash
     def initialize(args = ARGV)
-      @@args = args || ['-h']
+      @@args = args.empty? ? ['-h'] : args
       parse
     end
 
