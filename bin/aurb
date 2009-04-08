@@ -33,7 +33,7 @@ module Aurb
       @config = Config.new(
         'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
         'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
-        '/var/lib/pacman/sync/%s',
+        '/var/lib/pacman/sync/community',
         # Change this to reflect your personal download path
         Pathname.new(File.join(ENV['HOME'], 'abs')).realpath
       )
@@ -54,7 +54,7 @@ module Aurb
         list(package).each do |names|
           if names.first == package
             Dir.chdir(@config.dir) do |dir|
-              if in_sync? package, 'community'
+              if in_sync? package
                 puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman will do."
                 exec "sudo pacman -S #{package}"
               else
@@ -124,9 +124,8 @@ module Aurb
     end
 
   private
-    def in_sync?(package, repo)
-      repo = @config.sync % repo
-      true if Dir["#{repo}/#{package}-*"].first
+    def in_sync?(package)
+      Dir["#{@config.sync}/#{package}-*"].first ? true : false
     end
 
     def list(package)
