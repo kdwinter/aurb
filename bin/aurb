@@ -41,7 +41,7 @@ module Aurb
     end
 
     def start
-      trap(:INT) { raise AurbError, 'Catched SIGINT' }
+      trap(:INT) { exit 0 }
 
       if @opts[:cmd]
         instance_eval(@opts[:cmd])
