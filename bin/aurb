@@ -81,9 +81,7 @@ module Aurb
             result = result['results']
             # Skip this iteration if the package is found in the community repo
             next if in_sync? result['Name']
-            if package.any? do |pac|
-              (result['Name'].include?(pac)) || (result['Description'].include?(pac))
-            end
+            if package.any? { |pac| (result['Name'].include?(pac)) || (result['Description'].include?(pac)) }
               count += 1
               puts "[#{result['OutOfDate'] == '1' ? color('✘', :red) : color('✔', :green)}] #{color(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
             end
@@ -120,7 +118,7 @@ module Aurb
 
       unless upgradable.empty?
         puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'upgrade' : 'upgrades'}"
-        # Ask for each seperate upgrade if the new version is to be downloaded
+        # Prompt for each seperate upgrade if the new version is to be downloaded
         upgradable.each do |pkg|
           print "#{color('==>', :yellow)} Download '#{pkg}'? [y] "
           $stdin.gets.chomp =~ /^y/ ? download(pkg) : next
