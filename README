@@ -4,8 +4,8 @@ See <tt>ruby setup.rb --help</tt>.
 
 Quick and dirty (may require root):
 
-    <tt>ruby setup.rb all</tt>.
+    ruby setup.rb all
 
 Or in ~/bin:
 
-    <tt>ruby setup.rb config --bindir=/home/username/bin && ruby setup.rb install</tt>
+    ruby setup.rb config --bindir=/home/username/bin && ruby setup.rb install
