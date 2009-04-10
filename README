@@ -2,8 +2,9 @@
 
 See <tt>ruby setup.rb --help</tt>.
 
-Quick and dirty:
-    <tt>ruby setup.rb all</tt> (may require root).
+Quick and dirty (may require root):
+
+    <tt>ruby setup.rb all</tt>.
 
 Or in ~/bin:
 
