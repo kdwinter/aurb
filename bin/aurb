@@ -1,11 +1,13 @@
 #!/usr/bin/env ruby
-%w(optparse rubygems cgi json open-uri pathname zlib facets/ansicode facets/minitar facets/version).each do |l|
-  require l
+%w(optparse rubygems cgi json open-uri pathname zlib facets/ansicode facets/minitar facets/version).each do |lib|
+  require lib
 end
 
 module Aurb
   Config  = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 5, 3]
+  Version = [0, 5, 4]
+  # Change Me!
+  DlPath  = File.join(File.expand_path('~'), 'abs') # => '/home/gig/abs' in my case
 
   def self.aur
     @aur ||= Aur.new
@@ -29,8 +31,7 @@ module Aurb
         'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
         'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
         '/var/lib/pacman/sync/community',
-        # Change this to reflect your personal download path
-        Pathname.new(File.join(ENV['HOME'], 'abs')).realpath
+        Pathname.new(DlPath).realpath
       )
       @opts = Opts.new(ARGV)
     end
@@ -74,13 +75,15 @@ module Aurb
       count, threads = 0, []
       list(package).each do |names|
         # Launch a separate thread for each packagename to be checked
-        # This is slooow otherwise.
+        # This is slooow otherwise, because it will have to wait for each result
+        # to be displayed before going on to the next one
         threads << Thread.new do
           result = json(@config.info % names[1])
           unless result['type'] == 'error'
             result = result['results']
             # Skip this iteration if the package is found in the community repo
             next if in_sync? result['Name']
+            # Check both name and description for matches
             if package.any? { |pac| (result['Name'].include?(pac)) || (result['Description'].include?(pac)) }
               count += 1
               puts "[#{result['OutOfDate'] == '1' ? color('✘', :red) : color('✔', :green)}] #{color(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
@@ -88,6 +91,7 @@ module Aurb
           end
         end
       end
+      # Join the threads after searching is finished
       threads.each { |t| t.join }
 
       puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'result' : 'results'}"
@@ -108,6 +112,8 @@ module Aurb
             # Make sure the remote version is newer
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
               count += 1
+              # Insert the upgradable package's name into an array which we will
+              # use later to prompt the download
               upgradable << name
               puts "#{color(name, :bold)} (#{color(version, :red)}) can be upgraded to #{color(result['Version'], :green)}"
             end
@@ -117,15 +123,13 @@ module Aurb
         end
       end
 
+      puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'upgrade' : 'upgrades'}"
       unless upgradable.empty?
-        puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} #{count == 1 ? 'upgrade' : 'upgrades'}"
-        # Prompt for each seperate upgrade if the new version is to be downloaded
+        # Prompt asking to download the upgrades
         upgradable.each do |pkg|
           print "#{color('==>', :yellow)} Download '#{pkg}'? [y] "
           $stdin.gets.chomp =~ /^y/ ? download(pkg) : next
         end
-      else
-        puts "\n#{color('==>', :yellow)} All packages are up to date."
       end
     end
 
@@ -173,7 +177,7 @@ module Aurb
       OptionParser.new do |o|
         o.version      = Version.join('.')
         o.program_name = 'Aurb'
-        o.release      = '2009-04-07'
+        o.release      = '2009-04-10'
 
         o.on('-D', '--download P1,P2,...', Array, 'Download package(s). Separate by commas if multiple (no spaces).') do |d|
           self[:cmd] = "download('#{d*"', '"}')"
