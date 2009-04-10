@@ -1,1 +1,10 @@
-Coming soon.
+== Installation
+
+See <tt>ruby setup.rb --help</tt>.
+
+Quick and dirty:
+    <tt>ruby setup.rb all</tt> (may require root).
+
+Or in ~/bin:
+
+    <tt>ruby setup.rb config --bindir=/home/username/bin && ruby setup.rb install</tt>
