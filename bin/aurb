@@ -5,7 +5,7 @@ end
 
 module Aurb
   Config  = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 5, 2]
+  Version = [0, 5, 3]
 
   def self.aur
     @aur ||= Aur.new
@@ -100,6 +100,7 @@ module Aurb
         # Split them up in variables
         name, version = line.chomp.split
         result = json(@config.info % name)
+        # Ensure that packages are on the aur before checking
         unless result['type'] == 'error'
           result = result['results']
           # Check if local version != remote version
