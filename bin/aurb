@@ -1,11 +1,19 @@
 #!/usr/bin/env ruby
-%w(optparse rubygems cgi json open-uri pathname zlib facets/ansicode facets/minitar facets/version).each do |lib|
-  require lib
-end
+require 'optparse'
+require 'fileutils'
+require 'rubygems'
+require 'cgi'
+require 'json'
+require 'open-uri'
+require 'pathname'
+require 'zlib'
+require 'facets/ansicode'
+require 'facets/minitar'
+require 'facets/version'
 
 module Aurb
   Config  = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 5, 4]
+  Version = [0, 5, 5]
   # Change Me!
   DlPath  = File.join(File.expand_path('~'), 'abs') # => '/home/gig/abs'
 
@@ -16,8 +24,7 @@ module Aurb
   module Util
     # Colorize a string
     #
-    # For example:
-    # <tt>color('Text', :green)</tt>
+    #   color('Text', :green)
     #
     # For a full list of available effects, see
     # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
@@ -56,8 +63,8 @@ module Aurb
 
     # Downloads +packages+
     #
-    # For example:
-    # <tt>download('awesome-git', 'aurb')</tt>
+    #   download('awesome-git', 'aurb')
+    #
     def download(*packages)
       packages.each do |package|
         list(package).each do |names|
@@ -71,8 +78,11 @@ Pacman will do."
             else
             # Else download and untar it from the AUR
               Dir.chdir(@config.dir) do |dir|
+                # Remove old files if they already exist instead of overwriting
+                FileUtils.rm("#{package}.tar.gz") if File.exists?("#{package}.tar.gz")
                 fetch(package, dir)
                 puts "#{color('==>', :yellow)} Downloaded #{package}"
+                FileUtils.rm_r(package) if File.directory?(package)
                 untar(package)
                 puts "#{color('==>', :yellow)} Unpacked #{package}"
               end
@@ -84,8 +94,8 @@ Pacman will do."
 
     # Searches for +package+
     #
-    # For example:
-    # <tt>search('awesome')</tt>
+    #   search('awesome')
+    #
     def search(package)
       count, threads = 0, []
       list(package).each do |names|
@@ -98,8 +108,8 @@ Pacman will do."
             result = result['results']
             # Skip this iteration if the package is found in the community repo
             next if in_sync? result['Name']
-            # Check both name and description for matches
             if package.any? do |pac|
+              # Check both name and description for matches
               (result['Name'].include?(pac)) || (result['Description'].include?(pac))
             end
               count += 1
@@ -157,12 +167,18 @@ can be upgraded to #{color(result['Version'], :green)}"
     end
 
   private
-    # Check if a package exists in the community repository
+    # Checks if a package exists in the community repository
+    #
+    #   in_sync?('awesome-git')
+    #
     def in_sync?(package)
       Dir["#{@config.sync}/#{package}-*"].first ? true : false
     end
 
     # Returns a list of packages found by a search
+    #
+    #   list('awesome-git')
+    #
     def list(package)
       info, list = json(@config.search % CGI::escape(package)), []
       if info['type'] == 'error'
@@ -174,7 +190,10 @@ can be upgraded to #{color(result['Version'], :green)}"
       list.sort unless list.empty?
     end
 
-    # Download
+    # Downloads given +package+ into +dir+
+    #
+    #   fetch('awesome-git', $0.dirname)
+    #
     def fetch(package, dir)
       open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
         File.open("#{dir}/#{package}.tar.gz", 'wb') do |local|
@@ -183,7 +202,10 @@ can be upgraded to #{color(result['Version'], :green)}"
       end
     end
 
-    # Untar
+    # Untars +package+
+    #
+    #   untar('awesome-git')   #=> .tar.gz is automagically appended
+    #
     def untar(package)
       Archive::Tar::Minitar.unpack(
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
@@ -192,6 +214,9 @@ can be upgraded to #{color(result['Version'], :green)}"
     end
 
     # Shortcut to parsing json
+    #
+    #   json('http://foo.bar')
+    #
     def json(item)
       JSON.parse(open(item).read)
     end
@@ -210,7 +235,7 @@ can be upgraded to #{color(result['Version'], :green)}"
       OptionParser.new do |o|
         o.version      = Version.join('.')
         o.program_name = 'Aurb'
-        o.release      = '2009-04-10'
+        o.release      = '2009-04-12'
 
         o.on('-D', '--download P1,P2,...', Array, "Download package(s). \
 Separate by commas if multiple (no spaces).") do |d|
