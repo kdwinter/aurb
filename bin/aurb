@@ -194,7 +194,7 @@ private
       list << [result['Name'], result['ID']]
     end
 
-    list.empty ? nil : list.sort
+    list.sort
   end
 
   # Downloads given +package+ into +dir+
