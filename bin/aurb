@@ -194,7 +194,7 @@ private
       list << [result['Name'], result['ID']]
     end
 
-    list.sort unless list.empty?
+    list.empty ? nil : list.sort
   end
 
   # Downloads given +package+ into +dir+
@@ -246,9 +246,9 @@ private
     require 'optparse'
 
     OptionParser.new do |o|
-      o.version      = [0, 5, 5].join('.')
+      o.version      = [0, 5, 6].join('.')
       o.program_name = 'Aurb'
-      o.release      = '2009-04-12'
+      o.release      = '2009-04-13'
 
       o.on('-D', '--download P1,P2,...', Array, "Download package(s).") do |d|
         self[:cmd] = "download('#{d*"', '"}')"
