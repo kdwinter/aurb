@@ -174,7 +174,7 @@ private
   #   in_sync?('awesome-git')
   #
   def in_sync? package
-    Dir["#{@config.sync}/#{package}-*"].first ? true : false
+    !!Dir["#{@config.sync}/#{package}-*"].first
   end
 
   # Returns a list of packages found by a search
