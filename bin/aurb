@@ -19,6 +19,7 @@ module Util
   # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
   def color text, effect
     require 'facets/ansicode' unless defined? ANSICode
+
     ANSICode.send(effect.to_sym) << text << ANSICode.clear
   end
 end
@@ -30,6 +31,7 @@ class Aur
 
   def initialize
     require 'pathname'
+
     @config = Config.new(
       'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
       'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
@@ -43,6 +45,7 @@ class Aur
   def start
     # Exit peacefully on *INT
     trap(:INT) { exit 0 }
+
     # Evaluate a command in string form
     # Example: instance_eval('search("package")')
     # Which will invoke the search method
@@ -63,17 +66,17 @@ class Aur
           # Check if the package exists in the community repo
           # Invoke pacman if so
           if in_sync? package
-            puts "#{color('==>', :yellow)} Found #{package} in community repo. \
-Pacman will do."
+            puts "#{color('==>', :yellow)} Found #{package} in community repo."
             exec "sudo pacman -S #{package}"
           else
-            # Else download and untar it from the AUR
             Dir.chdir(@config.dir) do |dir|
               # Remove old files if they already exist instead of overwriting
               require 'fileutils'
+
               FileUtils.rm("#{package}.tar.gz") if File.exists?("#{package}.tar.gz")
               fetch(package, dir)
               puts "#{color('==>', :yellow)} Downloaded #{package}"
+
               FileUtils.rm_r(package) if File.directory?(package)
               untar(package)
               puts "#{color('==>', :yellow)} Unpacked #{package}"
@@ -90,16 +93,17 @@ Pacman will do."
   #
   def search package
     count, threads = 0, []
+
     list(package).each do |names|
       # Launch a separate thread for each packagename to be checked
-      # This is slooow otherwise, because it will have to wait for each result
-      # to be displayed before going on to the next one
       threads << Thread.new do
         result = json(@config.info % names[1])
+
         unless result['type'] == 'error'
           result = result['results']
           # Skip this iteration if the package is found in the community repo
           next if in_sync? result['Name']
+
           if package.any? do |pac|
             # Check both name and description for matches
             (result['Name'].include?(pac)) || (result['Description'].include?(pac))
@@ -122,18 +126,22 @@ Pacman will do."
   # official repository.
   def check_upgrade
     count, upgradable = 0, []
+
     `pacman -Qm`.each_line do |line|
       # Pacman -Qm output: name 1.1-1
       # Split them up in variables
       name, version = line.chomp.split
       result = json(@config.info % name)
+
       # Ensure that packages are on the aur before checking
       unless result['type'] == 'error'
         result = result['results']
+
         # Check if local version != remote version
         if (result.is_a?(Hash)) && (result['Version'] != version)
           # Make sure the remote version is newer
           require 'facets/version'
+
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             count += 1
             # Insert the upgradable package's name into an array which we will
@@ -150,6 +158,7 @@ can be upgraded to #{color(result['Version'], :green)}"
 
     puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} \
 #{count == 1 ? 'upgrade' : 'upgrades'}"
+
     unless upgradable.empty?
       # Prompt asking to download the upgrades
       upgradable.each do |pkg|
@@ -174,13 +183,17 @@ private
   #
   def list package
     require 'cgi'
+
     info, list = json(@config.search % CGI::escape(package)), []
+
     if info['type'] == 'error'
       raise AurbError, "#{color('Fatal', :on_red)}: no results"
     end
-    for result in info['results'] do
+
+    info['results'].each do |result|
       list << [result['Name'], result['ID']]
     end
+
     list.sort unless list.empty?
   end
 
@@ -203,6 +216,7 @@ private
   def untar package
     require 'facets/minitar'
     require 'zlib'
+
     Archive::Tar::Minitar.unpack(
       Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
       Dir.pwd
@@ -216,6 +230,7 @@ private
   def json item
     require 'json'
     require 'open-uri'
+
     JSON.parse(open(item).read)
   end
 end
@@ -229,13 +244,13 @@ class Opts < Hash
 private
   def parse
     require 'optparse'
+
     OptionParser.new do |o|
       o.version      = [0, 5, 5].join('.')
       o.program_name = 'Aurb'
       o.release      = '2009-04-12'
 
-      o.on('-D', '--download P1,P2,...', Array, "Download package(s). \
-Separate by commas if multiple (no spaces).") do |d|
+      o.on('-D', '--download P1,P2,...', Array, "Download package(s).") do |d|
         self[:cmd] = "download('#{d*"', '"}')"
       end
       o.on('-S', '--search PKG', 'Search for a package.') do |s|
