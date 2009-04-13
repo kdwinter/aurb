@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 require 'optparse'
 require 'fileutils'
-require 'rubygems'
-require 'cgi'
-require 'json'
-require 'open-uri'
 require 'pathname'
 require 'zlib'
+require 'open-uri'
+require 'cgi'
+require 'rubygems'
+require 'json'
 require 'facets/ansicode'
 require 'facets/minitar'
 require 'facets/version'
@@ -75,7 +75,7 @@ module Aurb
 Pacman will do."
               exec "sudo pacman -S #{package}"
             else
-            # Else download and untar it from the AUR
+              # Else download and untar it from the AUR
               Dir.chdir(@config.dir) do |dir|
                 # Remove old files if they already exist instead of overwriting
                 FileUtils.rm("#{package}.tar.gz") if File.exists?("#{package}.tar.gz")
