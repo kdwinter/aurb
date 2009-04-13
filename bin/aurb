@@ -262,12 +262,12 @@ private
     end.parse!(@@args)
   end
 end
+
 end
 
 at_exit do
-if __FILE__ == $0
-  raise $! if $!
-  Aurb.aur.start
-end
-
+  if __FILE__ == $0
+    raise $! if $!
+    Aurb.aur.start
+  end
 end
