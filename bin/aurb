@@ -12,10 +12,9 @@ require 'facets/minitar'
 require 'facets/version'
 
 module Aurb
+  DlPath  = File.join(File.expand_path('~'), 'abs') # Change me!
+
   Config  = Struct.new(:search, :info, :sync, :dir)
-  Version = [0, 5, 5]
-  # Change Me!
-  DlPath  = File.join(File.expand_path('~'), 'abs') # => '/home/gig/abs'
 
   def self.aur
     @aur ||= Aur.new
@@ -204,7 +203,7 @@ can be upgraded to #{color(result['Version'], :green)}"
 
     # Untars +package+
     #
-    #   untar('awesome-git')   #=> .tar.gz is automagically appended
+    #   untar('awesome-git') #=> .tar.gz is automagically appended
     #
     def untar(package)
       Archive::Tar::Minitar.unpack(
@@ -225,15 +224,13 @@ can be upgraded to #{color(result['Version'], :green)}"
   class Opts < Hash
     def initialize(args = ARGV)
       @@args = args.empty? ? ['-h'] : args
-
-      # Invoke this class's only private method
       parse
     end
 
   private
     def parse
       OptionParser.new do |o|
-        o.version      = Version.join('.')
+        o.version      = [0, 5, 5].join('.')
         o.program_name = 'Aurb'
         o.release      = '2009-04-12'
 
@@ -244,7 +241,7 @@ Separate by commas if multiple (no spaces).") do |d|
         o.on('-S', '--search PKG', 'Search for a package.') do |s|
           self[:cmd] = "search('#{s}')"
         end
-        o.on('-U', '--upgrade', 'Check for upgrades.') do
+        o.on('-U', '--upgrade', 'Check the AUR for upgrades.') do
           self[:cmd] = 'check_upgrade'
         end
       end.parse!(@@args)
