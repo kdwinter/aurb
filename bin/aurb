@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require 'open-uri'
 require 'rubygems'
 
 module Aurb
@@ -191,6 +192,7 @@ private
     end
 
     info['results'].each do |result|
+      next if in_sync? result['Name']
       list << [result['Name'], result['ID']]
     end
 
@@ -229,7 +231,6 @@ private
   #
   def json item
     require 'json'
-    require 'open-uri'
 
     JSON.parse(open(item).read)
   end
