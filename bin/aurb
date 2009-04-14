@@ -14,11 +14,11 @@ end
 module Util
   # Colorize a string
   #
-  #   color('Text', :green)
+  #   ansi('Text', :green)
   #
   # For a full list of available effects, see
   # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
-  def color text, effect
+  def ansi text, effect
     require 'facets/ansicode' unless defined? ANSICode
 
     ANSICode.send(effect.to_sym) << text << ANSICode.clear
@@ -63,7 +63,7 @@ class Aur
       list(package).each do |names|
         if names.first == package
           if in_sync? package
-            puts "#{color('==>', :yellow)} Found #{package} in community repo. Pacman!"
+            puts "#{ansi('==>', :yellow)} Found #{package} in community repo. Pacman!"
             exec "sudo pacman -S #{package}"
           else
             Dir.chdir(@config.dir) do
@@ -84,26 +84,23 @@ class Aur
     count, threads = 0, []
 
     list(package).each do |names|
-      threads << Thread.new do
-        result = json(@config.info % names[1])
+      result = json(@config.info % names[1])
 
-        unless result['type'] == 'error'
-          result = result['results']
-          next if in_sync? result['Name']
+      unless result['type'] == 'error'
+        result = result['results']
+        next if in_sync? result['Name']
 
-          if package.any? do |pac| # Check both name and description for matches
-            (result['Name'].include?(pac)) || (result['Description'].include?(pac))
-          end
-            count += 1
-            puts "[#{result['OutOfDate'] == '1' ? color('✘', :red) : color('✔', :green)}] \
-#{color(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
-          end
+        if package.any? do |pac| # Check both name and description for matches
+          (result['Name'].include?(pac)) || (result['Description'].include?(pac))
+        end
+          count += 1
+          puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
+#{ansi(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
         end
       end
     end
-    threads.each { |t| t.join }
 
-    puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} \
+    puts "\n#{ansi('==>', :yellow)} Found #{ansi(count.to_s, :magenta)} \
 #{count == 1 ? 'result' : 'results'}"
   end
 
@@ -127,23 +124,23 @@ class Aur
             count += 1
             upgradable << name
 
-            puts "#{color(name, :blink)} (#{color(version, :red)}) \
-can be upgraded to #{color(result['Version'], :green)}"
+            puts "#{ansi(name, :blink)} (#{ansi(version, :red)}) \
+can be upgraded to #{ansi(result['Version'], :green)}"
           end
         else
-          puts "#{color(name, :bold)} (#{color(version, :green)}) is up to date"
+          puts "#{ansi(name, :bold)} (#{ansi(version, :green)}) is up to date"
         end
       end
     end
 
-    puts "\n#{color('==>', :yellow)} Found #{color(count.to_s, :magenta)} \
+    puts "\n#{ansi('==>', :yellow)} Found #{ansi(count.to_s, :magenta)} \
 #{count == 1 ? 'upgrade' : 'upgrades'}"
 
     unless upgradable.empty?
-      require 'highline'
+      require 'readline'
 
       upgradable.each do |pkg|
-        answer = ask("#{color('==>', :yellow)} Download #{pkg}? ") { q.validate /[a-zA-Z]/ }
+        answer = Readline::readline("#{ansi('==>', :yellow)} Download #{pkg}? ")
         answer =~ /^y|yes$/i ? download(pkg) : next
       end
     end
@@ -168,7 +165,7 @@ private
     info, list = json(@config.search % CGI::escape(package)), []
 
     if info['type'] == 'error'
-      raise AurbError, "#{color('Fatal', :on_red)}: no results"
+      raise AurbError, "#{ansi('Fatal', :on_red)}: no results"
     end
 
     info['results'].each do |result|
@@ -184,7 +181,7 @@ private
   #   fetch('awesome-git', $0.dirname)
   #
   def fetch package
-    File.delete("#{package}.tar.gz")) if File.exists?("#{package}.tar.gz")
+    File.delete("#{package}.tar.gz") if File.exists?("#{package}.tar.gz")
 
     open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
       File.open("#{package}.tar.gz", 'wb') do |local|
@@ -192,7 +189,7 @@ private
       end
     end
 
-    puts "#{color('==>', :yellow)} Fetched #{package}.tar.gz"
+    puts "#{ansi('==>', :yellow)} Fetched #{package}.tar.gz"
   end
 
   # Untars +package+
@@ -204,13 +201,13 @@ private
     require 'zlib'
     require 'fileutils'
 
-    FileUtils.rm_r(package, :verbose => true) if File.directory?(package)
+    FileUtils.rm_r(package) if File.directory?(package)
 
     Archive::Tar::Minitar.unpack(
       Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd
     )
 
-    puts "#{color('==>', :yellow)} Untarred #{package}.tar.gz"
+    puts "#{ansi('==>', :yellow)} Untarred #{package}.tar.gz"
   end
 
   # Shortcut to parsing json
@@ -235,9 +232,9 @@ private
     require 'optparse'
 
     OptionParser.new do |o|
-      o.version      = [0, 5, 6].join('.')
+      o.version      = [0, 5, 7].join('.')
       o.program_name = 'Aurb'
-      o.release      = '2009-04-13'
+      o.release      = '2009-04-14'
 
       o.on('-D', '--download P1,P2,...', Array, "Download package(s).") do |d|
         self[:cmd] = "download('#{d*"', '"}')"
