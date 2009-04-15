@@ -5,7 +5,7 @@ require 'rubygems'
 module Aurb
 
 DlPath = File.join(File.expand_path('~'), 'abs') # Change me!
-Config = Struct.new :search, :info, :sync, :dir
+Config = Struct.new :search, :info, :sync, :dir  # Don't change me!
 
 def self.aur
   @aur ||= Aur.new
@@ -63,8 +63,7 @@ class Aur
       list(package).each do |names|
         if names.first == package
           if in_sync? package
-            puts "#{ansi('==>', :yellow)} Found #{package} in community repo. Pacman!"
-            exec "sudo pacman -S #{package}"
+            puts "#{ansi('==>', :yellow)} Found #{package} in community. Use pacman!"
           else
             Dir.chdir(@config.dir) do
               fetch package
@@ -88,20 +87,19 @@ class Aur
 
       unless result['type'] == 'error'
         result = result['results']
+
         next if in_sync? result['Name']
 
         if package.any? do |pac| # Check both name and description for matches
           (result['Name'].include?(pac)) || (result['Description'].include?(pac))
         end
           count += 1
+
           puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
 #{ansi(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
         end
       end
     end
-
-    puts "\n#{ansi('==>', :yellow)} Found #{ansi(count.to_s, :magenta)} \
-#{count == 1 ? 'result' : 'results'}"
   end
 
   # Checks the aur for upgrades to local packages that were not found in any
@@ -110,12 +108,15 @@ class Aur
   def check_upgrade
     count, upgradable = 0, []
 
+    puts "#{ansi('==>', :yellow)} Searching for upgrades. This may take a while..."
     `pacman -Qm`.each_line do |line|
       name, version = line.chomp.split
       result = json(@config.info % name)
 
       unless result['type'] == 'error'
         result = result['results']
+
+        next if in_sync? result['Name']
 
         if (result.is_a?(Hash)) && (result['Version'] != version)
           require 'facets/version'
@@ -124,20 +125,19 @@ class Aur
             count += 1
             upgradable << name
 
-            puts "#{ansi(name, :blink)} (#{ansi(version, :red)}) \
-can be upgraded to #{ansi(result['Version'], :green)}"
+            puts "#{ansi(name, :bold)} #{ansi(version, :red)} -> \
+#{ansi(result['Version'], :green)}"
           end
-        else
-          puts "#{ansi(name, :bold)} (#{ansi(version, :green)}) is up to date"
         end
       end
     end
 
-    puts "\n#{ansi('==>', :yellow)} Found #{ansi(count.to_s, :magenta)} \
-#{count == 1 ? 'upgrade' : 'upgrades'}"
-
-    unless upgradable.empty?
+    if upgradable.empty? && count == 0
+      puts "#{ansi('==>', :yellow)} Everything is up to date"
+    else
       require 'readline'
+
+      puts "#{ansi('==>', :yellow)} Targets (#{count}): #{upgradable.join(', ')}"
 
       upgradable.each do |pkg|
         answer = Readline::readline("#{ansi('==>', :yellow)} Download #{pkg}? ")
@@ -164,13 +164,10 @@ private
 
     info, list = json(@config.search % CGI::escape(package)), []
 
-    if info['type'] == 'error'
-      raise AurbError, "#{ansi('Fatal', :on_red)}: no results"
-    end
-
-    info['results'].each do |result|
-      next if in_sync? result['Name']
-      list << [result['Name'], result['ID']]
+    unless info['type'] == 'error'
+      info['results'].each do |result|
+        list << [result['Name'], result['ID']]
+      end
     end
 
     list.sort
@@ -232,16 +229,18 @@ private
     require 'optparse'
 
     OptionParser.new do |o|
-      o.version      = [0, 5, 7].join('.')
+      o.version      = [0, 5, 8].join('.')
       o.program_name = 'Aurb'
-      o.release      = '2009-04-14'
+      o.release      = '2009-04-15'
 
       o.on('-D', '--download P1,P2,...', Array, "Download package(s).") do |d|
         self[:cmd] = "download('#{d*"', '"}')"
       end
+
       o.on('-S', '--search PKG', 'Search for a package.') do |s|
         self[:cmd] = "search('#{s}')"
       end
+
       o.on('-U', '--upgrade', 'Check the AUR for upgrades.') do
         self[:cmd] = 'check_upgrade'
       end
