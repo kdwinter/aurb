@@ -106,7 +106,7 @@ class Aur
   # official repository.
   #
   def check_upgrade
-    count, upgradable = 0, []
+    upgradable = []
 
     puts "#{ansi('==>', :yellow)} Searching for upgrades. This may take a while..."
     `pacman -Qm`.each_line do |line|
@@ -122,10 +122,9 @@ class Aur
           require 'facets/version'
 
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-            count += 1
             upgradable << name
 
-            puts "#{ansi(name, :bold)} #{ansi(version, :red)} -> \
+            puts "#{ansi(name, :bold)} #{ansi(version, :red)} => \
 #{ansi(result['Version'], :green)}"
           end
         end
@@ -137,10 +136,11 @@ class Aur
     else
       require 'readline'
 
-      puts "#{ansi('==>', :yellow)} Targets (#{count}): #{upgradable.join(', ')}"
+      puts "#{ansi('==>', :yellow)} Targets (#{upgradable.length}): \
+#{upgradable.join(', ')}"
 
       upgradable.each do |pkg|
-        answer = Readline::readline("#{ansi('==>', :yellow)} Download #{pkg}? ")
+        answer = Readline::readline("#{ansi('==>', :yellow)} Download #{pkg}? [y/n] ")
         answer =~ /^y|yes$/i ? download(pkg) : next
       end
     end
