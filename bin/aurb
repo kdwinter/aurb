@@ -124,14 +124,13 @@ class Aur
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << name
 
-            puts "#{ansi(name, :bold)} #{ansi(version, :red)} => \
-#{ansi(result['Version'], :green)}"
+            puts ":: #{name} #{ansi(version, :red)} => #{ansi(result['Version'], :green)}"
           end
         end
       end
     end
 
-    if upgradable.empty? && count == 0
+    if upgradable.empty?
       puts "#{ansi('==>', :yellow)} Everything is up to date"
     else
       require 'readline'
