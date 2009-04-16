@@ -5,7 +5,7 @@ require 'rubygems'
 module Aurb
 
 DlPath = File.join(File.expand_path('~'), 'abs') # Change me!
-Config = Struct.new :search, :info, :sync, :dir  # Don't change me!
+Config = Struct.new(:search, :info, :sync, :dir) # Don't change me!
 
 def self.aur
   @aur ||= Aur.new
@@ -18,14 +18,13 @@ module Util
   #
   # For a full list of available effects, see
   # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
+  #
   def ansi text, effect
     require 'facets/ansicode' unless defined? ANSICode
 
     ANSICode.send(effect.to_sym) << text << ANSICode.clear
   end
 end
-
-class AurbError < Exception; end
 
 class Aur
   include Aurb::Util
@@ -46,12 +45,10 @@ class Aur
     trap(:INT) { exit 0 } # Exit peacefully on *INT
 
     # Evaluate a command in string form
-    # Example: instance_eval('search("package")')
-    # Which will invoke the search method
+    # 
+    #   instance_eval('search("package")')
+    #
     instance_eval @opts[:cmd]
-  rescue AurbError => e
-    $stderr.puts e.message
-    exit 1
   end
 
   # Downloads +packages+
