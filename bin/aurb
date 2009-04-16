@@ -4,8 +4,8 @@ require 'rubygems'
 
 module Aurb
 
-DlPath = File.join(File.expand_path('~'), 'abs') # Change me!
-Config = Struct.new(:search, :info, :sync, :dir) # Don't change me!
+DlPath = File.join File.expand_path('~'), 'abs' # Change me!
+Config = Struct.new :search, :info, :sync, :dir # Don't change me!
 
 def self.aur
   @aur ||= Aur.new
@@ -60,9 +60,9 @@ class Aur
       list(package).each do |names|
         if names.first == package
           if in_sync? package
-            puts "#{ansi('==>', :yellow)} Found #{package} in community. Use pacman!"
+            puts "#{ansi '==>', :yellow} Found #{package} in community. Use pacman!"
           else
-            Dir.chdir(@config.dir) do
+            Dir.chdir @config.dir do
               fetch package
               untar package
             end
@@ -88,12 +88,12 @@ class Aur
         next if in_sync? result['Name']
 
         if package.any? do |pac| # Check both name and description for matches
-          (result['Name'].include?(pac)) || (result['Description'].include?(pac))
+          (result['Name'].include? pac) || (result['Description'].include? pac)
         end
           count += 1
 
           puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
-#{ansi(result['Name'], :blue)} (#{result['Version']}): #{result['Description']}"
+#{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
         end
       end
     end
@@ -105,7 +105,7 @@ class Aur
   def check_upgrade
     upgradable = []
 
-    puts "#{ansi('==>', :yellow)} Searching for upgrades. This may take a while..."
+    puts "#{ansi '==>', :yellow} Searching for upgrades. This may take a while..."
     `pacman -Qm`.each_line do |line|
       name, version = line.chomp.split
       result = json(@config.info % name)
@@ -115,28 +115,28 @@ class Aur
 
         next if in_sync? result['Name']
 
-        if (result.is_a?(Hash)) && (result['Version'] != version)
+        if (result.is_a? Hash) && (result['Version'] != version)
           require 'facets/version'
 
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << name
 
-            puts ":: #{name} #{ansi(version, :red)} => #{ansi(result['Version'], :green)}"
+            puts ":: #{name} #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
         end
       end
     end
 
     if upgradable.empty?
-      puts "#{ansi('==>', :yellow)} Everything is up to date"
+      puts "#{ansi '==>', :yellow} Everything is up to date"
     else
       require 'readline'
 
-      puts "#{ansi('==>', :yellow)} Targets (#{upgradable.length}): \
+      puts "#{ansi '==>', :yellow} Targets (#{upgradable.length}): \
 #{upgradable.join(', ')}"
 
       upgradable.each do |pkg|
-        answer = Readline::readline("#{ansi('==>', :yellow)} Download #{pkg}? [y/n] ")
+        answer = Readline::readline "#{ansi '==>', :yellow} Download #{pkg}? [y/n] "
         answer =~ /^y|yes$/i ? download(pkg) : next
       end
     end
@@ -178,11 +178,11 @@ private
 
     open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
       File.open("#{package}.tar.gz", 'wb') do |local|
-        local.write(remote.read)
+        local.write remote.read
       end
     end
 
-    puts "#{ansi('==>', :yellow)} Fetched #{package}.tar.gz"
+    puts "#{ansi '==>', :yellow} Fetched #{package}.tar.gz"
   end
 
   # Untars +package+
@@ -200,7 +200,7 @@ private
       Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd
     )
 
-    puts "#{ansi('==>', :yellow)} Untarred #{package}.tar.gz"
+    puts "#{ansi '==>', :yellow} Untarred #{package}.tar.gz"
   end
 
   # Shortcut to parsing json
@@ -210,12 +210,12 @@ private
   def json item
     require 'json'
 
-    JSON.parse(open(item).read)
+    JSON.parse open(item).read
   end
 end
 
 class Opts < Hash
-  def initialize(args = ARGV)
+  def initialize args = ARGV
     @@args = args.empty? ? ['-h'] : args
     parse
   end
@@ -229,15 +229,15 @@ private
       o.program_name = 'Aurb'
       o.release      = '2009-04-15'
 
-      o.on('-D', '--download P1,P2,...', Array, "Download package(s).") do |d|
+      o.on '-D', '--download P1,P2,...', Array, "Download package(s)." do |d|
         self[:cmd] = "download('#{d*"', '"}')"
       end
 
-      o.on('-S', '--search PKG', 'Search for a package.') do |s|
+      o.on '-S', '--search PKG', 'Search for a package.' do |s|
         self[:cmd] = "search('#{s}')"
       end
 
-      o.on('-U', '--upgrade', 'Check the AUR for upgrades.') do
+      o.on '-U', '--upgrade', 'Check the AUR for upgrades.' do
         self[:cmd] = 'check_upgrade'
       end
     end.parse! @@args
