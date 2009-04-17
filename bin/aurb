@@ -1,11 +1,14 @@
 #!/usr/bin/env ruby
-require 'open-uri'
+# Author:: Gigamo &lt;gigamo@gmail.com&gt;
+# License:: GPL
+
 require 'rubygems'
+require 'open-uri'
 
 module Aurb
 
 DlPath = File.join File.expand_path('~'), 'abs' # Change me!
-Config = Struct.new :search, :info, :sync, :dir # Don't change me!
+Config = Struct.new :search, :info, :dir # Don't change me!
 
 def self.aur
   @aur ||= Aur.new
@@ -24,6 +27,7 @@ module Util
 
     ANSICode.send(effect.to_sym) << text << ANSICode.clear
   end
+  module_function :ansi
 end
 
 class Aur
@@ -35,14 +39,16 @@ class Aur
     @config = Config.new(
       'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
       'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
-      '/var/lib/pacman/sync/community',
       Pathname.new(DlPath).realpath
     )
-    @opts = Opts.new(ARGV)
+    @opts = Opts.new
   end
 
   def start
-    trap(:INT) { exit 0 } # Exit peacefully on *INT
+    trap :INT do
+      puts "\nCatched SIGINT... Bye!"
+      exit 0 # Exit peacefully on *INT
+    end
 
     # Evaluate a command in string form
     # 
@@ -58,9 +64,9 @@ class Aur
   def download *packages
     packages.each do |package|
       list(package).each do |names|
-        if names.first == package
+        if names[0] == package
           if in_sync? package
-            puts "#{ansi '==>', :yellow} Found #{package} in community. Use pacman!"
+            puts ":: Found #{package} in community. Use pacman!"
           else
             Dir.chdir @config.dir do
               fetch package
@@ -105,7 +111,8 @@ class Aur
   def check_upgrade
     upgradable = []
 
-    puts "#{ansi '==>', :yellow} Searching for upgrades. This may take a while..."
+    puts ":: Searching for upgrades. This may take a while..."
+
     `pacman -Qm`.each_line do |line|
       name, version = line.chomp.split
       result = json(@config.info % name)
@@ -121,22 +128,21 @@ class Aur
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << name
 
-            puts ":: #{name} #{ansi version, :red} => #{ansi result['Version'], :green}"
+            puts " #{name} #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
         end
       end
     end
 
     if upgradable.empty?
-      puts "#{ansi '==>', :yellow} Everything is up to date"
+      puts ":: Everything is up to date"
     else
       require 'readline'
 
-      puts "#{ansi '==>', :yellow} Targets (#{upgradable.length}): \
-#{upgradable.join(', ')}"
+      puts ":: Targets (#{upgradable.length}): #{upgradable.join(', ')}"
 
       upgradable.each do |pkg|
-        answer = Readline::readline "#{ansi '==>', :yellow} Download #{pkg}? [y/n] "
+        answer = Readline::readline " Download #{pkg}? [y/n] "
         answer =~ /^y|yes$/i ? download(pkg) : next
       end
     end
@@ -148,7 +154,7 @@ private
   #   in_sync?('awesome-git')
   #
   def in_sync? package
-    !!Dir["#{@config.sync}/#{package}-*"].first
+    !!Dir["/var/lib/pacman/sync/community/#{package}-*"][0]
   end
 
   # Returns a list of packages found by a search
@@ -174,15 +180,15 @@ private
   #   fetch('awesome-git', $0.dirname)
   #
   def fetch package
-    File.delete("#{package}.tar.gz") if File.exists?("#{package}.tar.gz")
+    File.delete "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
 
-    open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
-      File.open("#{package}.tar.gz", 'wb') do |local|
+    open "http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz" do |remote|
+      File.open "#{package}.tar.gz", 'wb' do |local|
         local.write remote.read
       end
     end
 
-    puts "#{ansi '==>', :yellow} Fetched #{package}.tar.gz"
+    puts ":: Fetched #{package}.tar.gz"
   end
 
   # Untars +package+
@@ -197,10 +203,10 @@ private
     FileUtils.rm_r(package) if File.directory?(package)
 
     Archive::Tar::Minitar.unpack(
-      Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd
+      Zlib::GzipReader.new File.open("#{package}.tar.gz", 'rb'), Dir.pwd
     )
 
-    puts "#{ansi '==>', :yellow} Untarred #{package}.tar.gz"
+    puts ":: Untarred #{package}.tar.gz"
   end
 
   # Shortcut to parsing json
@@ -208,15 +214,15 @@ private
   #   json('http://foo.bar')
   #
   def json item
-    require 'json'
+    require 'json' unless defined? JSON
 
     JSON.parse open(item).read
   end
 end
 
 class Opts < Hash
-  def initialize args = ARGV
-    @@args = args.empty? ? ['-h'] : args
+  def initialize
+    @@args = ARGV.empty? ? ['-h'] : ARGV
     parse
   end
 
