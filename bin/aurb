@@ -2,14 +2,13 @@
 #  Author:: Gigamo &lt;gigamo@gmail.com&gt;
 # License:: GPL
 #
-
 require 'rubygems'
 require 'open-uri'
 
 module Aurb
 
 DlPath = File.join File.expand_path('~'), 'abs' # Change me!
-Config = Struct.new :search, :info, :dir # Don't change me!
+Config = Struct.new :search, :info, :dir  # Don't change me!
 
 def self.aur
   @aur ||= Aur.new
@@ -20,7 +19,7 @@ module Util
   #
   #   ansi('Text', :green)
   #
-  # For a full list of available effects, see
+  # For a full list of available effects, go to:
   # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
   #
   def ansi text, effect
@@ -68,22 +67,18 @@ class Aur
     packages = packages[0] if packages[0].is_a? Array
 
     puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
-    answer = Readline::readline "Proceed? [y/n] "
+    answer = Readline::readline "\nProceed? [y/n] "
 
     if answer =~ /^y|yes$/i
       packages.each do |package|
         list(package).each do |names|
           if names[0] == package
-            if in_sync? package
-              puts ":: Found #{package} in community. Use pacman!"
-            else
-              Dir.chdir(@config.dir) do
-                fetch package
-                untar package
+            Dir.chdir(@config.dir) do
+              fetch package
+              untar package
 
-                puts "(#{ansi "#{packages.index(package)+1}", :green}/\
+              puts "(#{ansi "#{packages.index(package)+1}", :green}/\
 #{ansi "#{packages.length}", :yellow}) downloaded #{package}"
-              end
             end
           end
         end
@@ -102,8 +97,6 @@ class Aur
       unless result['type'] == 'error'
         result = result['results']
 
-        next if in_sync? result['Name']
-
         if package.any? do |pac| # Check both name and description for matches
           (result['Name'].include? pac) || (result['Description'].include? pac)
         end
@@ -118,10 +111,10 @@ class Aur
   # official repository.
   #
   def check_upgrade
+    return nil if `which pacman`.strip == ''
     upgradable = []
 
     puts ":: Searching for upgrades. This may take a while..."
-
     `pacman -Qm`.each_line do |line|
       name, version = line.chomp.split
       result = json(@config.info % name)
@@ -129,9 +122,7 @@ class Aur
       unless result['type'] == 'error'
         result = result['results']
 
-        next if in_sync? result['Name']
-
-        if (result.is_a? Hash) && (result['Version'] != version)
+        if result.is_a?(Hash) && result['Version'] != version
           require 'facets/version'
 
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
@@ -166,7 +157,7 @@ private
 
     unless info['type'] == 'error'
       info['results'].each do |result|
-        list << [result['Name'], result['ID']]
+        list << [result['Name'], result['ID']] unless in_sync? result['Name']
       end
     end
 
@@ -175,7 +166,7 @@ private
 
   # Downloads given +package+ into +dir+
   #
-  #   fetch('awesome-git', $0.dirname)
+  #   fetch('awesome-git')
   #
   def fetch package
     File.delete "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
@@ -216,7 +207,7 @@ end
 
 class Opts < Hash
   def initialize
-    @@args = ARGV.empty? ? ['-h'] : ARGV
+    self[:args]  = ARGV.empty? ? ['-h'] : ARGV
     self[:color] = true
 
     parse
@@ -250,7 +241,7 @@ private
       o.on '--[no-]color', "use colors? [#{self[:color]}]" do |c|
         self[:color] = c
       end
-    end.parse! @@args
+    end.parse! self[:args]
   end
 end
 
