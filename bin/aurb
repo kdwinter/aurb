@@ -63,18 +63,25 @@ class Aur
   #   download('awesome-git', 'aurb')
   #
   def download *packages
+    require 'readline'
+
     packages = packages[0] if packages[0].is_a? Array
-    packages.each do |package|
-      list(package).each do |names|
-        if names[0] == package
-          if in_sync? package
-            puts ":: Found #{package} in community. Use pacman!"
-          else
-            puts "Targets (#{packages.length}): #{packages.join(', ')}"
-            Dir.chdir(@config.dir) do
-              fetch package
-              untar package
-              puts " (#{packages.index(package)+1}/#{packages.length}) Downloaded #{package}"
+
+    puts "Targets (#{packages.length}): #{packages.join(', ')}"
+    answer = Readline::readline "Proceed? [y/n] "
+    if answer =~ /^y|yes$/i
+      packages.each do |package|
+        list(package).each do |names|
+          if names[0] == package
+            if in_sync? package
+              puts ":: Found #{package} in community. Use pacman!"
+            else
+              Dir.chdir(@config.dir) do
+                fetch package
+                untar package
+
+                puts " (#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
+              end
             end
           end
         end
@@ -141,13 +148,7 @@ class Aur
     if upgradable.empty?
       puts ":: Everything is up to date"
     else
-      require 'readline'
-
-      puts "Targets (#{upgradable.length}): #{upgradable.join(', ')}"
-      answer = Readline::readline "Proceed by downloading these packages? [y/n] "
-      if answer =~ /^y|yes$/i
-        download upgradable
-      end
+      download upgradable
     end
   end
 
