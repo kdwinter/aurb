@@ -52,7 +52,7 @@ class Aur
   def start
     trap :INT do
       puts "\nInterrupt signal received\n\n"
-      exit 0 # Exit peacefully on *INT
+      exit 0 # Exit peacefully
     end
 
     # Evaluate a command in string form
@@ -225,14 +225,14 @@ end
 class Opts < Hash
   def initialize
     @@args = ARGV.empty? ? ['-h'] : ARGV
+    self[:color] = true
+
     parse
   end
 
 private
   def parse
     require 'optparse'
-
-    self[:color] = true
 
     OptionParser.new do |o|
       o.version      = [0, 6, 2].join('.')
@@ -255,7 +255,7 @@ private
 
       o.separator 'Optional:'
 
-      o.on '--[no-]color', "toggle colored output [#{self[:color]}]" do |c|
+      o.on '--[no-]color', "use colors? [#{self[:color]}]" do |c|
         self[:color] = c
       end
     end.parse! @@args
