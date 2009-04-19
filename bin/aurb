@@ -96,8 +96,6 @@ class Aur
   #   search('awesome')
   #
   def search package
-    count, threads = 0, []
-
     list(package).each do |names|
       result = json(@config.info % names[1])
 
@@ -109,8 +107,6 @@ class Aur
         if package.any? do |pac| # Check both name and description for matches
           (result['Name'].include? pac) || (result['Description'].include? pac)
         end
-          count += 1
-
           puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
 #{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
         end
