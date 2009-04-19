@@ -26,11 +26,8 @@ module Util
   def ansi text, effect
     require 'facets/ansicode' unless defined? ANSICode
 
-    if @opts[:color]
-      ANSICode.send(effect.to_sym) << text << ANSICode.clear
-    else
-      text
-    end
+    effect = @opts[:color] ? ANSICode.send(effect.to_sym) : ''
+    effect << text << ANSICode.clear
   end
   module_function :ansi
 end
