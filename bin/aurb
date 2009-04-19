@@ -80,7 +80,7 @@ class Aur
                 fetch package
                 untar package
 
-                puts " (#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
+                puts "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
               end
             end
           end
