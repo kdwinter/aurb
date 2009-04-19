@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
-# Author:: Gigamo &lt;gigamo@gmail.com&gt;
+#  Author:: Gigamo &lt;gigamo@gmail.com&gt;
 # License:: GPL
+#
 
 require 'rubygems'
 require 'open-uri'
@@ -46,7 +47,7 @@ class Aur
 
   def start
     trap :INT do
-      puts "\nCatched SIGINT... Bye!"
+      puts "\nInterrupt signal received\n\n"
       exit 0 # Exit peacefully on *INT
     end
 
@@ -62,15 +63,17 @@ class Aur
   #   download('awesome-git', 'aurb')
   #
   def download *packages
+    packages = packages[0] if packages[0].is_a? Array
     packages.each do |package|
       list(package).each do |names|
         if names[0] == package
           if in_sync? package
             puts ":: Found #{package} in community. Use pacman!"
           else
-            Dir.chdir @config.dir do
+            Dir.chdir(@config.dir) do
               fetch package
               untar package
+              puts " (#{packages.index(package)+1}/#{packages.length}) Downloaded #{package}"
             end
           end
         end
@@ -128,7 +131,7 @@ class Aur
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << name
 
-            puts " #{name} #{ansi version, :red} => #{ansi result['Version'], :green}"
+            puts " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
         end
       end
@@ -140,10 +143,9 @@ class Aur
       require 'readline'
 
       puts ":: Targets (#{upgradable.length}): #{upgradable.join(', ')}"
-
-      upgradable.each do |pkg|
-        answer = Readline::readline " Download #{pkg}? [y/n] "
-        answer =~ /^y|yes$/i ? download(pkg) : next
+      answer = Readline::readline "Proceed by downloading these packages? [y/n] "
+      if answer =~ /^y|yes$/i
+        download upgradable
       end
     end
   end
@@ -182,13 +184,11 @@ private
   def fetch package
     File.delete "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
 
-    open "http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz" do |remote|
-      File.open "#{package}.tar.gz", 'wb' do |local|
-        local.write remote.read
+    open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
+      File.open("#{package}.tar.gz", 'wb') do |local|
+        local.write(remote.read)
       end
     end
-
-    puts ":: Fetched #{package}.tar.gz"
   end
 
   # Untars +package+
@@ -200,13 +200,11 @@ private
     require 'zlib'
     require 'fileutils'
 
-    FileUtils.rm_r(package) if File.directory?(package)
+    FileUtils.rm_r package if File.directory? package
 
     Archive::Tar::Minitar.unpack(
-      Zlib::GzipReader.new File.open("#{package}.tar.gz", 'rb'), Dir.pwd
+      Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd
     )
-
-    puts ":: Untarred #{package}.tar.gz"
   end
 
   # Shortcut to parsing json
@@ -216,7 +214,7 @@ private
   def json item
     require 'json' unless defined? JSON
 
-    JSON.parse open(item).read
+    JSON.parse(open(item).read)
   end
 end
 
@@ -231,9 +229,9 @@ private
     require 'optparse'
 
     OptionParser.new do |o|
-      o.version      = [0, 5, 8].join('.')
+      o.version      = [0, 6, 1].join('.')
       o.program_name = 'Aurb'
-      o.release      = '2009-04-15'
+      o.release      = '2009-04-19'
 
       o.on '-D', '--download P1,P2,...', Array, "Download package(s)." do |d|
         self[:cmd] = "download('#{d*"', '"}')"
@@ -256,8 +254,5 @@ at_exit do
   if __FILE__ == $0
     raise $! if $!
     Aurb.aur.start
-  else
-    $stderr.puts 'Please only run me by myself. Thanks.'
-    exit 1
   end
 end
