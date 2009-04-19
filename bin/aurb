@@ -77,7 +77,7 @@ class Aur
               fetch package
               untar package
 
-              puts "(#{ansi "#{packages.index(package)+1}", :green}/\
+              puts "(#{ansi "#{packages.index(package) + 1}", :green}/\
 #{ansi "#{packages.length}", :yellow}) downloaded #{package}"
             end
           end
