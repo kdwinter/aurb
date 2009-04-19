@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'aurb'
-  s.version = '0.6.1'
+  s.version = '0.6.2'
   s.date = %q{2009-04-19}
   s.summary = %q{A simple AUR utility}
   s.email = %q{gigamo@gmail.com}

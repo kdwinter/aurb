@@ -26,7 +26,11 @@ module Util
   def ansi text, effect
     require 'facets/ansicode' unless defined? ANSICode
 
-    ANSICode.send(effect.to_sym) << text << ANSICode.clear
+    if @opts[:color]
+      ANSICode.send(effect.to_sym) << text << ANSICode.clear
+    else
+      text
+    end
   end
   module_function :ansi
 end
@@ -69,6 +73,7 @@ class Aur
 
     puts "Targets (#{packages.length}): #{packages.join(', ')}"
     answer = Readline::readline "Proceed? [y/n] "
+
     if answer =~ /^y|yes$/i
       packages.each do |package|
         list(package).each do |names|
@@ -145,11 +150,7 @@ class Aur
       end
     end
 
-    if upgradable.empty?
-      puts ":: Everything is up to date"
-    else
-      download upgradable
-    end
+    upgradable.empty? ? puts(':: Everything up to date') : download(upgradable)
   end
 
 private
@@ -230,10 +231,14 @@ private
   def parse
     require 'optparse'
 
+    self[:color] = true
+
     OptionParser.new do |o|
-      o.version      = [0, 6, 1].join('.')
+      o.version      = [0, 6, 2].join('.')
       o.program_name = 'Aurb'
       o.release      = '2009-04-19'
+
+      o.separator 'Actions:'
 
       o.on '-D', '--download P1,P2,...', Array, "Download package(s)." do |d|
         self[:cmd] = "download('#{d*"', '"}')"
@@ -245,6 +250,12 @@ private
 
       o.on '-U', '--upgrade', 'Check the AUR for upgrades.' do
         self[:cmd] = 'check_upgrade'
+      end
+
+      o.separator 'Optional:'
+
+      o.on '-C', '--[no-]color', 'Toggle colored output' do |c|
+        self[:color] = c
       end
     end.parse! @@args
   end
