@@ -71,7 +71,7 @@ class Aur
 
     packages = packages[0] if packages[0].is_a? Array
 
-    puts "Targets (#{packages.length}): #{packages.join(', ')}"
+    puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
     answer = Readline::readline "Proceed? [y/n] "
 
     if answer =~ /^y|yes$/i
@@ -85,7 +85,8 @@ class Aur
                 fetch package
                 untar package
 
-                puts "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
+                puts "(#{ansi "#{packages.index(package)+1}", :green}/\
+#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
               end
             end
           end
@@ -240,21 +241,21 @@ private
 
       o.separator 'Actions:'
 
-      o.on '-D', '--download P1,P2,...', Array, "Download package(s)." do |d|
+      o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
         self[:cmd] = "download('#{d*"', '"}')"
       end
 
-      o.on '-S', '--search PKG', 'Search for a package.' do |s|
+      o.on '-S', '--search PKG', 'search for a package' do |s|
         self[:cmd] = "search('#{s}')"
       end
 
-      o.on '-U', '--upgrade', 'Check the AUR for upgrades.' do
+      o.on '-U', '--upgrade', 'check the AUR for upgrades' do
         self[:cmd] = 'check_upgrade'
       end
 
       o.separator 'Optional:'
 
-      o.on '-C', '--[no-]color', 'Toggle colored output' do |c|
+      o.on '-C', '--[no-]color', "toggle colored output [#{self[:color]}]" do |c|
         self[:color] = c
       end
     end.parse! @@args
