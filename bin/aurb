@@ -2,8 +2,10 @@
 #  Author:: Gigamo &lt;gigamo@gmail.com&gt;
 # License:: GPL
 #
-require 'rubygems'
-require 'open-uri'
+%w[optparse pathname fileutils readline rubygems cgi json zlib
+open-uri facets/ansicode facets/minitar facets/version].each do |lib|
+  require lib
+end
 
 module Aurb
 
@@ -23,8 +25,6 @@ module Util
   # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
   #
   def ansi text, effect
-    require 'facets/ansicode' unless defined? ANSICode
-
     (@opts[:color] ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
   end
   module_function :ansi
@@ -34,8 +34,6 @@ class Aur
   include Aurb::Util
 
   def initialize
-    require 'pathname'
-
     @config = Config.new(
       'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
       'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
@@ -62,8 +60,6 @@ class Aur
   #   download('awesome-git', 'aurb')
   #
   def download *packages
-    require 'readline'
-
     packages = packages[0] if packages[0].is_a? Array
 
     puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
@@ -122,14 +118,10 @@ class Aur
       unless result['type'] == 'error'
         result = result['results']
 
-        if result.is_a?(Hash) && result['Version'] != version
-          require 'facets/version'
+        if result.is_a?(Hash) && VersionNumber.new(result['Version']) > VersionNumber.new(version)
+          upgradable << name
 
-          if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-            upgradable << name
-
-            puts " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
-          end
+          puts " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
         end
       end
     end
@@ -151,8 +143,6 @@ private
   #   list('awesome-git')
   #
   def list package
-    require 'cgi'
-
     info, list = json(@config.search % CGI::escape(package)), []
 
     unless info['type'] == 'error'
@@ -183,10 +173,6 @@ private
   #   untar('awesome-git') #=> .tar.gz is automagically appended
   #
   def untar package
-    require 'facets/minitar'
-    require 'zlib'
-    require 'fileutils'
-
     FileUtils.rm_r package if File.directory? package
 
     Archive::Tar::Minitar.unpack(
@@ -199,8 +185,6 @@ private
   #   json('http://foo.bar')
   #
   def json item
-    require 'json' unless defined? JSON
-
     JSON.parse(open(item).read)
   end
 end
@@ -215,8 +199,6 @@ class Opts < Hash
 
 private
   def parse
-    require 'optparse'
-
     OptionParser.new do |o|
       o.version      = [0, 6, 2].join('.')
       o.program_name = 'Aurb'
