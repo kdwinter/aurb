@@ -2,10 +2,8 @@
 #  Author:: Gigamo &lt;gigamo@gmail.com&gt;
 # License:: GPL
 #
-%w[optparse pathname fileutils readline rubygems cgi json zlib
-open-uri facets/ansicode facets/minitar facets/version].each do |lib|
-  require lib
-end
+%w[optparse pathname fileutils readline rubygems cgi json zlib open-uri 
+   facets/ansicode facets/minitar facets/version].each { |lib| require lib }
 
 module Aurb
 
@@ -19,17 +17,21 @@ def self.aur
 end
 
 module Util
-  # Colorize a string
-  #
-  #   ansi('Text', :green)
-  #
-  # For a full list of available effects, go to:
-  # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
-  #
-  def ansi text, effect
-    (@opts.color ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
-  end
-  module_function :ansi
+
+# Colorize +text+ with +effect+
+#
+#   ansi('Text', :green)
+#
+# For a full list of available effects, go to:
+# http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
+#
+# This method will not do anything if @opts.color is disabled
+#
+def ansi text, effect
+  (@opts.color ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
+end
+module_function :ansi
+
 end
 
 class Aur
@@ -74,9 +76,8 @@ class Aur
             Dir.chdir(@config.dir) do
               fetch package
               untar package
-
-              puts "(#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
             end
+            puts "(#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
           end
         end
       end
@@ -120,7 +121,6 @@ class Aur
 
         if result.is_a?(Hash) && VersionNumber.new(result['Version']) > VersionNumber.new(version)
           upgradable << name
-
           puts " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
         end
       end
@@ -189,11 +189,11 @@ private
 end
 
 class Opts
-  attr_reader :cmd, :color
+  attr_accessor :args, :cmd, :color
 
   def initialize
-    @args  = ARGV.empty? ? ['-h'] : ARGV
-    @color = true
+    self.args  = ARGV.empty? ? ['-h'] : ARGV
+    self.color = true
 
     parse
   end
@@ -206,23 +206,23 @@ private
       o.separator 'Actions:'
 
       o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
-        @cmd = "download('#{d*"', '"}')"
+        self.cmd = "download('#{d*"', '"}')"
       end
 
       o.on '-S', '--search PKG', 'search for a package' do |s|
-        @cmd = "search('#{s}')"
+        self.cmd = "search('#{s}')"
       end
 
       o.on '-U', '--upgrade', 'check the AUR for upgrades' do
-        @cmd = 'check_upgrade'
+        self.cmd = 'check_upgrade'
       end
 
       o.separator 'Optional:'
 
-      o.on '--[no-]color', "use colors? [#@color]" do |c|
-        @color = c
+      o.on '--[no-]color', "use colors? [#{self.color ? 'yes' : 'no'}]" do |c|
+        self.color = c
       end
-    end.parse! @args
+    end.parse! self.args
   end
 end
 
