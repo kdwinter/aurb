@@ -68,10 +68,9 @@ class Aur
     packages = packages[0] if packages[0].is_a? Array
 
     puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
-    answer = Readline::readline "\nProceed? [y/n] "
+    answer = Readline::readline "Proceed? [y/n] "
 
     if answer =~ /^y|yes$/i
-      puts # Empty newline
       packages.each do |package|
         list(package).each do |names|
           if names[0] == package
