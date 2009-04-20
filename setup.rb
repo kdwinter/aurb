@@ -1580,7 +1580,7 @@ if $0 == __FILE__
   rescue SetupError
     raise if $DEBUG
     $stderr.puts $!.message
-    $stderr.puts "Try 'ruby #{$0} --help' for detailed usage."
+    $stderr.puts "Try 'ruby #{File.basename($0)} --help' for detailed usage."
     exit 1
   end
 end
