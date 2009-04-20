@@ -10,7 +10,9 @@ end
 module Aurb
 
 DlPath = File.join File.expand_path('~'), 'abs' # Change me!
-Config = Struct.new :search, :info, :dir  # Don't change me!
+
+PrInfo = {:name => 'Aurb', :version => [0, 6, 2].join('.'), :release => '2009-04-19'}
+Config = Struct.new :search, :info, :dir
 
 def self.aur
   @aur ||= Aur.new
@@ -200,9 +202,9 @@ class Opts < Hash
 private
   def parse
     OptionParser.new do |o|
-      o.version      = [0, 6, 2].join('.')
-      o.program_name = 'Aurb'
-      o.release      = '2009-04-19'
+      o.program_name, o.version, o.release = [:name, :version, :release].map do |key|
+        PrInfo[key]
+      end
 
       o.separator 'Actions:'
 
