@@ -12,9 +12,10 @@ DlPath = File.join File.expand_path('~'), 'abs' # Change me!
 PrInfo = {:name => 'Aurb', :version => [0, 6, 2].join('.'), :release => '2009-04-19'}
 Config = Struct.new :search, :info, :dir
 
-def self.aur
+def aur
   @aur ||= Aur.new
 end
+module_function :aur
 
 module Util
 
@@ -195,11 +196,11 @@ class Opts
     self.args  = ARGV.empty? ? ['-h'] : ARGV
     self.color = true
 
-    parse
+    parse!
   end
 
 private
-  def parse
+  def parse!
     OptionParser.new do |o|
       o.program_name, o.version, o.release = [:name, :version, :release].map { |key| PrInfo[key] }
 
