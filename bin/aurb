@@ -75,8 +75,7 @@ class Aur
               fetch package
               untar package
 
-              puts "(#{ansi "#{packages.index(package) + 1}", :green}/\
-#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
+              puts "(#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
             end
           end
         end
@@ -98,8 +97,7 @@ class Aur
         if package.any? do |pac| # Check both name and description for matches
           (result['Name'].include? pac) || (result['Description'].include? pac)
         end
-          puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
-#{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
+          puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] #{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
         end
       end
     end
@@ -109,7 +107,7 @@ class Aur
   # official repository.
   #
   def check_upgrade
-    return nil if `which pacman`.strip == ''
+    raise 'Pacman binary was not found. Are you running Arch Linux?' if `which pacman`.strip == ''
     upgradable = []
 
     puts ":: Searching for upgrades. This may take a while..."
@@ -128,6 +126,7 @@ class Aur
       end
     end
 
+    puts # Empty newline
     upgradable.empty? ? puts(':: Everything up to date') : download(upgradable)
   end
 
@@ -177,9 +176,7 @@ private
   def untar package
     FileUtils.rm_r package if File.directory? package
 
-    Archive::Tar::Minitar.unpack(
-      Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd
-    )
+    Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
   end
 
   # Shortcut to parsing json
@@ -202,9 +199,7 @@ class Opts < Hash
 private
   def parse
     OptionParser.new do |o|
-      o.program_name, o.version, o.release = [:name, :version, :release].map do |key|
-        PrInfo[key]
-      end
+      o.program_name, o.version, o.release = [:name, :version, :release].map { |key| PrInfo[key] }
 
       o.separator 'Actions:'
 
