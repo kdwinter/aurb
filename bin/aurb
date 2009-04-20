@@ -71,6 +71,7 @@ class Aur
     answer = Readline::readline "\nProceed? [y/n] "
 
     if answer =~ /^y|yes$/i
+      puts # Empty newline
       packages.each do |package|
         list(package).each do |names|
           if names[0] == package
