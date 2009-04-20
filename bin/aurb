@@ -127,7 +127,6 @@ class Aur
       end
     end
 
-    puts # Empty newline
     upgradable.empty? ? puts(':: Everything up to date') : download(upgradable)
   end
 
