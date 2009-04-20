@@ -27,7 +27,7 @@ module Util
   # http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
   #
   def ansi text, effect
-    (@opts[:color] ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
+    (@opts.color ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
   end
   module_function :ansi
 end
@@ -54,7 +54,7 @@ class Aur
     # 
     #   instance_eval('search("package")')
     #
-    instance_eval @opts[:cmd]
+    instance_eval @opts.cmd
   end
 
   # Downloads +packages+
@@ -188,10 +188,12 @@ private
   end
 end
 
-class Opts < Hash
+class Opts
+  attr_reader :cmd, :color
+
   def initialize
-    self[:args]  = ARGV.empty? ? ['-h'] : ARGV
-    self[:color] = true
+    @args  = ARGV.empty? ? ['-h'] : ARGV
+    @color = true
 
     parse
   end
@@ -204,23 +206,23 @@ private
       o.separator 'Actions:'
 
       o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
-        self[:cmd] = "download('#{d*"', '"}')"
+        @cmd = "download('#{d*"', '"}')"
       end
 
       o.on '-S', '--search PKG', 'search for a package' do |s|
-        self[:cmd] = "search('#{s}')"
+        @cmd = "search('#{s}')"
       end
 
       o.on '-U', '--upgrade', 'check the AUR for upgrades' do
-        self[:cmd] = 'check_upgrade'
+        @cmd = 'check_upgrade'
       end
 
       o.separator 'Optional:'
 
-      o.on '--[no-]color', "use colors? [#{self[:color]}]" do |c|
-        self[:color] = c
+      o.on '--[no-]color', "use colors? [#@color]" do |c|
+        @color = c
       end
-    end.parse! self[:args]
+    end.parse! @args
   end
 end
 
