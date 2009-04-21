@@ -122,7 +122,7 @@ class Aur
 
         if result.is_a?(Hash) && VersionNumber.new(result['Version']) > VersionNumber.new(version)
           upgradable << name
-          puts " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+          puts "  #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
         end
       end
     end
@@ -131,7 +131,7 @@ class Aur
   end
 
 private
-  # Checks if a package exists in the community repository
+  # Checks if +package+ exists in the community repository
   #
   #   in_sync?('awesome-git')
   #
@@ -139,7 +139,7 @@ private
     !!Dir["/var/lib/pacman/sync/community/#{package}-*"][0]
   end
 
-  # Returns a list of packages found by a search
+  # Returns a list of search results found for +package+
   #
   #   list('awesome-git')
   #
@@ -179,7 +179,7 @@ private
     Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
   end
 
-  # Shortcut to parsing json
+  # Parse +item+ through JSON
   #
   #   json('http://foo.bar')
   #
@@ -189,11 +189,11 @@ private
 end
 
 class Opts
-  attr_accessor :args, :cmd, :color
+  attr_accessor :cmd, :color
 
   def initialize
-    self.args  = ARGV.empty? ? ['-h'] : ARGV
-    self.color = true
+    @args  = ARGV.empty? ? ['-h'] : ARGV
+    @color = true
 
     parse!
   end
