@@ -145,7 +145,7 @@ module Aurb
   end
 
   class Opts
-    attr_accessor :cmd, :color
+    attr_reader :cmd, :color
 
     def initialize
       @args  = ARGV.empty? ? ['-h'] : ARGV
@@ -162,21 +162,21 @@ module Aurb
         o.separator 'Actions:'
 
         o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
-          self.cmd = "download('#{d*"', '"}')"
+          @cmd = "download('#{d*"', '"}')"
         end
 
         o.on '-S', '--search PKG', 'search for a package' do |s|
-          self.cmd = "search('#{s}')"
+          @cmd = "search('#{s}')"
         end
 
         o.on '-U', '--upgrade', 'check the AUR for upgrades' do
-          self.cmd = 'check_upgrade'
+          @cmd = 'check_upgrade'
         end
 
         o.separator 'Optional:'
 
-        o.on '--[no-]color', "use colors? [#{self.color ? 'yes' : 'no'}]" do |c|
-          self.color = c
+        o.on '--[no-]color', "use colors? [#{@color ? 'yes' : 'no'}]" do |c|
+          @color = c
         end
       end.parse! @args
     end
