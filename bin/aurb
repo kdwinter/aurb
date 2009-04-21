@@ -7,225 +7,180 @@
 
 module Aurb
 
-DlPath = File.join File.expand_path('~'), 'abs' # Change me!
+# Path where PKGBUILDS will get saved to
+  DlPath = File.join File.expand_path('~'), 'abs'
 
-PrInfo = {:name => 'Aurb', :version => [0, 6, 2].join('.'), :release => '2009-04-19'}
-Config = Struct.new :search, :info, :dir
+# Don't change these
+  PrInfo = {:name => 'Aurb', :version => [0, 6, 2].join('.'), :release => '2009-04-19'}
+  Config = Struct.new :search, :info, :dir
 
-def aur
-  @aur ||= Aur.new
-end
-module_function :aur
+  def aur
+    @aur ||= Aur.new
+  end
+  module_function :aur
 
-module Util
-
-# Colorize +text+ with +effect+
-#
-#   ansi('Text', :green)
-#
-# For a full list of available effects, go to:
-# http://facets.rubyforge.org/doc/api/more/classes/ANSICode.html
-#
-# This method will not do anything if @opts.color is disabled
-#
-def ansi text, effect
-  (@opts.color ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
-end
-module_function :ansi
-
-end
-
-class Aur
-  include Aurb::Util
-
-  def initialize
-    @config = Config.new(
-      'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
-      'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
-      Pathname.new(DlPath).realpath
-    )
-    @opts = Opts.new
+  module Util
+    def ansi text, effect
+      (@opts.color ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
+    end
+    module_function :ansi
   end
 
-  def start
-    trap :INT do
-      puts "\nInterrupt signal received\n\n"
-      exit 0 # Exit peacefully
+  class Aur
+    include Aurb::Util
+
+    def initialize
+      @config = Config.new(
+        'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
+        'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
+        Pathname.new(DlPath).realpath
+      )
+      @opts = Opts.new
     end
 
-    # Evaluate a command in string form
-    # 
-    #   instance_eval('search("package")')
-    #
-    instance_eval @opts.cmd
-  end
+    def start
+      trap :INT do
+        puts "\nInterrupt signal received\n\n"
+        exit 0
+      end
 
-  # Downloads +packages+
-  #
-  #   download('awesome-git', 'aurb')
-  #
-  def download *packages
-    packages = packages.first if packages.first.is_a? Array
+      instance_eval @opts.cmd
+    end
 
-    puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
-    answer = Readline::readline "Proceed? [y/n] "
+    def download *packages
+      packages = packages.first if packages.first.is_a? Array
 
-    if answer =~ /^y|yes$/i
-      packages.each do |package|
-        list(package).each do |names|
-          if names.first == package
-            Dir.chdir(@config.dir) do
-              fetch package
-              untar package
+      puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
+      answer = Readline::readline "Proceed? [y/n] "
+
+      if answer =~ /^y|yes$/i
+        packages.each do |package|
+          list(package).each do |names|
+            if names.first == package
+              Dir.chdir(@config.dir) do
+                fetch package
+                untar package
+              end
+              puts "(#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
             end
-            puts "(#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
           end
         end
       end
     end
-  end
 
-  # Searches for +package+
-  #
-  #   search('awesome')
-  #
-  def search package
-    list(package).each do |names|
-      result = json(@config.info % names.last)
+    def search package
+      list(package).each do |names|
+        result = json(@config.info % names.last)
 
-      unless result['type'] == 'error'
-        result = result['results']
+        unless result['type'] == 'error'
+          result = result['results']
 
-        if package.any? do |pac| # Check both name and description for matches
-          (result['Name'].include? pac) || (result['Description'].include? pac)
-        end
-          puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] #{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
-        end
-      end
-    end
-  end
-
-  # Checks the aur for upgrades to local packages that were not found in any
-  # official repository.
-  #
-  def check_upgrade
-    raise 'Pacman binary was not found. Are you running Arch Linux?' if `which pacman`.strip == ''
-    upgradable = []
-
-    puts ":: Searching for upgrades. This may take a while..."
-    `pacman -Qm`.each_line do |line|
-      name, version = line.chomp.split
-      result = json(@config.info % name)
-
-      unless result['type'] == 'error'
-        result = result['results']
-
-        if result.is_a?(Hash) && VersionNumber.new(result['Version']) > VersionNumber.new(version)
-          upgradable << name
-          puts "  #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+          if package.any? do |pac| # Check both name and description for matches
+            (result['Name'].include? pac) || (result['Description'].include? pac)
+          end
+            puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] #{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
+          end
         end
       end
     end
 
-    upgradable.empty? ? puts(':: Everything up to date') : download(upgradable)
-  end
+    def check_upgrade
+      raise 'Pacman binary was not found. Are you running Arch Linux?' if `which pacman`.strip == ''
+      upgradable = []
 
-private
-  # Checks if +package+ exists in the community repository
-  #
-  #   in_sync?('awesome-git')
-  #
-  def in_sync? package
-    !!Dir["/var/lib/pacman/sync/community/#{package}-*"].first
-  end
+      puts ":: Searching for upgrades. This may take a while..."
+      `pacman -Qm`.each_line do |line|
+        name, version = line.chomp.split
+        result = json(@config.info % name)
 
-  # Returns a list of search results found for +package+
-  #
-  #   list('awesome-git')
-  #
-  def list package
-    info, list = json(@config.search % CGI::escape(package)), []
+        unless result['type'] == 'error'
+          result = result['results']
 
-    unless info['type'] == 'error'
-      info['results'].each do |result|
-        list << [result['Name'], result['ID']] unless in_sync? result['Name']
+          if result.is_a?(Hash) && VersionNumber.new(result['Version']) > VersionNumber.new(version)
+            upgradable << name
+            puts "  #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+          end
+        end
+      end
+
+      upgradable.empty? ? puts(':: Everything up to date') : download(upgradable)
+    end
+
+  private
+    def in_sync? package
+      !!Dir["/var/lib/pacman/sync/community/#{package}-*"].first
+    end
+
+    def list package
+      info, list = json(@config.search % CGI::escape(package)), []
+
+      unless info['type'] == 'error'
+        info['results'].each do |result|
+          list << [result['Name'], result['ID']] unless in_sync? result['Name']
+        end
+      end
+
+      list.sort
+    end
+
+    def fetch package
+      File.delete "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
+
+      open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
+        File.open("#{package}.tar.gz", 'wb') do |local|
+          local.write(remote.read)
+        end
       end
     end
 
-    list.sort
-  end
+    def untar package
+      FileUtils.rm_r package if File.directory? package
 
-  # Downloads given +package+ into +dir+
-  #
-  #   fetch('awesome-git')
-  #
-  def fetch package
-    File.delete "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
+      Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
+    end
 
-    open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
-      File.open("#{package}.tar.gz", 'wb') do |local|
-        local.write(remote.read)
-      end
+    def json item
+      JSON.parse(open(item).read)
     end
   end
 
-  # Untars +package+
-  #
-  #   untar('awesome-git') #=> .tar.gz is automagically appended
-  #
-  def untar package
-    FileUtils.rm_r package if File.directory? package
+  class Opts
+    attr_accessor :cmd, :color
 
-    Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
+    def initialize
+      @args  = ARGV.empty? ? ['-h'] : ARGV
+      @color = true
+
+      parse!
+    end
+
+  private
+    def parse!
+      OptionParser.new do |o|
+        o.program_name, o.version, o.release = [:name, :version, :release].map { |key| PrInfo[key] }
+
+        o.separator 'Actions:'
+
+        o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
+          self.cmd = "download('#{d*"', '"}')"
+        end
+
+        o.on '-S', '--search PKG', 'search for a package' do |s|
+          self.cmd = "search('#{s}')"
+        end
+
+        o.on '-U', '--upgrade', 'check the AUR for upgrades' do
+          self.cmd = 'check_upgrade'
+        end
+
+        o.separator 'Optional:'
+
+        o.on '--[no-]color', "use colors? [#{self.color ? 'yes' : 'no'}]" do |c|
+          self.color = c
+        end
+      end.parse! @args
+    end
   end
-
-  # Parse +item+ through JSON
-  #
-  #   json('http://foo.bar')
-  #
-  def json item
-    JSON.parse(open(item).read)
-  end
-end
-
-class Opts
-  attr_accessor :cmd, :color
-
-  def initialize
-    @args  = ARGV.empty? ? ['-h'] : ARGV
-    @color = true
-
-    parse!
-  end
-
-private
-  def parse!
-    OptionParser.new do |o|
-      o.program_name, o.version, o.release = [:name, :version, :release].map { |key| PrInfo[key] }
-
-      o.separator 'Actions:'
-
-      o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
-        self.cmd = "download('#{d*"', '"}')"
-      end
-
-      o.on '-S', '--search PKG', 'search for a package' do |s|
-        self.cmd = "search('#{s}')"
-      end
-
-      o.on '-U', '--upgrade', 'check the AUR for upgrades' do
-        self.cmd = 'check_upgrade'
-      end
-
-      o.separator 'Optional:'
-
-      o.on '--[no-]color', "use colors? [#{self.color ? 'yes' : 'no'}]" do |c|
-        self.color = c
-      end
-    end.parse! @args
-  end
-end
-
 end
 
 at_exit do
