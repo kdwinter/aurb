@@ -73,7 +73,7 @@ class Aur
     if answer =~ /^y|yes$/i
       packages.each do |package|
         list(package).each do |names|
-          if names[0] == package
+          if names[:name] == package
             Dir.chdir(@config.dir) do
               fetch package
               untar package
@@ -91,7 +91,7 @@ class Aur
   #
   def search package
     list(package).each do |names|
-      result = json(@config.info % names[1])
+      result = json(@config.info % names[:id])
 
       unless result['type'] == 'error'
         result = result['results']
@@ -148,7 +148,7 @@ private
 
     unless info['type'] == 'error'
       info['results'].each do |result|
-        list << [result['Name'], result['ID']] unless in_sync? result['Name']
+        list << {:name => result['Name'], :id => result['ID']} unless in_sync? result['Name']
       end
     end
 
