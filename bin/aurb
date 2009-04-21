@@ -65,7 +65,7 @@ class Aur
   #   download('awesome-git', 'aurb')
   #
   def download *packages
-    packages = packages[0] if packages[0].is_a? Array
+    packages = packages.first if packages.first.is_a? Array
 
     puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
     answer = Readline::readline "Proceed? [y/n] "
@@ -73,7 +73,7 @@ class Aur
     if answer =~ /^y|yes$/i
       packages.each do |package|
         list(package).each do |names|
-          if names[:name] == package
+          if names.first == package
             Dir.chdir(@config.dir) do
               fetch package
               untar package
@@ -91,7 +91,7 @@ class Aur
   #
   def search package
     list(package).each do |names|
-      result = json(@config.info % names[:id])
+      result = json(@config.info % names.last)
 
       unless result['type'] == 'error'
         result = result['results']
@@ -136,7 +136,7 @@ private
   #   in_sync?('awesome-git')
   #
   def in_sync? package
-    !!Dir["/var/lib/pacman/sync/community/#{package}-*"][0]
+    !!Dir["/var/lib/pacman/sync/community/#{package}-*"].first
   end
 
   # Returns a list of search results found for +package+
@@ -148,7 +148,7 @@ private
 
     unless info['type'] == 'error'
       info['results'].each do |result|
-        list << {:name => result['Name'], :id => result['ID']} unless in_sync? result['Name']
+        list << [result['Name'], result['ID']] unless in_sync? result['Name']
       end
     end
 
@@ -222,7 +222,7 @@ private
       o.on '--[no-]color', "use colors? [#{self.color ? 'yes' : 'no'}]" do |c|
         self.color = c
       end
-    end.parse! self.args
+    end.parse! @args
   end
 end
 
