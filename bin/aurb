@@ -15,10 +15,10 @@ module Aurb
   Config = Struct.new :search, :info, :dir
 
   def self.aur
-    @aur ||= Aur.new Config.new                              \
-      'http://aur.archlinux.org/rpc.php?type=search&arg=%s', \ # :search
-      'http://aur.archlinux.org/rpc.php?type=info&arg=%s',   \ # :info
-      Pathname.new(DlPath).realpath                            # :dir
+    @aur ||= Aur.new Config.new \
+      'http://aur.archlinux.org/rpc.php?type=search&arg=%s', # :search
+      'http://aur.archlinux.org/rpc.php?type=info&arg=%s',   # :info
+      Pathname.new(DlPath).realpath                          # :dir
   end
 
   module Util
@@ -136,13 +136,11 @@ module Aurb
     end
 
     def untar package
-      FileUtils.rm_r package if File.directory? package || File.exists? package
+      FileUtils.rm_r package if File.directory? package
 
       Archive::Tar::Minitar.unpack \
-      (
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
         Dir.pwd
-      )
     end
 
     def json item
