@@ -2,7 +2,7 @@
 #  Author:: Gigamo &lt;gigamo@gmail.com&gt;
 # License:: GPL
 #
-%w[optparse pathname fileutils readline rubygems cgi json zlib open-uri 
+%w[optparse pathname fileutils readline zlib open-uri rubygems cgi json 
    facets/ansicode facets/minitar facets/version].each { |lib| require lib }
 
 module Aurb
@@ -30,10 +30,11 @@ module Aurb
     include Aurb::Util
 
     def initialize
-      @config = Config.new(
-        'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
-        'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
-        Pathname.new(DlPath).realpath
+      @config = Config.new \
+      (
+        'http://aur.archlinux.org/rpc.php?type=search&arg=%s', # :search
+        'http://aur.archlinux.org/rpc.php?type=info&arg=%s',   # :info
+        Pathname.new(DlPath).realpath                          # :dir
       )
       @opts = Opts.new
     end
@@ -61,7 +62,8 @@ module Aurb
                 fetch package
                 untar package
               end
-              puts "(#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
+              puts "(#{ansi "#{packages.index(package) + 1}", :green}/" + 
+                "#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
             end
           end
         end
@@ -78,14 +80,16 @@ module Aurb
           if package.any? do |pac| # Check both name and description for matches
             (result['Name'].include? pac) || (result['Description'].include? pac)
           end
-            puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] #{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
+            puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
+              "#{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
           end
         end
       end
     end
 
     def check_upgrade
-      raise 'Pacman binary was not found. Are you running Arch Linux?' if `which pacman`.strip == ''
+      raise 'Pacman binary was not found. ' + 
+        Are you running Arch Linux?' if `which pacman`.strip == ''
       upgradable = []
 
       puts ":: Searching for upgrades. This may take a while..."
@@ -96,7 +100,7 @@ module Aurb
         unless result['type'] == 'error'
           result = result['results']
 
-          if result.is_a?(Hash) && VersionNumber.new(result['Version']) > VersionNumber.new(version)
+          if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << name
             puts "  #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
@@ -136,7 +140,11 @@ module Aurb
     def untar package
       FileUtils.rm_r package if File.directory? package
 
-      Archive::Tar::Minitar.unpack(Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')), Dir.pwd)
+      Archive::Tar::Minitar.unpack \
+      (
+        Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
+        Dir.pwd
+      )
     end
 
     def json item
@@ -157,7 +165,8 @@ module Aurb
   private
     def parse!
       OptionParser.new do |o|
-        o.program_name, o.version, o.release = [:name, :version, :release].map { |key| PrInfo[key] }
+        o.program_name, o.version, o.release = \
+          [:name, :version, :release].map { |key| PrInfo[key] }
 
         o.separator 'Actions:'
 
