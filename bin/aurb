@@ -14,16 +14,15 @@ module Aurb
   PrInfo = {:name => 'Aurb', :version => [0, 6, 2].join('.'), :release => '2009-04-19'}
   Config = Struct.new :search, :info, :dir
 
-  def aur
+  def self.aur
     @aur ||= Aur.new
   end
-  module_function :aur
 
   module Util
     def ansi text, effect
-      (@opts.color ? ANSICode.send(effect.to_sym) : '') << text << ANSICode.clear
+      text = ANSICode.send(effect.to_sym) << text << ANSICode.clear if @opts.color
+      text
     end
-    module_function :ansi
   end
 
   class Aur
@@ -58,12 +57,12 @@ module Aurb
         packages.each do |package|
           list(package).each do |names|
             if names.first == package
-              Dir.chdir(@config.dir) do
+              FileUtils.cd @config.dir do
                 fetch package
                 untar package
               end
               puts "(#{ansi "#{packages.index(package) + 1}", :green}/" + 
-                "#{ansi "#{packages.length}", :yellow}) downloaded #{package}"
+                "#{ansi "#{packages.length}", :green}) downloaded #{package}"
             end
           end
         end
@@ -89,10 +88,10 @@ module Aurb
 
     def check_upgrade
       raise 'Pacman binary was not found. ' + 
-        Are you running Arch Linux?' if `which pacman`.strip == ''
+        'Are you running Arch Linux?' if `which pacman`.strip == ''
       upgradable = []
 
-      puts ":: Searching for upgrades. This may take a while..."
+      puts ':: Searching for updates. This may take a while...'
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
         result = json(@config.info % name)
@@ -101,8 +100,9 @@ module Aurb
           result = result['results']
 
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-            upgradable << name
-            puts "  #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+            upgradable << result['Name']
+            puts "  #{result['Name']}: #{ansi version, :red} => " +
+              "#{ansi result['Version'], :green}"
           end
         end
       end
@@ -128,17 +128,17 @@ module Aurb
     end
 
     def fetch package
-      File.delete "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
+      FileUtils.rm "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
 
       open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
         File.open("#{package}.tar.gz", 'wb') do |local|
-          local.write(remote.read)
+          local.write remote.read
         end
       end
     end
 
     def untar package
-      FileUtils.rm_r package if File.directory? package
+      FileUtils.rm_r package if File.directory? package || File.exists? package
 
       Archive::Tar::Minitar.unpack \
       (
@@ -156,7 +156,7 @@ module Aurb
     attr_reader :cmd, :color
 
     def initialize
-      @args  = ARGV.empty? ? ['-h'] : ARGV
+      @@args = ARGV.empty? ? ['-h'] : ARGV
       @color = true
 
       parse!
@@ -166,9 +166,9 @@ module Aurb
     def parse!
       OptionParser.new do |o|
         o.program_name, o.version, o.release = \
-          [:name, :version, :release].map { |key| PrInfo[key] }
+          [:name, :version, :release].map {|key| PrInfo[key]}
 
-        o.separator 'Actions:'
+        o.separator 'Actions (Required):'
 
         o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
           @cmd = "download('#{d*"', '"}')"
@@ -187,7 +187,7 @@ module Aurb
         o.on '--[no-]color', "use colors? [#{@color ? 'yes' : 'no'}]" do |c|
           @color = c
         end
-      end.parse! @args
+      end.parse! @@args
     end
   end
 end
