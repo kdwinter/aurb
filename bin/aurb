@@ -48,7 +48,7 @@ module Aurb
       packages = packages.first if packages.first.is_a? Array
 
       puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
-      answer = ask("Proceed? [Y/n] ") {|q| q.readline = true; q.default = 'y'}
+      answer = ask("Proceed? ") {|q| q.readline = true; q.default = 'y'}
 
       if answer =~ /^y|yes$/i
         packages.each do |package|
