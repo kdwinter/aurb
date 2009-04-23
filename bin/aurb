@@ -8,7 +8,7 @@
 module Aurb
 
 # Path where PKGBUILDS will get saved to
-  DlPath = File.join File.expand_path('~'), 'abs'
+  DlPath = File.join ENV['HOME'], 'abs'
 
 # Program Info
   PrInfo = {:name => 'Aurb', :version => [0, 6, 3].join('.'), :release => '2009-04-23'}
