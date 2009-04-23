@@ -184,6 +184,9 @@ UPDATE
           @color = c
         end
       end.parse! @@args
+    rescue OptionParser::MissingArgument
+      say 'This action requires an argument!'
+      exit 1
     end
   end
 end
