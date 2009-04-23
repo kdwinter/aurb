@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'aurb'
-  s.version = '0.6.2'
-  s.date = %q{2009-04-19}
+  s.version = '0.6.3'
+  s.date = %q{2009-04-23}
   s.summary = %q{A simple AUR utility}
   s.email = %q{gigamo@gmail.com}
   s.homepage = %q{http://github.com/gigamo/aurb}
@@ -14,4 +14,5 @@ Gem::Specification.new do |s|
   s.files = ['bin/aurb', 'aurb.gemspec', 'README']
   s.add_dependency 'json'
   s.add_dependency 'facets'
+  s.add_dependency 'highline'
 end
