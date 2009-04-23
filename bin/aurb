@@ -37,7 +37,7 @@ module Aurb
 
     def start
       trap :INT do
-        puts "\nInterrupt signal received\n\n"
+        say "\nInterrupt signal received\n\n"
         exit 0
       end
 
@@ -47,7 +47,7 @@ module Aurb
     def download *packages
       packages = packages.first if packages.first.is_a? Array
 
-      puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
+      say "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
       answer = ask("Proceed? ") {|q| q.readline = true; q.default = 'y'}
 
       if answer =~ /^y|yes$/i
@@ -58,7 +58,7 @@ module Aurb
                 fetch package
                 untar package
               end
-              puts <<DOWNLOAD
+              say <<DOWNLOAD
 (#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :green}) \
 #{in_sync?(package) ? "did NOT download #{package}" : "downloaded #{package}"}
 DOWNLOAD
@@ -79,7 +79,7 @@ DOWNLOAD
           if package.any? do |pac| # Check both name and description for matches
             result['Name'].include?(pac) || result['Description'].include?(pac)
           end
-            puts <<SEARCH
+            say <<SEARCH
 [#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
 #{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}
 SEARCH
@@ -92,7 +92,7 @@ SEARCH
       raise 'Pacman binary not found' if `which pacman`.strip == ''
       upgradable = []
 
-      puts 'Searching for updates'
+      say 'Searching for updates'
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
         result = json(@config[:info][name])
@@ -103,14 +103,14 @@ SEARCH
 
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << result['Name']
-            puts <<UPDATE
+            say <<UPDATE
   #{result['Name']}: #{ansi version, :red} => #{ansi result['Version'], :green}
 UPDATE
           end
         end
       end
 
-      upgradable.empty? ? puts('Nothing to update') : download(upgradable)
+      upgradable.empty? ? say('Nothing to update') : download(upgradable)
     end
 
   private
