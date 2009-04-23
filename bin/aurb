@@ -61,10 +61,10 @@ module Aurb
                 fetch package
                 untar package
               end
-              say <<DOWNLOAD
+              say <<-D
 (#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :green}) \
 #{in_sync?(package) ? "did NOT download #{package}" : "downloaded #{package}"}
-DOWNLOAD
+              D
             end
           end
         end
@@ -82,10 +82,10 @@ DOWNLOAD
           if package.any? do |pac| # Check both name and description for matches
             result['Name'].include?(pac) || result['Description'].include?(pac)
           end
-            say <<SEARCH
+            say <<-S
 [#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
 #{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}
-SEARCH
+            S
           end
         end
       end
@@ -106,9 +106,9 @@ SEARCH
 
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << result['Name']
-            say <<UPDATE
+            say <<-U
   #{result['Name']}: #{ansi version, :red} => #{ansi result['Version'], :green}
-UPDATE
+            U
           end
         end
       end
