@@ -45,10 +45,13 @@ module Aurb
     end
 
     def download *packages
-      packages = packages.first if packages.first.is_a? Array
+      packages = packages.first if packages.first.is_a?(Array)
 
       say "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
-      answer = ask("Proceed? ") {|q| q.readline = true; q.default = 'y'}
+      answer = ask "Proceed? " do |q|
+        q.readline = true
+        q.default = 'y'
+      end
 
       if answer =~ /^y|yes$/i
         packages.each do |package|
