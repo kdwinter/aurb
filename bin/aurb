@@ -16,8 +16,8 @@ module Aurb
   def self.aur
     @aur ||= Aur.new \
       :search => proc {|t| "http://aur.archlinux.org/rpc.php?type=search&arg=#{t}"},
-        :info => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
-        :path => Pathname.new(DlPath).realpath
+      :info   => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
+      :path   => Pathname.new(DlPath).realpath
   end
 
   module Util
