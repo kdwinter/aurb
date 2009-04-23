@@ -15,8 +15,8 @@ module Aurb
 
   def self.aur
     @aur ||= Aur.new \
-      :search => 'http://aur.archlinux.org/rpc.php?type=search&arg=%s',
-        :info => 'http://aur.archlinux.org/rpc.php?type=info&arg=%s',
+      :search => proc {|t| "http://aur.archlinux.org/rpc.php?type=search&arg=#{t}"},
+        :info => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
         :path => Pathname.new(DlPath).realpath
   end
 
@@ -70,14 +70,14 @@ DOWNLOAD
 
     def search package
       list(package).each do |names|
-        result = json(@config[:info] % names.last)
+        result = json(@config[:info][names.last])
 
         unless result['type'] == 'error'
           result = result['results']
           next if in_sync? result['Name']
 
           if package.any? do |pac| # Check both name and description for matches
-            (result['Name'].include? pac) || (result['Description'].include? pac)
+            result['Name'].include?(pac) || result['Description'].include?(pac)
           end
             puts <<SEARCH
 [#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
@@ -89,13 +89,13 @@ SEARCH
     end
 
     def check_upgrade
-      raise 'Pacman binary was not found' if `which pacman`.strip == ''
+      raise 'Pacman binary not found' if `which pacman`.strip == ''
       upgradable = []
 
-      puts ':: Searching for updates. This may take a while...'
+      puts 'Searching for updates'
       `pacman -Qm`.each_line do |line|
         name, version = line.chomp.split
-        result = json(@config[:info] % name)
+        result = json(@config[:info][name])
 
         unless result['type'] == 'error'
           result = result['results']
@@ -110,7 +110,7 @@ UPDATE
         end
       end
 
-      upgradable.empty? ? puts(':: Everything up to date') : download(upgradable)
+      upgradable.empty? ? puts('Nothing to update') : download(upgradable)
     end
 
   private
@@ -119,7 +119,7 @@ UPDATE
     end
 
     def list package
-      info, list = json(@config[:search] % CGI::escape(package)), []
+      info, list = json(@config[:search][CGI::escape(package)]), []
 
       unless info['type'] == 'error'
         info['results'].each do |result|
