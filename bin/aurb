@@ -20,13 +20,6 @@ module Aurb
       :path   => Pathname.new(DlPath).realpath
   end
 
-  module Util
-    def ansi text, effect
-      text = ANSICode.send(effect.to_sym) << text << ANSICode.clear if @opts.color
-      text
-    end
-  end
-
   class Aur
     include Aurb::Util
 
@@ -150,6 +143,13 @@ UPDATE
 
     def json item
       JSON.parse(open(item).read)
+    end
+  end
+
+  module Util
+    def ansi text, effect
+      text = ANSICode.send(effect.to_sym) << text << ANSICode.clear if @opts.color
+      text
     end
   end
 
