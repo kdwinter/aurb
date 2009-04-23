@@ -2,7 +2,7 @@
 #  Author:: Gigamo &lt;gigamo@gmail.com&gt;
 # License:: Do whatever you want
 #
-%w[optparse pathname fileutils readline zlib open-uri rubygems cgi json 
+%w[optparse pathname fileutils zlib open-uri rubygems cgi json highline/import
    facets/ansicode facets/minitar facets/version].each { |lib| require lib }
 
 module Aurb
@@ -11,7 +11,7 @@ module Aurb
   DlPath = File.join File.expand_path('~'), 'abs'
 
 # Program Info
-  PrInfo = {:name => 'Aurb', :version => [0, 6, 2].join('.'), :release => '2009-04-19'}
+  PrInfo = {:name => 'Aurb', :version => [0, 6, 3].join('.'), :release => '2009-04-23'}
 
   def self.aur
     @aur ||= Aur.new \
@@ -48,7 +48,7 @@ module Aurb
       packages = packages.first if packages.first.is_a? Array
 
       puts "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
-      answer = Readline::readline "Proceed? [y/n] "
+      answer = ask("Proceed? [Y/n] ") {|q| q.readline = true; q.default = 'y'}
 
       if answer =~ /^y|yes$/i
         packages.each do |package|
