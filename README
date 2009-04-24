@@ -2,7 +2,7 @@
 
 See <tt>aurb --help</tt> for a full list of commands.
 
-= Overview
+=== Overview
 
 *--upgrade*:: Searches the AUR for upgrades to local packages that don't exist in any official repository
 *--download*:: Downloads your specified package from the AUR and untars it
