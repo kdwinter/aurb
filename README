@@ -5,7 +5,7 @@ See <tt>aurb --help</tt> for a full list of commands.
 = Overview
 
 *--upgrade*:: Searches the AUR for upgrades to local packages that don't exist in any official repository
-*--download*:: Downloads a tarball from the AUR containing necessary files (PKGBUILD and optional *.install) and untars it
+*--download*:: Downloads your specified package from the AUR and untars it
 *--search*:: Searches the AUR for a specified name or description
 
 == Installation
@@ -28,4 +28,9 @@ Or if you prefer RubyGems:
 There is also a github gem available:
 
   % gem sources -a http://gems.github.com/ (you only need to do this once)
-  # gem install gigamo-aurb --
+  # gem install gigamo-aurb
+
+== Todo
+
+* Add a --save-to option?
+* Automatically build (and install) the package after download?
