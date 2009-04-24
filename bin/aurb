@@ -1,13 +1,19 @@
 #!/usr/bin/env ruby
 #  Author:: Gigamo &lt;gigamo@gmail.com&gt;
-# License:: Do whatever you want
+#                   _
+#                  | |
+#   __ _ _   _ _ __| |__
+#  / _` | | | | '__| '_ \
+# | (_| | |_| | |  | |_) |
+#  \__,_|\__,_|_|  |_.__/
 #
+# A Ruby AUR (Arch User Repository) utility.
+#
+
 %w[optparse pathname fileutils zlib open-uri rubygems cgi json highline/import
    facets/ansicode facets/minitar facets/version].each {|lib| require lib}
 
 module Aurb
-  include Enumerable
-
 # Path where PKGBUILDS will get saved to
   DlPath = File.join ENV['HOME'], 'abs'
 
