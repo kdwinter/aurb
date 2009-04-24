@@ -10,17 +10,18 @@ See <tt>aurb --help</tt> for a full list of commands.
 
 == Installation
 
-See <tt>ruby setup.rb --help</tt>.
-
 Quick and dirty:
 
   # ruby setup.rb all
 
-You can install it in ~/bin:
+Or you can install it in ~/bin:
 
-  % ruby setup.rb config --bindir=/home/username/bin && ruby setup.rb install
+  % ruby setup.rb config --bindir=$HOME/bin
+  % ruby setup.rb install
 
-Or if you prefer RubyGems:
+For more information about setup.rb, ee <tt>ruby setup.rb --help</tt>.
+
+If you prefer RubyGems:
 
   % gem build aurb.gemspec
   # gem install aurb-0.6.3.gem
@@ -34,3 +35,4 @@ There is also a github gem available:
 
 * Add a --save-to option?
 * Automatically build (and install) the package after download?
+* Add dependency checking/downloading?
