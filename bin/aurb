@@ -172,10 +172,7 @@ module Aurb
     attr_reader :cmd, :config, :color
 
     def initialize
-      @@args  = ARGV.any? ? ARGV : ['-h']
-      @config = {}
-      @color  = true
-
+      @@args, @config, @color  = (ARGV.any? ? ARGV : ['-h']), {}, true
     # Parse zeh ARGV!
       parse!
     end
