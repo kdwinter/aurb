@@ -43,10 +43,10 @@ module Aurb
 
     def yes_or_no? question
       ask(question, lambda {|yn| yn.downcase[0] == ?y}) do |q|
-        q.readline                 = true
-        q.default                  = 'y'
-        q.validate                 = /\Ay(?:es)?|no?\Z/i
-        q.responses[:not_valid]    = 'Yes or no, please.'
+        q.readline              = true
+        q.default               = 'y'
+        q.validate              = /\Ay(?:es)?|no?\Z/i
+        q.responses[:not_valid] = 'Yes or no, please.'
       end
     end
   end
@@ -54,15 +54,13 @@ module Aurb
   class Aur
     include Aurb::Util
 
-    def initialize config = {}
+    def initialize config
       @opts   = Opts.new
-      @config = config.merge(@opts.config)
+      @config = config.merge @opts.config
     end
 
     def start
-      trap :INT do
-        die "\nInterrupt signal received\n\n", 0
-      end
+      trap(:INT) {die "\nInterrupt signal received\n\n", 0}
 
       instance_eval @opts.cmd
     end
