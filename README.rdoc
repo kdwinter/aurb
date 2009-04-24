@@ -24,7 +24,7 @@ For more information about setup.rb, see <tt>ruby setup.rb --help</tt>.
 If you prefer RubyGems:
 
   % gem build aurb.gemspec
-  # gem install aurb-0.7.1.gem
+  # gem install aurb-0.7.2.gem
 
 There is also a github gem available:
 
