@@ -92,7 +92,6 @@ module Aurb
     end
 
     def check_upgrade
-      raise 'Pacman binary not found' if `which pacman`.strip == ''
       upgradable = []
 
       say 'Searching for updates'
@@ -144,7 +143,8 @@ module Aurb
     end
 
     def untar package
-      FileUtils.rm_r package if File.directory? package
+      raise "#{package}.tar.gz was not found." unless File.exists? "#{package}.tar.gz"
+      FileUtils.rmdir package if File.directory? package
 
       Archive::Tar::Minitar.unpack \
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
@@ -152,7 +152,7 @@ module Aurb
     end
 
     def json item
-      JSON.parse(open(item).read)
+      JSON.parse open(item).read
     end
   end
 
@@ -160,7 +160,7 @@ module Aurb
     attr_reader :cmd, :color
 
     def initialize
-      @@args = ARGV.empty? ? ['-h'] : ARGV
+      @@args = ARGV.any? ? ARGV : ['-h']
       @color = true
 
       parse!
@@ -187,8 +187,8 @@ module Aurb
           @color = c
         end
       end.parse! @@args
-    rescue OptionParser::MissingArgument
-      say 'This action requires an argument!'
+    rescue OptionParser::ParseError
+      say 'I.. I think you broke it...'
       exit 1
     end
   end
