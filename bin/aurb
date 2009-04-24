@@ -55,8 +55,7 @@ module Aurb
     include Aurb::Util
 
     def initialize config
-      @opts   = Opts.new
-      @config = config.merge @opts.config
+      @opts, @config = Opts.new, config.merge(@opts.config)
     end
 
     def start
