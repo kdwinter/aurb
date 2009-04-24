@@ -4,9 +4,9 @@ See <tt>aurb --help</tt> for a full list of commands.
 
 === Overview
 
-*upgrade*:: Searches the AUR for upgrades to local packages that don't exist in any official repository
-*download*:: Downloads your specified package from the AUR and untars it
-*search*:: Searches the AUR for a specified name or description
+<b>--upgrade</b>:: Searches the AUR for upgrades to local packages that don't exist in any official repository
+<b>--download</b>:: Downloads your specified package from the AUR and untars it
+<b>--search</b>:: Searches the AUR for a specified name or description
 
 == Installation
 
@@ -37,6 +37,6 @@ Aurb requires the 'facets', 'json' and 'highline' rubygems to be installed.
 
 == Todo
 
-* Add a --save-to option?
+* Add a <tt>--save-to</tt> option?
 * Automatically build (and install) the package after download?
 * Add dependency checking/downloading?
