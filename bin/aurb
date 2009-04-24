@@ -55,8 +55,8 @@ module Aurb
     include Aurb::Util
 
     def initialize config = {}
-      @config = config
-      @opts = Opts.new
+      @opts   = Opts.new
+      @config = config.merge(@opts.config)
     end
 
     def start
@@ -172,16 +172,19 @@ module Aurb
   end
 
   class Opts
-    attr_reader :cmd, :color
+    attr_reader :cmd, :config, :color
 
     def initialize
-      @@args = ARGV.any? ? ARGV : ['-h']
-      @color = true
+      @@args  = ARGV.any? ? ARGV : ['-h']
+      @config = {}
+      @color  = true
 
       parse!
     end
 
   private
+    include Aurb::Util
+
     def parse!
       OptionParser.new do |o|
         o.program_name, o.version, o.release = \
@@ -198,12 +201,19 @@ module Aurb
           @cmd = 'check_upgrade'
         end
         o.separator 'Optional:'
+        o.on '--save-to [PATH]', "download path [#{DlPath}]" do |d|
+          if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
+            @config[:path] = Pathname.new(d).realpath
+          else
+            die 'The path you specified doesn\'t exist'
+          end
+        end
         o.on '--[no-]color', "use colors? [#{@color ? 'yes' : 'no'}]" do |c|
           @color = c
         end
       end.parse! @@args
     rescue OptionParser::ParseError
-      Aurb::Util.die 'I.. I think you broke it...'
+      die 'I.. I think you broke it...'
     end
   end
 end
