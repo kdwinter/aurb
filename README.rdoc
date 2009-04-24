@@ -37,6 +37,5 @@ Aurb requires the 'facets', 'json' and 'highline' rubygems to be installed.
 
 == Todo
 
-* Add a <tt>--save-to</tt> option?
 * Automatically build (and install) the package after download?
 * Add dependency checking/downloading?
