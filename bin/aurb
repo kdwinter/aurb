@@ -3,9 +3,10 @@
 # License:: Do whatever you want
 #
 %w[optparse pathname fileutils zlib open-uri rubygems cgi json highline/import
-   facets/ansicode facets/minitar facets/version].each { |lib| require lib }
+   facets/ansicode facets/minitar facets/version].each {|lib| require lib}
 
 module Aurb
+  include Enumerable
 
 # Path where PKGBUILDS will get saved to
   DlPath = File.join ENV['HOME'], 'abs'
@@ -21,9 +22,24 @@ module Aurb
   end
 
   module Util
+    def die message, code = 1
+      say message
+      exit code.to_i
+    end
+    module_function :die
+
     def ansi text, effect
       text = ANSICode.send(effect.to_sym) << text << ANSICode.clear if @opts.color
       text
+    end
+
+    def yes_or_no? question
+      ask(question, lambda {|yn| yn.downcase[0] == ?y}) do |q|
+        q.readline                 = true
+        q.default                  = 'y'
+        q.validate                 = /\Ay(?:es)?|no?\Z/i
+        q.responses[:not_valid]    = 'Yes or no, please.'
+      end
     end
   end
 
@@ -37,8 +53,7 @@ module Aurb
 
     def start
       trap :INT do
-        say "\nInterrupt signal received\n\n"
-        exit 0
+        die "\nInterrupt signal received\n\n", 0
       end
 
       instance_eval @opts.cmd
@@ -47,13 +62,14 @@ module Aurb
     def download *packages
       packages = packages.first if packages.first.is_a?(Array)
 
-      say "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
-      answer = ask "Proceed? " do |q|
-        q.readline = true
-        q.default = 'y'
-      end
+    # Don't download a package if it's found in community
+      packages.delete_if {|pkg| in_sync?(pkg)}
+      die 'No package(s) to download. Possibly the package(s) you ' +
+        'specified was/were found in the community repository.' if packages.empty?
 
-      if answer =~ /^y|yes$/i
+      say "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
+
+      if yes_or_no? 'Proceed? '
         packages.each do |package|
           list(package).each do |names|
             if names.first == package
@@ -61,10 +77,7 @@ module Aurb
                 fetch package
                 untar package
               end
-              say <<-D
-(#{ansi "#{packages.index(package) + 1}", :green}/#{ansi "#{packages.length}", :green}) \
-#{in_sync?(package) ? "did NOT download #{package}" : "downloaded #{package}"}
-              D
+              say "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
             end
           end
         end
@@ -75,17 +88,13 @@ module Aurb
       list(package).each do |names|
         result = json(@config[:info][names.last])
 
-        unless result['type'] == 'error'
+        unless result['type'] =~ /error/
           result = result['results']
           next if in_sync? result['Name']
 
-          if package.any? do |pac| # Check both name and description for matches
-            result['Name'].include?(pac) || result['Description'].include?(pac)
-          end
-            say <<-S
-[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] \
-#{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}
-            S
+          if package.any? {|pac| (result['Name'] && result['Description']).include?(pac)}
+            say "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
+              "#{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
           end
         end
       end
@@ -99,20 +108,18 @@ module Aurb
         name, version = line.chomp.split
         result = json(@config[:info][name])
 
-        unless result['type'] == 'error'
+        unless result['type'] =~ /error/
           result = result['results']
           next if in_sync? result['Name']
 
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << result['Name']
-            say <<-U
-  #{result['Name']}: #{ansi version, :red} => #{ansi result['Version'], :green}
-            U
+            say " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
         end
       end
 
-      upgradable.empty? ? say('Nothing to update') : download(upgradable)
+      upgradable.any? ? download(upgradable) : say('Nothing to update')
     end
 
   private
@@ -123,7 +130,7 @@ module Aurb
     def list package
       info, list = json(@config[:search][CGI::escape(package)]), []
 
-      unless info['type'] == 'error'
+      unless info['type'] =~ /error/
         info['results'].each do |result|
           list << [result['Name'], result['ID']]
         end
@@ -143,8 +150,8 @@ module Aurb
     end
 
     def untar package
-      raise "#{package}.tar.gz was not found." unless File.exists? "#{package}.tar.gz"
-      FileUtils.rmdir package if File.directory? package
+      die "#{package}.tar.gz was not found." unless File.exists? "#{package}.tar.gz"
+      FileUtils.rm_r package if File.directory? package
 
       Archive::Tar::Minitar.unpack \
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
@@ -174,7 +181,7 @@ module Aurb
 
         o.separator 'Actions (Required):'
         o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
-          @cmd = "download('#{d*"', '"}')"
+          @cmd = "download('#{d*"', '"}')" # XXX: Very ugly. Makes instance_eval work though.
         end
         o.on '-S', '--search PKG', 'search for a package' do |s|
           @cmd = "search('#{s}')"
@@ -188,8 +195,7 @@ module Aurb
         end
       end.parse! @@args
     rescue OptionParser::ParseError
-      say 'I.. I think you broke it...'
-      exit 1
+      Aurb::Util.die 'I.. I think you broke it...'
     end
   end
 end
