@@ -19,7 +19,7 @@ Or you can install it in ~/bin:
   % ruby setup.rb config --bindir=$HOME/bin
   % ruby setup.rb install
 
-For more information about setup.rb, ee <tt>ruby setup.rb --help</tt>.
+For more information about setup.rb, see <tt>ruby setup.rb --help</tt>.
 
 If you prefer RubyGems:
 
