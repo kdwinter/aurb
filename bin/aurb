@@ -20,7 +20,7 @@ module Aurb
   DlPath = File.join ENV['HOME'], 'abs'
 
 # Program Info
-  PrInfo = {:name => 'Aurb', :version => [0, 6, 3].join('.'), :release => '2009-04-23'}
+  PrInfo = {:name => 'Aurb', :version => [0, 7, 1].join('.'), :release => '2009-04-24'}
 
   def self.aur
     @aur ||= Aur.new \
