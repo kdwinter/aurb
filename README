@@ -31,6 +31,10 @@ There is also a github gem available:
   % gem sources -a http://gems.github.com/ (you only need to do this once)
   # gem install gigamo-aurb
 
+=== Dependencies
+
+Aurb requires the 'facets', 'json' and 'highline' rubygems to be installed.
+
 == Todo
 
 * Add a --save-to option?
