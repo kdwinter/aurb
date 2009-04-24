@@ -55,7 +55,8 @@ module Aurb
     include Aurb::Util
 
     def initialize config
-      @opts, @config = Opts.new, config.merge(@opts.config)
+      @opts   = Opts.new
+      @config = config.merge(@opts.config)
     end
 
     def start
@@ -108,7 +109,7 @@ module Aurb
       upgradable = []
 
       say 'Searching for updates'
-      `pacman -Qm`.each_line do |line|
+      IO.popen('pacman -Qm') {|pm| pm.read}.each_line do |line|
         name, version = line.chomp.split
         result = json(@config[:info][name])
 
