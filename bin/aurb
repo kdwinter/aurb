@@ -97,7 +97,7 @@ module Aurb
           result = result['results']
           next if in_sync? result['Name']
 
-          if package.any? {|pac| (result['Name'] && result['Description']).include?(pac)}
+          if package.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
             say "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
               "#{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
           end
