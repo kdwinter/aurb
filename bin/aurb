@@ -44,7 +44,7 @@ module Aurb
     end
 
     def ansi text, effect
-      text = ANSICode.send(effect.to_sym) << text << ANSICode.clear if @opts.color
+      text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if @opts.color
       text
     end
 
