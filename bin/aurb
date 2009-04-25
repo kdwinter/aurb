@@ -73,13 +73,10 @@ module Aurb
 
     def download *packages
       packages = packages.first if packages.first.is_a?(Array)
-
-    # Don't download a package if it's found in community
       packages.delete_if {|pkg| in_sync?(pkg)}
       die 'No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository.' if packages.empty?
-
-      say "Targets (#{ansi "#{packages.length}", :magenta}): #{packages.join(', ')}"
+      say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
 
       if yes_or_no? 'Proceed? '
         packages.each do |package|
