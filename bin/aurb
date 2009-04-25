@@ -10,23 +10,26 @@
 #
 #
 # A Ruby AUR (Arch User Repository) utility.
+# Inspired by arson &lt;http://github.com/evaryont/arson/tree/master&gt;
 #
 
 %w[optparse pathname fileutils zlib open-uri rubygems cgi json highline/import
    facets/ansicode facets/minitar facets/version].each {|lib| require lib}
 
 module Aurb
-# Path where PKGBUILDS will get saved to
+# Default download path
   DlPath = File.join ENV['HOME'], 'abs'
 
 # Program Info
   PrInfo = {:name => 'Aurb', :version => [0, 7, 2].join('.'), :release => '2009-04-24'}
 
-  def self.aur
-    @aur ||= Aur.new \
-      :search => proc {|t| "http://aur.archlinux.org/rpc.php?type=search&arg=#{t}"},
-      :info   => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
-      :path   => Pathname.new(DlPath).realpath
+  class << self
+    def aur
+      @aur ||= Aur.new \
+        :search => proc {|t| "http://aur.archlinux.org/rpc.php?type=search&arg=#{t}"},
+        :info   => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
+        :path   => Pathname.new(DlPath).realpath
+    end
   end
 
   module Util
@@ -46,7 +49,7 @@ module Aurb
         q.readline              = true
         q.default               = 'y'
         q.validate              = /\Ay(?:es)?|no?\Z/i
-        q.responses[:not_valid] = 'Yes or no, please.'
+        q.responses[:not_valid] = 'Yes or no, please'
       end
     end
   end
@@ -109,7 +112,7 @@ module Aurb
       upgradable = []
 
       say 'Searching for updates'
-      IO.popen('pacman -Qm') {|pm| pm.read.lines}.each do |line|
+      IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
         name, version = line.chomp.split
         result = json(@config[:info][name])
 
