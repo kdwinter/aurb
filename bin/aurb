@@ -28,13 +28,14 @@ module Aurb
       @aur ||= Aur.new \
         :search => proc {|t| "http://aur.archlinux.org/rpc.php?type=search&arg=#{t}"},
         :info   => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
-        :path   => Pathname.new(DlPath).realpath
+        :path   => Pathname.new(DlPath).realpath,
+        :color  => true
     end
   end
 
   module Util
     def die message, code = 1
-      say message
+      say "#{ansi('Terminating:', :red, true)} #{message}"
       exit code.to_i
     end
     module_function :die
@@ -43,8 +44,9 @@ module Aurb
       trap(:INT) {die "\nInterrupt signal received\n\n", 0}
     end
 
-    def ansi text, effect
-      text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if @opts.color
+    def ansi text, effect, force = false
+      text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if \
+        @config[:color] || force
       text
     end
 
@@ -176,7 +178,7 @@ module Aurb
     attr_reader :cmd, :config, :color
 
     def initialize
-      @@args, @config, @color  = (ARGV.any? ? ARGV : ['-h']), {}, true
+      @@args, @config = (ARGV.any? ? ARGV : ['-h']), {}
     # Parse zeh ARGV!
       parse!
     end
@@ -204,11 +206,11 @@ module Aurb
           if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
             @config[:path] = Pathname.new(d).realpath
           else
-            die 'The path you specified doesn\'t exist'
+            die "The path you specified doesn't exist"
           end
         end
-        o.on '--[no-]color', "use colors? [#{@color ? 'yes' : 'no'}]" do |c|
-          @color = c
+        o.on '--[no-]color', 'use colors?' do |c|
+          @config[:color] = c
         end
       end.parse! @@args
     rescue OptionParser::ParseError
