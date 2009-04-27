@@ -28,8 +28,6 @@ module Aurb
       @aur ||= Aur.new \
         :search => proc {|t| "http://aur.archlinux.org/rpc.php?type=search&arg=#{t}"},
         :info   => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
-        :path   => Pathname.new(DlPath).realpath,
-        :color  => true
     end
   end
 
@@ -178,7 +176,8 @@ module Aurb
     attr_reader :cmd, :config
 
     def initialize
-      @@args, @config = (ARGV.any? ? ARGV : ['-h']), {}
+      @@args  = (ARGV.any? ? ARGV : ['-h'])
+      @config = {:path => Pathname.new(DlPath).realpath, :color => true}
     # Parse zeh ARGV!
       parse!
     end
@@ -209,7 +208,7 @@ module Aurb
             die "The path you specified doesn't exist"
           end
         end
-        o.on '--[no-]color', 'use colors?' do |c|
+        o.on '--[no-]color', "use colors? [#{@config[:color] ? 'yes' : 'no'}]" do |c|
           @config[:color] = c
         end
       end.parse! @@args
