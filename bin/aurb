@@ -13,7 +13,7 @@
 # Inspired by arson &lt;http://github.com/evaryont/arson/tree/master&gt;
 #
 
-%w[optparse pathname fileutils zlib open-uri rubygems cgi json highline/import
+%w[optparse pathname fileutils zlib open-uri rubygems json highline/import
    facets/ansicode facets/minitar facets/version].each {|lib| require lib}
 
 module Aurb
@@ -97,7 +97,7 @@ module Aurb
 
     def search package
       list(package).each do |names|
-        result = json(@config[:info][names.last])
+        result = json @config[:info][names.last]
 
         unless result['type'] =~ /error/
           result = result['results']
@@ -117,7 +117,7 @@ module Aurb
       say 'Searching for updates'
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
         name, version = line.chomp.split
-        result = json(@config[:info][name])
+        result = json @config[:info][name]
 
         unless result['type'] =~ /error/
           result = result['results']
@@ -139,7 +139,7 @@ module Aurb
     end
 
     def list package
-      info, list = json(@config[:search][CGI::escape(package)]), []
+      info, list = json(@config[:search][Uri.escape(package)]), []
 
       unless info['type'] =~ /error/
         info['results'].each do |result|
@@ -153,7 +153,7 @@ module Aurb
     def fetch package
       FileUtils.rm "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
 
-      open("http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz") do |remote|
+      open "http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz" do |remote|
         File.open("#{package}.tar.gz", 'wb') do |local|
           local.write remote.read
         end
@@ -161,7 +161,7 @@ module Aurb
     end
 
     def untar package
-      die "#{package}.tar.gz was not found." unless File.exists? "#{package}.tar.gz"
+      die "#{package}.tar.gz was not found" unless File.exists? "#{package}.tar.gz"
       FileUtils.rm_r package if File.directory? package
 
       Archive::Tar::Minitar.unpack \
@@ -175,7 +175,7 @@ module Aurb
   end
 
   class Opts
-    attr_reader :cmd, :config, :color
+    attr_reader :cmd, :config
 
     def initialize
       @@args, @config = (ARGV.any? ? ARGV : ['-h']), {}
