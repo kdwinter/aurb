@@ -26,15 +26,14 @@ module Aurb
   class << self
     def aur
       @aur ||= Aur.new \
-        :search => proc {|t| "http://aur.archlinux.org/rpc.php?type=search&arg=#{t}"},
-        :info   => proc {|t| "http://aur.archlinux.org/rpc.php?type=info&arg=#{t}"},
+        :rpc => proc {|t, a| "http://aur.archlinux.org/rpc.php?type=#{t}&arg=#{a}"}
     end
   end
 
   module Util
-    def die message, code = 1
-      say "#{ansi('Terminating:', :red, true)} #{message}"
-      exit code.to_i
+    def die message = $!.message, status = 1
+      say message.to_s
+      exit status.to_i
     end
     module_function :die
 
@@ -42,9 +41,12 @@ module Aurb
       trap(:INT) {die "\nInterrupt signal received\n\n", 0}
     end
 
-    def ansi text, effect, force = false
-      text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if \
-        @config[:color] || force
+    def realpath path
+      Pathname.new(path).realpath
+    end
+
+    def ansi text, effect
+      text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if @config[:color]
       text
     end
 
@@ -75,27 +77,28 @@ module Aurb
       packages = packages.first if packages.first.is_a?(Array)
       packages.delete_if {|pkg| in_sync?(pkg)}
       die 'No package(s) to download. Possibly the package(s) you ' +
-        'specified was/were found in the community repository.' if packages.empty?
+        'specified was/were found in the community repository?' if packages.empty?
       say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
 
       if yes_or_no? 'Proceed? '
         packages.each do |package|
-          list(package).each do |names|
-            if names.first == package
-              FileUtils.cd @config[:path] do
-                fetch package
-                untar package
-              end
-              say "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
+          FileUtils.cd @config[:path] do
+            begin
+              fetch package
+              untar package
+            rescue OpenURI::HTTPError
+              say "Something went wrong downloading '#{package}'. Are you sure it exists?"
+              package == packages.last ? exit : next
             end
           end
+          say "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
         end
       end
     end
 
     def search package
       list(package).each do |names|
-        result = json @config[:info][names.last]
+        result = json @config[:rpc]['info', names.last]
 
         unless result['type'] =~ /error/
           result = result['results']
@@ -103,7 +106,7 @@ module Aurb
 
           if package.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
             say "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
-              "#{ansi result['Name'], :blue} (#{result['Version']}): #{result['Description']}"
+              "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}"
           end
         end
       end
@@ -115,7 +118,7 @@ module Aurb
       say 'Searching for updates'
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
         name, version = line.chomp.split
-        result = json @config[:info][name]
+        result = json @config[:rpc]['info', name]
 
         unless result['type'] =~ /error/
           result = result['results']
@@ -137,7 +140,7 @@ module Aurb
     end
 
     def list package
-      info, list = json(@config[:search][URI.escape(package)]), []
+      info, list = json(@config[:rpc]['search', URI.escape(package)]), []
 
       unless info['type'] =~ /error/
         info['results'].each do |result|
@@ -176,8 +179,8 @@ module Aurb
     attr_reader :cmd, :config
 
     def initialize
-      @@args  = (ARGV.any? ? ARGV : ['-h'])
-      @config = {:path => Pathname.new(DlPath).realpath, :color => true}
+      @@args  = ARGV.any? ? ARGV : ['-h']
+      @config = {:path => realpath(DlPath), :color => true}
     # Parse zeh ARGV!
       parse!
     end
@@ -191,8 +194,8 @@ module Aurb
           [:name, :version, :release].map {|key| PrInfo[key]}
 
         o.separator 'Actions (Required):'
-        o.on '-D', '--download P1,P2,...', Array, 'download package(s)' do |d|
-          @cmd = "download('#{d*"', '"}')" # XXX: Very ugly. Makes instance_eval work though.
+        o.on '-D', '--download PKG1,PKG2,...', Array, 'download package(s)' do |d|
+          @cmd = "download('#{d*"', '"}')" # XXX: Ugly! Makes instance_eval work though.
         end
         o.on '-S', '--search PKG', 'search for a package' do |s|
           @cmd = "search('#{s}')"
@@ -201,9 +204,9 @@ module Aurb
           @cmd = 'check_upgrade'
         end
         o.separator 'Optional:'
-        o.on '--save-to [PATH]', "download path [#{DlPath}]" do |d|
+        o.on '--path [PATH]', "download path [#{DlPath}]" do |d|
           if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
-            @config[:path] = Pathname.new(d).realpath
+            @config[:path] = realpath(d)
           else
             die "The path you specified doesn't exist"
           end
@@ -213,7 +216,7 @@ module Aurb
         end
       end.parse! @@args
     rescue OptionParser::ParseError
-      die 'I.. I think you broke it...'
+      die
     end
   end
 end
