@@ -31,14 +31,8 @@ module Aurb
   end
 
   module Util
-    def die message = $!.message, status = 1
-      say message.to_s
-      exit status.to_i
-    end
-    module_function :die
-
     def set_trap
-      trap(:INT) {die "\nInterrupt signal received\n\n", 0}
+      trap(:INT) {abort "\nInterrupt signal received\n\n"}
     end
 
     def realpath path
@@ -76,7 +70,7 @@ module Aurb
     def download *packages
       packages = packages.first if packages.first.is_a?(Array)
       packages.delete_if {|pkg| in_sync?(pkg)}
-      die 'No package(s) to download. Possibly the package(s) you ' +
+      abort 'No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
       say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
 
@@ -162,7 +156,7 @@ module Aurb
     end
 
     def untar package
-      die "#{package}.tar.gz was not found" unless File.exists? "#{package}.tar.gz"
+      abort "#{package}.tar.gz was not found" unless File.exists? "#{package}.tar.gz"
       FileUtils.rm_r package if File.directory? package
 
       Archive::Tar::Minitar.unpack \
@@ -206,17 +200,17 @@ module Aurb
         o.separator 'Optional:'
         o.on '--path [PATH]', "download path [#{DlPath}]" do |d|
           if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
-            @config[:path] = realpath(d)
+            @config[:path] ||= realpath(d)
           else
-            die "The path you specified doesn't exist"
+            abort "The path you specified doesn't exist"
           end
         end
         o.on '--[no-]color', "use colors? [#{@config[:color] ? 'yes' : 'no'}]" do |c|
-          @config[:color] = c
+          @config[:color] ||= c
         end
       end.parse! @@args
     rescue OptionParser::ParseError
-      die
+      abort $!.message 
     end
   end
 end
