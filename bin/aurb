@@ -139,7 +139,7 @@ module Aurb
     end
 
     def list package
-      info, list = json(@config[:search][Uri.escape(package)]), []
+      info, list = json(@config[:search][URI.escape(package)]), []
 
       unless info['type'] =~ /error/
         info['results'].each do |result|
