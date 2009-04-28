@@ -202,7 +202,7 @@ module Aurb
           if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
             @config[:path] ||= realpath(d)
           else
-            abort "The path you specified doesn't exist"
+            warn "WARNING: The path you specified doesn't exist. Falling back to [#{DlPath}]\n"
           end
         end
         o.on '--[no-]color', "use colors? [#{@config[:color] ? 'yes' : 'no'}]" do |c|
