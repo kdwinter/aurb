@@ -45,7 +45,7 @@ module Aurb
     end
 
     def yes_or_no? question
-      ask(question, lambda {|yn| yn.downcase[0] == ?y}) do |q|
+      ask question, lambda {|yn| yn.downcase[0] == ?y} do |q|
         q.readline              = true
         q.default               = 'y'
         q.validate              = /\Ay(?:es)?|no?\Z/i
@@ -149,7 +149,7 @@ module Aurb
       FileUtils.rm "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
 
       open "http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz" do |remote|
-        File.open("#{package}.tar.gz", 'wb') do |local|
+        File.open "#{package}.tar.gz", 'wb' do |local|
           local.write remote.read
         end
       end
@@ -198,15 +198,15 @@ module Aurb
           @cmd = 'check_upgrade'
         end
         o.separator 'Optional:'
-        o.on '--path [PATH]', "download path [#{DlPath}]" do |d|
+        o.on '--path PATH', "download path [#{DlPath}]" do |d|
           if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
-            @config[:path] ||= realpath(d)
+            @config[:path] = realpath d
           else
             warn "WARNING: The path you specified doesn't exist. Falling back to [#{DlPath}]\n"
           end
         end
-        o.on '--[no-]color', "use colors? [#{@config[:color] ? 'yes' : 'no'}]" do |c|
-          @config[:color] ||= c
+        o.on '--[no-]color', "use colors?   [#{@config[:color] ? 'yes' : 'no'}]" do |c|
+          @config[:color] = c
         end
       end.parse! @@args
     rescue OptionParser::ParseError
