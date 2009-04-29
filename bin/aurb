@@ -20,7 +20,7 @@ module Aurb
 # Default download path
   DlPath = File.join ENV['HOME'], 'abs'
 
-# Program Info
+# Program info
   PrInfo = {:name => 'Aurb', :version => [0, 7, 2].join('.'), :release => '2009-04-24'}
 
   class << self
@@ -76,15 +76,16 @@ module Aurb
 
       if yes_or_no? 'Proceed? '
         packages.each do |package|
-          FileUtils.cd @config[:path] do
-            begin
+          begin
+            FileUtils.cd @config[:path] do
               fetch package
               untar package
-            rescue OpenURI::HTTPError
-              say "Something went wrong downloading '#{package}'. Are you sure it exists?"
-              package == packages.last ? exit : next
             end
+          rescue OpenURI::HTTPError
+            say "Something went wrong downloading '#{package}'. Are you sure it exists?"
+            package == packages.last ? exit : next
           end
+
           say "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
         end
       end
