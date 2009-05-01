@@ -39,10 +39,6 @@ module Aurb
       trap(:INT) {abort "\nInterrupt signal received\n\n"}
     end
 
-    def realpath path
-      Pathname.new(path).realpath
-    end
-
     def ansi text, effect
       text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if @config[:color]
       text
@@ -176,7 +172,7 @@ module Aurb
 
     def initialize
       @@args  = ARGV.any? ? ARGV : ['-h']
-      @config = {:path => realpath(DlPath), :color => true}
+      @config = {:path => DlPath, :color => true}
     # Parse zeh ARGV!
       parse!
     end
@@ -200,11 +196,11 @@ module Aurb
           @cmd = 'check_upgrade'
         end
         o.separator 'Optional:'
-        o.on '--path PATH', "download path [#{DlPath}]" do |d|
+        o.on '--path PATH', "download path [#{@config[:path]}]" do |d|
           if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
-            @config[:path] = realpath d
+            @config[:path] = Pathname.new(d).realpath
           else
-            warn "WARNING: The path you specified doesn't exist. Falling back to [#{DlPath}]\n"
+            warn "WARN: The path you specified doesn't exist. Falling back to [#{@config[:path]}]\n"
           end
         end
         o.on '--[no-]color', "use colors?   [#{@config[:color] ? 'yes' : 'no'}]" do |c|
