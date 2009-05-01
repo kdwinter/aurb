@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+#++
 # Copyright (C) 2009 Gigamo
 #
 # This program is free software; you can redistribute it and/or
@@ -14,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+#--
 # Inspired by arson (http://evaryont.github.com/arson)
 
 %w[optparse pathname fileutils zlib open-uri rubygems json highline/import
@@ -109,8 +110,8 @@ module Aurb
 
     def check_upgrade
       upgradable = []
-
       say 'Searching for updates'
+
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
         name, version = line.chomp.split
         result = json @config[:rpc]['info', name]
@@ -126,7 +127,7 @@ module Aurb
         end
       end
 
-      upgradable.any? ? download(upgradable) : say('Nothing to update')
+      upgradable.any? ? (say "\n"; download upgradable) : say('Nothing to update')
     end
 
   private
@@ -155,7 +156,8 @@ module Aurb
     end
 
     def untar package
-      abort "FATAL: #{package}.tar.gz not found for untar" unless File.exists? "#{package}.tar.gz"
+      abort "FATAL: #{package}.tar.gz not found for untar" \
+        unless File.exists? "#{package}.tar.gz" # This should never, ever happen. Just in case.
 
       Archive::Tar::Minitar.unpack \
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
