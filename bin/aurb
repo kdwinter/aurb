@@ -70,7 +70,7 @@ module Aurb
     def download *packages
       packages = packages.first if packages.first.is_a?(Array)
       packages.delete_if {|pkg| in_sync?(pkg)}
-      abort 'No package(s) to download. Possibly the package(s) you ' +
+      abort 'FATAL: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
       say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
 
@@ -155,7 +155,7 @@ module Aurb
     end
 
     def untar package
-      abort "#{package}.tar.gz was not found" unless File.exists? "#{package}.tar.gz"
+      abort "FATAL: #{package}.tar.gz not found for untar" unless File.exists? "#{package}.tar.gz"
 
       Archive::Tar::Minitar.unpack \
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
