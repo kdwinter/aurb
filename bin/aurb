@@ -184,6 +184,10 @@ module Aurb
     include Aurb::Util
 
     def parse!
+      if ARGV.empty?
+        abort 'No argument given. Try --help.'
+      end
+
       gopts = GetoptLong.new \
         ['--download', '-d',        GetoptLong::REQUIRED_ARGUMENT],
         ['--search', '-s',          GetoptLong::REQUIRED_ARGUMENT],
@@ -196,7 +200,7 @@ module Aurb
       gopts.each do |opt, arg|
         case opt
         when '--download' then @cmd            = "download '#{arg}'"
-        when '--search'   then @cmd            = "search '#{arg.join('+')}'"
+        when '--search'   then @cmd            = "search '#{arg}'"
         when '--upgrade'  then @cmd            = 'check_upgrade'
         when '--color'    then @config[:color] = !@config[:color]
         when '--path'     then
@@ -226,11 +230,7 @@ Optional:
 HELP
         end
       end
-
-      if ARGV.empty?
-        abort 'No argument given. Try --help.'
-      end
-    rescue GetoptLong::InvalidOption
+    rescue GetoptLong::Error
       abort $!.message
     end
   end
