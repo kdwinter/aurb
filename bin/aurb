@@ -181,8 +181,6 @@ module Aurb
     end
 
   private
-    include Aurb::Util
-
     def parse!
       if ARGV.empty?
         abort 'No argument given. Try --help.'
@@ -192,7 +190,7 @@ module Aurb
         ['--download', '-d',        GetoptLong::REQUIRED_ARGUMENT],
         ['--search', '-s',          GetoptLong::REQUIRED_ARGUMENT],
         ['--upgrade', '-u',         GetoptLong::NO_ARGUMENT],
-        ['--color',                 GetoptLong::NO_ARGUMENT],
+        ['--no-color',              GetoptLong::NO_ARGUMENT],
         ['--path',                  GetoptLong::OPTIONAL_ARGUMENT],
         ['--version', '-v',         GetoptLong::NO_ARGUMENT],
         ['--help', '-h',            GetoptLong::NO_ARGUMENT]
@@ -202,7 +200,7 @@ module Aurb
         when '--download' then @cmd            = "download '#{arg}'"
         when '--search'   then @cmd            = "search '#{arg}'"
         when '--upgrade'  then @cmd            = 'check_upgrade'
-        when '--color'    then @config[:color] = !@config[:color]
+        when '--no-color' then @config[:color] = !@config[:color]
         when '--path'     then
           if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
             @config[:path] = Pathname.new(arg).realpath
@@ -224,14 +222,13 @@ Options (Required):
   -u, --upgrade               Search for package updates.
 
 Optional:
-  --color                     Use colors? [#{@config[:color]}]
+  --no-color                  Disable colored output.
   --path [PATH]               Override the default save path. [#{@config[:path]}]
   --version                   Show version and exit.
 HELP
         end
       end
-    rescue GetoptLong::Error
-      abort $!.message
+    rescue GetoptLong::Error; exit 2
     end
   end
 end
@@ -247,7 +244,7 @@ __END__
 
 =head1 NAME
 
-Aurb - A Ruby AUR Utility
+Aurb - An AUR utility written in Ruby
 
 =head1 SYNOPSIS
 
