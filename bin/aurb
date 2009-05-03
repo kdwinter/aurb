@@ -18,7 +18,7 @@
 #--
 # Inspired by arson (http://evaryont.github.com/arson)
 
-%w[optparse pathname fileutils zlib open-uri rubygems json highline/import
+%w[getoptlong pathname fileutils zlib open-uri rubygems json highline/import
    facets/ansicode facets/minitar facets/version].each {|lib| require lib}
 
 module Aurb
@@ -26,7 +26,7 @@ module Aurb
   DlPath = File.join ENV['HOME'], 'abs'
 
 # Program info
-  PrInfo = {:name => 'Aurb', :version => [0, 7, 2].join('.'), :release => '2009-04-24'}
+  PrInfo = {:name => 'Aurb', :version => [0, 8, 1].join('.'), :release => '2009-05-03'}
 
   class << self
     def aur
@@ -68,8 +68,8 @@ module Aurb
       instance_eval @opts.cmd
     end
 
-    def download *packages
-      packages = packages.first if packages.first.is_a?(Array)
+    def download packages
+      packages = packages.split
       packages.delete_if {|pkg| in_sync?(pkg)}
       abort 'FATAL: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
@@ -157,11 +157,13 @@ module Aurb
 
     def untar package
       abort "FATAL: #{package}.tar.gz not found for untar" \
-        unless File.exists? "#{package}.tar.gz" # This should never, ever happen. Just in case.
+        unless File.exists? "#{package}.tar.gz" # This should never, ever happen.
 
       Archive::Tar::Minitar.unpack \
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
         Dir.pwd
+
+      FileUtils.rm "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
     end
 
     def json item
@@ -173,7 +175,6 @@ module Aurb
     attr_reader :cmd, :config
 
     def initialize
-      @@args  = ARGV.any? ? ARGV : ['-h']
       @config = {:path => DlPath, :color => true}
     # Parse zeh ARGV!
       parse!
@@ -183,34 +184,54 @@ module Aurb
     include Aurb::Util
 
     def parse!
-      OptionParser.new do |o|
-        o.program_name, o.version, o.release = \
-          [:name, :version, :release].map {|key| PrInfo[key]}
+      gopts = GetoptLong.new \
+        ['--download', '-d',        GetoptLong::REQUIRED_ARGUMENT],
+        ['--search', '-s',          GetoptLong::REQUIRED_ARGUMENT],
+        ['--upgrade', '-u',         GetoptLong::NO_ARGUMENT],
+        ['--color',                 GetoptLong::NO_ARGUMENT],
+        ['--path',                  GetoptLong::OPTIONAL_ARGUMENT],
+        ['--version', '-v',         GetoptLong::NO_ARGUMENT],
+        ['--help', '-h',            GetoptLong::NO_ARGUMENT]
 
-        o.separator 'Actions (Required):'
-        o.on '-D', '--download PKG1,PKG2,...', Array, 'download package(s)' do |d|
-          @cmd = "download('#{d*"', '"}')" # XXX: Ugly! Makes instance_eval work though.
-        end
-        o.on '-S', '--search PKG', 'search for a package' do |s|
-          @cmd = "search('#{s}')"
-        end
-        o.on '-U', '--upgrade', 'check the AUR for upgrades' do
-          @cmd = 'check_upgrade'
-        end
-        o.separator 'Optional:'
-        o.on '--path PATH', "download path [#{@config[:path]}]" do |d|
-          if File.exists? d = (d[0...1] == '/' ? d : File.join(Dir.pwd, d))
-            @config[:path] = Pathname.new(d).realpath
+      gopts.each do |opt, arg|
+        case opt
+        when '--download' then @cmd            = "download '#{arg}'"
+        when '--search'   then @cmd            = "search '#{arg.join('+')}'"
+        when '--upgrade'  then @cmd            = 'check_upgrade'
+        when '--color'    then @config[:color] = !@config[:color]
+        when '--path'     then
+          if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
+            @config[:path] = Pathname.new(arg).realpath
           else
-            warn "WARN: The path you specified doesn't exist. Falling back to [#{@config[:path]}]\n"
+            warn "WARN: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n"
           end
+        when '--version' then abort '%s %s (%s)' % [
+          :name, :version, :release
+        ].map {|key| PrInfo[key]}
+        when '--help'    then abort <<HELP
+Aurb - An AUR utility written in Ruby.
+
+Usage:
+  #$0 [options]
+
+Options (Required):
+  -d, --download PACKAGE      Download a package.
+  -s, --search PACKAGE        Search for package(s).
+  -u, --upgrade               Search for package updates.
+
+Optional:
+  --color                     Use colors? [#{@config[:color]}]
+  --path [PATH]               Override the default save path. [#{@config[:path]}]
+  --version                   Show version and exit.
+HELP
         end
-        o.on '--[no-]color', "use colors?   [#{@config[:color] ? 'yes' : 'no'}]" do |c|
-          @config[:color] = c
-        end
-      end.parse! @@args
-    rescue OptionParser::ParseError
-      abort $!.message 
+      end
+
+      if ARGV.empty?
+        abort 'No argument given. Try --help.'
+      end
+    rescue GetoptLong::InvalidOption
+      abort $!.message
     end
   end
 end
@@ -230,7 +251,7 @@ Aurb - A Ruby AUR Utility
 
 =head1 SYNOPSIS
 
-  aurb
+  aurb --help
 
 =head1 DESCRIPTION
 
