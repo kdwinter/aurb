@@ -18,8 +18,28 @@
 #--
 # Inspired by arson (http://evaryont.github.com/arson)
 
-%w[getoptlong pathname fileutils zlib open-uri rubygems json highline/import
-   facets/ansicode facets/minitar facets/version].each {|lib| require lib}
+[
+  'getoptlong',
+  'pathname',
+  'fileutils',
+  'zlib',
+  'open-uri',
+  'rubygems',
+  'json',
+  'highline/import',
+  'facets/ansicode',
+  'facets/minitar',
+  'facets/version',
+].each do |lib|
+  begin
+    require lib
+  rescue LoadError
+    abort <<ERR
+Couldn't load '#{lib}'.
+Please make sure you have the necessary rubygems installed.
+ERR
+  end
+end
 
 module Aurb
 # Default download path
@@ -112,9 +132,9 @@ module Aurb
     end
 
     def check_upgrade
-      upgradable = []
       say 'Searching for updates'
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
+        upgradable ||= []
         name, version = line.chomp.split
         result = json @config[:rpc]['info', name]
         unless result['type'] =~ /error/
