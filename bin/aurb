@@ -68,7 +68,6 @@ module Aurb
     def yes_or_no? question
       ask question, lambda {|yn| yn.downcase[0] == ?y} do |q|
         q.readline              = true
-        q.default               = 'y'
         q.validate              = /\Ay(?:es)?|no?\Z/i
         q.responses[:not_valid] = 'Yes or no, please'
       end
@@ -97,7 +96,7 @@ module Aurb
       abort 'FATAL: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
       say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
-      if yes_or_no? 'Proceed? '
+      if yes_or_no? 'Proceed? [yn] '
         packages.each do |package|
           begin
             FileUtils.cd @config[:path] do
