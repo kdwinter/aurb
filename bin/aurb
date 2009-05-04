@@ -156,9 +156,6 @@ module Aurb
     end
 
     def untar package
-      abort "FATAL: #{package}.tar.gz not found for untar" \
-        unless File.exists? "#{package}.tar.gz" # This should never, ever happen.
-
       Archive::Tar::Minitar.unpack \
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
         Dir.pwd
