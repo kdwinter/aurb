@@ -86,7 +86,7 @@ module Aurb
             end
           rescue OpenURI::HTTPError => e
             say "Something went wrong downloading '#{package}'. Are you sure it exists?\n" +
-              "---\n#{e.message}"
+              "#{e.message}"
             package == packages.last ? exit : next
           end
           say "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
@@ -218,6 +218,18 @@ Optional:
   --no-color                  Disable colored output.
   --path [PATH]               Override the default save path. [#{@config[:path]}]
   --version                   Show version and exit.
+
+Examples:
+  #{File.basename $0} -d 'aurb arson yaourt' --path ~/downloads
+  #{File.basename $0} -s 'package1 package2' --no-color
+  #{File.basename $0} --upgrade
+
+You can also chain commands, like so:
+
+  #{File.basename $0} -d 'thispackage' -s 'thatpackage' -u
+
+Aurb is was inspired by arson. Do have a look at http://evaryont.github.com/arson
+For further information you can contact the author at <gigamo@gmail.com>.
 HELP
         end
       end
