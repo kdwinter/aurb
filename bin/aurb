@@ -209,7 +209,7 @@ module Aurb
 Aurb - An AUR utility written in Ruby.
 
 Usage:
-  #$0 [options]
+  #{File.basename $0} [options]
 
 Options (Required):
   -d, --download PACKAGE      Download a package.
