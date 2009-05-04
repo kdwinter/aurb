@@ -182,9 +182,7 @@ module Aurb
 
   private
     def parse!
-      if ARGV.empty?
-        abort 'No argument given. Try --help.'
-      end
+      abort 'No argument given. Try --help.' if ARGV.empty?
 
       gopts = GetoptLong.new \
         ['--download', '-d',        GetoptLong::REQUIRED_ARGUMENT],
