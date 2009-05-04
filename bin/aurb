@@ -92,8 +92,8 @@ module Aurb
       end
     end
 
-    def search package
-      list(package).each do |names|
+    def search packages
+      list(packages).each do |names|
         result = json @config[:rpc]['info', names.last]
 
         unless result['type'] =~ /error/
