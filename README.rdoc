@@ -2,11 +2,19 @@
 
 See <tt>aurb --help</tt> for a full list of commands.
 
-=== Overview
+=== Quick Overview
 
-<b>--upgrade</b>:: Searches the AUR for upgrades to local packages that don't exist in any official repository
-<b>--download</b>:: Downloads your specified package(s) from the AUR and untars it
+Required options:
+
+<b>--download</b>:: Downloads a specified package and untars it
 <b>--search</b>:: Searches the AUR for a specified name or description
+<b>--upgrade</b>:: Searches the AUR for updates to foreign local packages
+
+Optional options:
+
+<b>--no-color</b>:: Suppress colored output
+<b>--path</b>:: Override the default save path (defined as DlPath)
+<b>--version</b>:: Print version and exit
 
 == Installation
 
