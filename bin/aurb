@@ -26,7 +26,7 @@ module Aurb
   DlPath = File.join ENV['HOME'], 'abs'
 
 # Program info
-  PrInfo = {:name => 'Aurb', :version => [0, 8, 1].join('.'), :release => '2009-05-03'}
+  PrInfo = {:name => 'Aurb', :version => [0, 8, 2].join('.'), :release => '2009-05-04'}
 
   class << self
     def aur
@@ -65,7 +65,10 @@ module Aurb
 
     def start
       set_trap
-      instance_eval @opts.cmd
+      @opts.cmd.each do |cmd|
+        instance_eval cmd
+        say "\n---\n\n" unless cmd == @opts.cmd.last
+      end
     end
 
     def download packages
@@ -74,7 +77,6 @@ module Aurb
       abort 'FATAL: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
       say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
-
       if yes_or_no? 'Proceed? '
         packages.each do |package|
           begin
@@ -82,27 +84,28 @@ module Aurb
               fetch package
               untar package
             end
-          rescue OpenURI::HTTPError
-            say "Something went wrong downloading '#{package}'. Are you sure it exists?"
+          rescue OpenURI::HTTPError => e
+            say "Something went wrong downloading '#{package}'. Are you sure it exists?\n" +
+              "---\n#{e.message}"
             package == packages.last ? exit : next
           end
-
           say "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
         end
       end
     end
 
     def search packages
-      list(packages).each do |names|
-        result = json @config[:rpc]['info', names.last]
-
-        unless result['type'] =~ /error/
-          result = result['results']
-          next if in_sync? result['Name']
-
-          if package.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
-            say "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
-              "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}"
+      packages = packages.split
+      packages.each do |package|
+        list(package).each do |names|
+          result = json @config[:rpc]['info', names.last]
+          unless result['type'] =~ /error/
+            result = result['results']
+            next if in_sync? result['Name']
+            if package.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
+              say "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
+                "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}"
+            end
           end
         end
       end
@@ -111,22 +114,18 @@ module Aurb
     def check_upgrade
       upgradable = []
       say 'Searching for updates'
-
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
         name, version = line.chomp.split
         result = json @config[:rpc]['info', name]
-
         unless result['type'] =~ /error/
           result = result['results']
           next if in_sync? result['Name']
-
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << result['Name']
             say " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
         end
       end
-
       upgradable.any? ? (say "\n"; download upgradable) : say('Nothing to update')
     end
 
@@ -137,13 +136,11 @@ module Aurb
 
     def list package
       info, list = json(@config[:rpc]['search', URI.escape(package)]), []
-
       unless info['type'] =~ /error/
         info['results'].each do |result|
           list << [result['Name'], result['ID']]
         end
       end
-
       list.sort
     end
 
@@ -160,7 +157,7 @@ module Aurb
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
         Dir.pwd
 
-      FileUtils.rm "#{package}.tar.gz" if File.exists? "#{package}.tar.gz"
+      FileUtils.rm "#{package}.tar.gz"
     end
 
     def json item
@@ -169,18 +166,19 @@ module Aurb
   end
 
   class Opts
-    attr_reader :cmd, :config
+    attr_reader :config
+    attr_reader :cmd
 
     def initialize
       @config = {:path => DlPath, :color => true}
-    # Parse zeh ARGV!
+      @cmd    = []
+
       parse!
     end
 
   private
     def parse!
-      abort 'No argument given. Try --help.' if ARGV.empty?
-
+      ARGV.unshift '-h' if ARGV.empty?
       gopts = GetoptLong.new \
         ['--download', '-d',        GetoptLong::REQUIRED_ARGUMENT],
         ['--search', '-s',          GetoptLong::REQUIRED_ARGUMENT],
@@ -192,10 +190,10 @@ module Aurb
 
       gopts.each do |opt, arg|
         case opt
-        when '--download' then @cmd            = "download '#{arg}'"
-        when '--search'   then @cmd            = "search '#{arg}'"
-        when '--upgrade'  then @cmd            = 'check_upgrade'
-        when '--no-color' then @config[:color] = !@config[:color]
+        when '--download' then @cmd << "download '#{arg}'"
+        when '--search'   then @cmd << "search '#{arg}'"
+        when '--upgrade'  then @cmd << 'check_upgrade'
+        when '--no-color' then @config[:color] = false
         when '--path'     then
           if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
             @config[:path] = Pathname.new(arg).realpath
