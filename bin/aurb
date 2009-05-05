@@ -248,7 +248,7 @@ You can also chain commands, like so:
 
   #{File.basename $0} -d 'thispackage' -s 'thatpackage' -u
 
-Aurb is was inspired by arson. Do have a look at http://evaryont.github.com/arson
+Aurb was inspired by arson. Do have a look at http://evaryont.github.com/arson
 For further information you can contact the author at <gigamo@gmail.com>.
 HELP
         end
