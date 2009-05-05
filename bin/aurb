@@ -86,7 +86,7 @@ module Aurb
       set_trap
       @opts.cmd.each do |cmd|
         instance_eval cmd
-        say "\n---\n\n" unless cmd == @opts.cmd.last
+        say "\n\n" unless cmd == @opts.cmd.last
       end
     end
 
@@ -95,6 +95,7 @@ module Aurb
       packages.delete_if {|pkg| in_sync?(pkg)}
       abort 'FATAL: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
+
       say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
       if yes_or_no? 'Proceed? [yn] '
         packages.each do |package|
@@ -115,7 +116,8 @@ module Aurb
 
     def search packages
       packages = packages.split
-      packages.each do |package|
+      packages.each do |package| # FIXME: Shouldnt need to iterate over an array to search for multiple packages
+                                 #        Can pass multiple keywords to list() instead?
         list(package).each do |name|
           result = json @config[:rpc]['info', name.last]
           unless result['type'] =~ /error/
@@ -133,19 +135,19 @@ module Aurb
     def check_upgrade
       say 'Searching for updates'
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
-        upgradable ||= []
         name, version = line.chomp.split
         result = json @config[:rpc]['info', name]
         unless result['type'] =~ /error/
           result = result['results']
           next if in_sync? result['Name']
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
+            upgradable ||= []
             upgradable << result['Name']
             say " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
         end
       end
-      upgradable.any? ? (say "\n"; download upgradable) : say('Nothing to update')
+      upgradable.any? ? (say "\n"; download upgradable) : (say 'Nothing to update')
     end
 
   private
@@ -235,12 +237,12 @@ Options (Required):
   -u, --upgrade               Search for package updates.
 
 Optional:
-  --no-color                  Disable colored output.
-  --path [PATH]               Override the default save path. [#{@config[:path]}]
+      --no-color              Disable colored output.
+      --path [PATH]           Override the default save path. [#{@config[:path]}]
 
 Other:
-  --version                   Show version and exit.
-  --help                      This message.
+      --version               Show version and exit.
+      --help                  This message.
 
 Examples:
   #{File.basename $0} -d 'aurb arson yaourt' --path ~/downloads
