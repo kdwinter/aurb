@@ -237,6 +237,8 @@ Options (Required):
 Optional:
   --no-color                  Disable colored output.
   --path [PATH]               Override the default save path. [#{@config[:path]}]
+
+Other:
   --version                   Show version and exit.
   --help                      This message.
 
