@@ -116,8 +116,8 @@ module Aurb
     def search packages
       packages = packages.split
       packages.each do |package|
-        list(package).each do |names|
-          result = json @config[:rpc]['info', names.last]
+        list(package).each do |name|
+          result = json @config[:rpc]['info', name.last]
           unless result['type'] =~ /error/
             result = result['results']
             next if in_sync? result['Name']
@@ -154,9 +154,10 @@ module Aurb
     end
 
     def list package
-      info, list = json(@config[:rpc]['search', URI.escape(package)]), []
+      info = json(@config[:rpc]['search', URI.escape(package)])
       unless info['type'] =~ /error/
         info['results'].each do |result|
+          list ||= []
           list << [result['Name'], result['ID']]
         end
       end
