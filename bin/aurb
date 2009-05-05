@@ -115,9 +115,8 @@ module Aurb
     end
 
     def search packages
-      packages = packages.split
-      packages.each do |package| # FIXME: Shouldnt need to iterate over an array to search for multiple packages
-                                 #        Can pass multiple keywords to list() instead?
+      packages = packages.split  # FIXME: Shouldnt need to iterate over an array to search for multiple packages
+      packages.each do |package| #        Can pass multiple keywords to list() instead?
         list(package).each do |name|
           result = json @config[:rpc]['info', name.last]
           unless result['type'] =~ /error/
