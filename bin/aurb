@@ -91,7 +91,7 @@ module Aurb
     end
 
     def download packages
-      packages = packages.split
+      packages = packages.split unless packages.is_a?(Array)
       packages.delete_if {|pkg| in_sync?(pkg)}
       abort 'FATAL: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
@@ -132,6 +132,7 @@ module Aurb
     end
 
     def check_upgrade
+      upgradable ||= []
       say 'Searching for updates'
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
         name, version = line.chomp.split
@@ -140,7 +141,6 @@ module Aurb
           result = result['results']
           next if in_sync? result['Name']
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-            upgradable ||= []
             upgradable << result['Name']
             say " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
@@ -156,9 +156,9 @@ module Aurb
 
     def list package
       info = json(@config[:rpc]['search', URI.escape(package)])
+      list ||= []
       unless info['type'] =~ /error/
         info['results'].each do |result|
-          list ||= []
           list << [result['Name'], result['ID']]
         end
       end
@@ -244,7 +244,7 @@ Other:
       --help                  This message.
 
 Examples:
-  #{File.basename $0} -d 'aurb arson yaourt' --path ~/downloads
+  #{File.basename $0} -d 'package1 package2' --path ~/downloads
   #{File.basename $0} -s 'package1 package2' --no-color
   #{File.basename $0} --upgrade
 
