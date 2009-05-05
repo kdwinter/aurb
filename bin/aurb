@@ -238,6 +238,7 @@ Optional:
   --no-color                  Disable colored output.
   --path [PATH]               Override the default save path. [#{@config[:path]}]
   --version                   Show version and exit.
+  --help                      This message.
 
 Examples:
   #{File.basename $0} -d 'aurb arson yaourt' --path ~/downloads
