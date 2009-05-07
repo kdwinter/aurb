@@ -80,8 +80,8 @@ module Aurb
       end
 
       @opts.cmd.each do |cmd|
-        cmd.length == 1 ? send(cmd.first) : send(cmd.first, cmd.last)
-        $stdout.puts "\n\n" unless cmd == @opts.cmd.last
+        cmd.length == 1 ? __send__(cmd.first) : __send__(cmd.first, cmd.last)
+        $stdout.puts "\n\n-----" unless cmd == @opts.cmd.last
       end
     end
 
@@ -103,9 +103,8 @@ module Aurb
               fetch package
               untar package
             end
-          rescue OpenURI::HTTPError => e
-            $stderr.puts "Something went wrong downloading '#{package}'. Are you sure it exists?\n" +
-              "#{e.message}"
+          rescue OpenURI::HTTPError
+            $stderr.puts "Something went wrong downloading '#{package}'. Are you sure it exists?"
             package == packages.last ? exit : next
           end
           $stdout.puts "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
@@ -115,8 +114,8 @@ module Aurb
 
     def search packages
       packages.each do |package|
-        list(package).each do |name|
-          result = json @config[:rpc]['info', name.last]
+        list(package).each do |id|
+          result = json @config[:rpc]['info', id]
           unless result['type'] =~ /error/
             result = result['results']
             next if in_sync? result['Name']
@@ -155,7 +154,7 @@ module Aurb
       list, info = [], json(@config[:rpc]['search', URI.escape(package)])
       unless info['type'] =~ /error/
         info['results'].each do |result|
-          list << [result['Name'], result['ID']]
+          list << result['ID']
         end
       end
       list.sort
