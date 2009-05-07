@@ -51,13 +51,16 @@ module Aurb
   class << self
     def aur
       @aur ||= Aur.new \
-        :rpc => proc {|t, a| "http://aur.archlinux.org/rpc.php?type=#{t}&arg=#{a}"}
+        :rpc => proc {|type, arg| "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"}
     end
   end
 
   module Util
     def set_trap
-      trap(:INT) {abort "\nInterrupt signal received\n\n"}
+      trap :INT do
+        $stderr.puts "\nInterrupt signal received\n\n"
+        exit 0
+      end
     end
 
     def ansi text, effect
@@ -86,14 +89,14 @@ module Aurb
       set_trap
       @opts.cmd.each do |cmd|
         instance_eval cmd
-        say "\n\n" unless cmd == @opts.cmd.last
+        $stdout.puts "\n\n" unless cmd == @opts.cmd.last
       end
     end
 
     def download packages
       packages = packages.split unless packages.is_a?(Array)
       packages.delete_if {|pkg| in_sync?(pkg)}
-      abort 'FATAL: No package(s) to download. Possibly the package(s) you ' +
+      abort 'ERROR: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
 
       say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
@@ -105,11 +108,11 @@ module Aurb
               untar package
             end
           rescue OpenURI::HTTPError => e
-            say "Something went wrong downloading '#{package}'. Are you sure it exists?\n" +
+            $stderr.puts "Something went wrong downloading '#{package}'. Are you sure it exists?\n" +
               "#{e.message}"
             package == packages.last ? exit : next
           end
-          say "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
+          $stdout.puts "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
         end
       end
     end
@@ -123,7 +126,7 @@ module Aurb
             result = result['results']
             next if in_sync? result['Name']
             if package.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
-              say "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
+              $stdout.puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
                 "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}"
             end
           end
@@ -133,7 +136,6 @@ module Aurb
 
     def check_upgrade
       upgradable ||= []
-      say 'Searching for updates'
       IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
         name, version = line.chomp.split
         result = json @config[:rpc]['info', name]
@@ -142,11 +144,11 @@ module Aurb
           next if in_sync? result['Name']
           if VersionNumber.new(result['Version']) > VersionNumber.new(version)
             upgradable << result['Name']
-            say " #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+            $stdout.puts "> #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
           end
         end
       end
-      upgradable.any? ? (say "\n"; download upgradable) : (say 'Nothing to update')
+      upgradable.any? ? ($stdout.puts; download upgradable) : ($stdout.puts 'Nothing to update')
     end
 
   private
@@ -155,8 +157,7 @@ module Aurb
     end
 
     def list package
-      info = json(@config[:rpc]['search', URI.escape(package)])
-      list ||= []
+      list, info = [], json(@config[:rpc]['search', URI.escape(package)])
       unless info['type'] =~ /error/
         info['results'].each do |result|
           list << [result['Name'], result['ID']]
@@ -187,12 +188,11 @@ module Aurb
   end
 
   class Opts
-    attr_reader :config
-    attr_reader :cmd
+    attr_reader :config, :cmd
 
     def initialize
       @config = {:path => DlPath, :color => true}
-      @cmd    = []
+      @cmd  ||= []
 
       parse!
     end
@@ -221,15 +221,17 @@ module Aurb
           else
             warn "WARN: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n"
           end
-        when '--version' then abort '%s %s (%s)' % [
-          :name, :version, :release
-        ].map {|key| PrInfo[key]}
+        when '--version' then $stderr.puts '%s %s (%s)' %
+          [
+            :name, :version, :release
+          ].map {|key| PrInfo[key]}
+          exit -1
         when '--help'    then print_help
         end
       end
 
       def print_help out = $stderr
-        abort <<HELP
+        $stderr.puts <<HELP
 Aurb - An AUR utility written in Ruby.
 
 Usage:
@@ -260,6 +262,7 @@ You can also chain commands, like so:
 Aurb was inspired by arson. Do have a look at http://evaryont.github.com/arson
 For further information you can contact the author at <gigamo@gmail.com>.
 HELP
+        exit -1
       end
     rescue GetoptLong::Error; exit 2
     end
