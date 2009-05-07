@@ -27,8 +27,8 @@ require 'rubygems'
   :json      => ['json',            true ],
   :highline  => ['highline/import', false],
   :ansicode  => ['facets/ansicode', false],
-  :minitar   => ['facets/minitar',  true ],
-  :version   => ['facets/version',  true ],
+  :minitar   => ['facets/minitar',  false],
+  :version   => ['facets/version',  false],
 }.each do |key, info|
   path, required = info[0, 2]
   $have_lib ||= {}
@@ -144,20 +144,24 @@ module Aurb
     end
 
     def check_upgrade
-      upgradable ||= []
-      IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
-        name, version = line.chomp.split
-        result = json @config[:rpc]['info', name]
-        unless result['type'] =~ /error/
-          result = result['results']
-          next if in_sync? result['Name']
-          if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-            upgradable << result['Name']
-            $stdout.puts "> #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+      if $have_lib[:version]
+        upgradable ||= []
+        IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
+          name, version = line.chomp.split
+          result = json @config[:rpc]['info', name]
+          unless result['type'] =~ /error/
+            result = result['results']
+            next if in_sync? result['Name']
+            if VersionNumber.new(result['Version']) > VersionNumber.new(version)
+              upgradable << result['Name']
+              $stdout.puts "> #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+            end
           end
         end
+        upgradable.any? ? ($stdout.puts; download upgradable) : ($stdout.puts 'Nothing to update')
+      else
+        $stderr.puts 'You need the facets rubygem installed to check for updates'
       end
-      upgradable.any? ? ($stdout.puts; download upgradable) : ($stdout.puts 'Nothing to update')
     end
 
   private
@@ -184,11 +188,15 @@ module Aurb
     end
 
     def untar package
-      Archive::Tar::Minitar.unpack \
-        Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
-        Dir.pwd
+      if $have_lib[:minitar]
+        Archive::Tar::Minitar.unpack \
+          Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
+          Dir.pwd
 
-      File.delete "#{package}.tar.gz"
+        File.delete "#{package}.tar.gz"
+      else
+        $stderr.puts 'You need the facets rubygem installed to untar the package'
+      end
     end
 
     def json item
