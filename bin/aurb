@@ -49,20 +49,13 @@ module Aurb
   PrInfo = {:name => 'Aurb', :version => [0, 8, 2].join('.'), :release => '2009-05-04'}
 
   class << self
-    def start
-      Aur.exec_action \
+    def aur
+      @aur ||= Aur.new \
         :rpc => proc {|type, arg| "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"}
     end
   end
 
   module Util
-    def set_trap
-      trap :INT do
-        $stderr.puts "\nInterrupt signal received\n\n"
-        exit 0
-      end
-    end
-
     def ansi text, effect
       text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if @config[:color]
       text
@@ -80,9 +73,11 @@ module Aurb
   class Aur
     include Aurb::Util
 
-    def self.exec_action config # Aur.exec_action
-      new config
-      set_trap
+    def start
+      trap :INT do
+        $stderr.puts "\nInterrupt signal received\n\n"
+        exit 0
+      end
 
       @opts.cmd.each do |cmd|
         instance_eval cmd
@@ -91,7 +86,7 @@ module Aurb
     end
 
     def initialize config
-      @opts   = Opts.get_opts
+      @opts   = Opts.new
       @config = config.merge(@opts.config)
     end
 
@@ -192,9 +187,8 @@ module Aurb
   class Opts
     attr_reader :config, :cmd
 
-    def self.get_opts
-      @config = {:path => DlPath, :color => true}
-      @cmd  ||= []
+    def initialize
+      @config, @cmd = {:path => DlPath, :color => true}, []
 
       parse!
       self
@@ -232,9 +226,11 @@ module Aurb
         when '--help'    then print_help
         end
       end
+    rescue GetoptLong::Error; exit 2
+    end
 
-      def print_help out = $stderr
-        out.puts <<-HELP
+    def print_help out = $stderr
+      out.puts <<-HELP
 Aurb - An AUR utility written in Ruby.
 
 Usage:
@@ -264,10 +260,8 @@ You can also chain commands, like so:
 
 Aurb was inspired by arson. Do have a look at http://evaryont.github.com/arson
 For further information you can contact the author at <gigamo@gmail.com>.
-        HELP
-        exit -1
-      end
-    rescue GetoptLong::Error; exit 2
+      HELP
+      exit -1
     end
   end
 end
@@ -275,7 +269,7 @@ end
 at_exit do
   if __FILE__ == $0
     raise $! if $!
-    Aurb.start
+    Aurb.aur.start
   end
 end
 
