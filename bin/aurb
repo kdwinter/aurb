@@ -231,7 +231,7 @@ module Aurb
       end
 
       def print_help out = $stderr
-        $stderr.puts <<HELP
+        out.puts <<-HELP
 Aurb - An AUR utility written in Ruby.
 
 Usage:
@@ -261,7 +261,7 @@ You can also chain commands, like so:
 
 Aurb was inspired by arson. Do have a look at http://evaryont.github.com/arson
 For further information you can contact the author at <gigamo@gmail.com>.
-HELP
+        HELP
         exit -1
       end
     rescue GetoptLong::Error; exit 2
