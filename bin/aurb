@@ -224,7 +224,12 @@ module Aurb
         when '--version' then abort '%s %s (%s)' % [
           :name, :version, :release
         ].map {|key| PrInfo[key]}
-        when '--help'    then abort <<HELP
+        when '--help'    then print_help
+        end
+      end
+
+      def print_help out = $stderr
+        abort <<HELP
 Aurb - An AUR utility written in Ruby.
 
 Usage:
@@ -255,7 +260,6 @@ You can also chain commands, like so:
 Aurb was inspired by arson. Do have a look at http://evaryont.github.com/arson
 For further information you can contact the author at <gigamo@gmail.com>.
 HELP
-        end
       end
     rescue GetoptLong::Error; exit 2
     end
