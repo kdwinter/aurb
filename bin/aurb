@@ -17,27 +17,34 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #--
 # Inspired by arson (http://evaryont.github.com/arson)
+require 'rubygems'
 
-[
-  'getoptlong',
-  'pathname',
-  'fileutils',
-  'zlib',
-  'open-uri',
-  'rubygems',
-  'json',
-  'highline/import',
-  'facets/ansicode',
-  'facets/minitar',
-  'facets/version',
-].each do |lib|
+{
+  :getopt    => ['getoptlong',      true ],
+  :pathname  => ['pathname',        false],
+  :zlib      => ['zlib',            true ],
+  :openuri   => ['open-uri',        true ],
+  :json      => ['json',            true ],
+  :highline  => ['highline/import', false],
+  :ansicode  => ['facets/ansicode', false],
+  :minitar   => ['facets/minitar',  true ],
+  :version   => ['facets/version',  true ],
+}.each do |key, info|
+  path, required = info[0, 2]
+  $have_lib ||= {}
+
   begin
-    require lib
+    require path
+    $have_lib[key] = true
   rescue LoadError
-    abort <<-ERR
-Couldn't load '#{lib}'.
+    if required
+      abort <<-ERR
+You're missing '#{lib}'.
 Please make sure you have the necessary rubygems installed.
-    ERR
+      ERR
+    else
+      $have_lib[key] = false
+    end
   end
 end
 
@@ -57,15 +64,23 @@ module Aurb
 
   module Util
     def ansi text, effect
-      text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear if @config[:color]
+      if @config[:color] && $have_lib[:ansicode]
+        text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear
+      end
       text
     end
 
     def yes_or_no? question
-      ask question, lambda {|yn| yn.downcase[0] == ?y} do |q|
-        q.readline              = true
-        q.validate              = /\Ay(?:es)?|no?\Z/i
-        q.responses[:not_valid] = 'Yes or no, please'
+      if $have_lib[:highline]
+        ask question, lambda {|yn| yn.downcase[0] == ?y} do |q|
+          q.readline              = true
+          q.validate              = /\Ay(?:es)?|no?\Z/i
+          q.responses[:not_valid] = 'Yes or no, please'
+        end
+      else
+        $stdout.print question
+        answer = $stdin.gets.chomp
+        answer =~ /\Ay(?:es)?|no?\Z/i
       end
     end
   end
@@ -99,7 +114,7 @@ module Aurb
       if yes_or_no? 'Proceed? [yn] '
         packages.each do |package|
           begin
-            FileUtils.cd @config[:path] do
+            Dir.chdir @config[:path] do
               fetch package
               untar package
             end
@@ -173,7 +188,7 @@ module Aurb
         Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
         Dir.pwd
 
-      FileUtils.rm "#{package}.tar.gz"
+      File.delete "#{package}.tar.gz"
     end
 
     def json item
@@ -211,7 +226,7 @@ module Aurb
         when '--no-color' then @config[:color] = false
         when '--path'     then
           if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
-            @config[:path] = Pathname.new(arg).realpath
+            @config[:path] = Pathname.new(arg).realpath || File.expand_path(arg)
           else
             warn "WARN: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n"
           end
