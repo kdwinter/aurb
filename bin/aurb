@@ -46,7 +46,7 @@ module Aurb
   DlPath = File.join ENV['HOME'], 'abs'
 
 # Program info
-  PrInfo = {:name => 'Aurb', :version => [0, 8, 2].join('.'), :release => '2009-05-04'}
+  PrInfo = {:name => 'Aurb', :version => [0, 8, 3].join('.'), :release => '2009-05-07'}
 
   class << self
     def aur
