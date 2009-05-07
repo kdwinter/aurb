@@ -275,7 +275,7 @@ end
 at_exit do
   if __FILE__ == $0
     raise $! if $!
-    Aurb.aur.start
+    Aurb.start
   end
 end
 
