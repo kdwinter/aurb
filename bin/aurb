@@ -80,7 +80,7 @@ module Aurb
       end
 
       @opts.cmd.each do |cmd|
-        instance_eval cmd
+        cmd.length == 1 ? send(cmd.first) : send(cmd.first, cmd.last)
         $stdout.puts "\n\n" unless cmd == @opts.cmd.last
       end
     end
@@ -91,7 +91,6 @@ module Aurb
     end
 
     def download packages
-      packages = packages.split unless packages.is_a?(Array)
       packages.delete_if {|pkg| in_sync?(pkg)}
       abort 'ERROR: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?' if packages.empty?
@@ -115,8 +114,7 @@ module Aurb
     end
 
     def search packages
-      packages = packages.split  # FIXME: Shouldnt need to iterate over an array to search for multiple packages
-      packages.each do |package| #        Can pass multiple keywords to list() instead?
+      packages.each do |package|
         list(package).each do |name|
           result = json @config[:rpc]['info', name.last]
           unless result['type'] =~ /error/
@@ -208,9 +206,9 @@ module Aurb
 
       gopts.each do |opt, arg|
         case opt
-        when '--download' then @cmd << "download '#{arg}'"
-        when '--search'   then @cmd << "search '#{arg}'"
-        when '--upgrade'  then @cmd << 'check_upgrade'
+        when '--download' then @cmd << ['download', arg.split]
+        when '--search'   then @cmd << ['search', arg.split]
+        when '--upgrade'  then @cmd << ['check_upgrade']
         when '--no-color' then @config[:color] = false
         when '--path'     then
           if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
@@ -234,7 +232,7 @@ module Aurb
 Aurb - An AUR utility written in Ruby.
 
 Usage:
-  #{File.basename $0} [options]
+  #{name = File.basename $0} [options]
 
 Options (Required):
   -d, --download PACKAGE      Download a package.
@@ -250,13 +248,13 @@ Other:
       --help                  This message.
 
 Examples:
-  #{File.basename $0} -d 'package1 package2' --path ~/downloads
-  #{File.basename $0} -s 'package1 package2' --no-color
-  #{File.basename $0} --upgrade
+  #{name} -d 'package1 package2' --path ~/downloads
+  #{name} -s 'package1 package2' --no-color
+  #{name} --upgrade
 
 You can also chain commands, like so:
 
-  #{File.basename $0} -d 'thispackage' -s 'thatpackage' -u
+  #{name} -d 'thispackage' -s 'thatpackage' -u
 
 Aurb was inspired by arson. Do have a look at http://evaryont.github.com/arson
 For further information you can contact the author at <gigamo@gmail.com>.
