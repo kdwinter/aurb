@@ -49,8 +49,8 @@ module Aurb
   PrInfo = {:name => 'Aurb', :version => [0, 8, 2].join('.'), :release => '2009-05-04'}
 
   class << self
-    def aur
-      @aur ||= Aur.new \
+    def start
+      Aur.exec_action \
         :rpc => proc {|type, arg| "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"}
     end
   end
@@ -80,17 +80,19 @@ module Aurb
   class Aur
     include Aurb::Util
 
-    def initialize config
-      @opts   = Opts.new
-      @config = config.merge(@opts.config)
-    end
-
-    def start
+    def self.exec_action config # Aur.exec_action
+      new config
       set_trap
+
       @opts.cmd.each do |cmd|
         instance_eval cmd
         $stdout.puts "\n\n" unless cmd == @opts.cmd.last
       end
+    end
+
+    def initialize config
+      @opts   = Opts.get_opts
+      @config = config.merge(@opts.config)
     end
 
     def download packages
@@ -190,11 +192,12 @@ module Aurb
   class Opts
     attr_reader :config, :cmd
 
-    def initialize
+    def self.get_opts
       @config = {:path => DlPath, :color => true}
       @cmd  ||= []
 
       parse!
+      self
     end
 
   private
