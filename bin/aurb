@@ -34,10 +34,10 @@
   begin
     require lib
   rescue LoadError
-    abort <<ERR
+    abort <<-ERR
 Couldn't load '#{lib}'.
 Please make sure you have the necessary rubygems installed.
-ERR
+    ERR
   end
 end
 
