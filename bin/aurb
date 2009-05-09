@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
-#++
+# aurb
+#
 # Copyright (C) 2009 Gigamo
 #
 # This program is free software; you can redistribute it and/or
@@ -15,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#--
+#
 # Inspired by arson (http://evaryont.github.com/arson)
 require 'rubygems'
 
@@ -25,6 +26,7 @@ require 'rubygems'
   :zlib      => ['zlib',            true ],
   :openuri   => ['open-uri',        true ],
   :json      => ['json',            true ],
+  :gettext   => ['gettext',         false],
   :highline  => ['highline/import', false],
   :ansicode  => ['facets/ansicode', false],
   :minitar   => ['facets/minitar',  false],
@@ -46,6 +48,10 @@ Please make sure you have the necessary rubygems installed.
       $have_lib[key] = false
     end
   end
+end
+
+def _ str
+  $have_lib[:gettext] ? GetText::_(str) : str
 end
 
 module Aurb
@@ -75,7 +81,7 @@ module Aurb
         ask question, lambda {|yn| yn.downcase[0] == ?y} do |q|
           q.readline              = true
           q.validate              = /\Ay(?:es)?|no?\Z/i
-          q.responses[:not_valid] = 'Yes or no, please'
+          q.responses[:not_valid] = _('Yes or no, please')
         end
       else
         true
@@ -88,7 +94,7 @@ module Aurb
 
     def start
       trap :INT do
-        $stderr.puts "\nInterrupt signal received\n\n"
+        $stderr.puts _("\nInterrupt signal received\n\n")
         exit 0
       end
 
@@ -105,11 +111,11 @@ module Aurb
 
     def download packages
       packages.delete_if {|pkg| in_sync?(pkg)}
-      abort 'ERROR: No package(s) to download. Possibly the package(s) you ' +
-        'specified was/were found in the community repository?' if packages.empty?
+      abort _('ERROR: No package(s) to download. Possibly the package(s) you ' +
+        'specified was/were found in the community repository?') if packages.empty?
 
-      say "Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}"
-      if yes_or_no? 'Proceed? [yn] '
+      say _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
+      if yes_or_no? _('Proceed? [yn] ')
         packages.each do |package|
           begin
             Dir.chdir @config[:path] do
@@ -117,10 +123,10 @@ module Aurb
               untar package
             end
           rescue OpenURI::HTTPError
-            warn "Something went wrong downloading '#{package}'. Are you sure it exists?"
+            warn _("WARN: Something went wrong downloading '#{package}'. Are you sure it exists?")
             package == packages.last ? exit : next
           end
-          $stdout.puts "(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}"
+          $stdout.puts _("(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}")
         end
       end
     end
@@ -133,8 +139,8 @@ module Aurb
             result = result['results']
             next if in_sync? result['Name']
             if package.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
-              $stdout.puts "[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
-                "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}"
+              $stdout.puts _("[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
+                "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}")
             end
           end
         end
@@ -152,13 +158,13 @@ module Aurb
             next if in_sync? result['Name']
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
               upgradable << result['Name']
-              $stdout.puts "> #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}"
+              $stdout.puts _("> #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}")
             end
           end
         end
-        upgradable.any? ? ($stdout.puts; download upgradable) : ($stdout.puts 'Nothing to update')
+        upgradable.any? ? ($stdout.puts; download upgradable) : ($stdout.puts _('Nothing to update'))
       else
-        warn 'You need the facets rubygem installed to check for updates'
+        warn _('WARN: You need the facets rubygem installed to check for updates')
       end
     end
 
@@ -193,7 +199,7 @@ module Aurb
 
         File.delete "#{package}.tar.gz"
       else
-        warn 'You need the facets rubygem installed to untar the package'
+        warn _('WARN: You need the facets rubygem installed to untar the package')
       end
     end
 
@@ -227,19 +233,19 @@ module Aurb
       gopts.each do |opt, arg|
         case opt
         when '--download' then @cmd << ['download', arg.split]
-        when '--search'   then @cmd << ['search', arg.split]
-        when '--upgrade'  then @cmd << ['check_upgrade']
+        when '--search'   then @cmd << ['search',   arg.split]
+        when '--upgrade'  then @cmd << ['check_upgrade'      ]
         when '--no-color' then @config[:color] = false
         when '--path'     then
           if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
             @config[:path] = Pathname.new(arg).realpath || File.expand_path(arg)
           else
-            warn "WARN: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n"
+            warn _("WARN: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n")
           end
-        when '--version' then $stdout.puts '%s %s (%s)' %
+        when '--version' then $stdout.puts _('%s %s (%s)' %
           [
             :name, :version, :release
-          ].map {|key| PrInfo[key]}
+          ].map {|key| PrInfo[key]})
           exit -1
         when '--help'    then print_help
         end
@@ -248,7 +254,7 @@ module Aurb
     end
 
     def print_help out = $stdout
-      out.puts <<-HELP
+      out.puts _(<<-HELP)
 Aurb - An AUR utility written in Ruby.
 
 Usage:
