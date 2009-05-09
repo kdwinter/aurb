@@ -75,18 +75,6 @@ module Aurb
       end
       text
     end
-
-    def yes_or_no? question
-      if $have_lib[:highline]
-        ask question, lambda {|yn| yn.downcase[0] == ?y} do |q|
-          q.readline              = true
-          q.validate              = /\Ay(?:es)?|no?\Z/i
-          q.responses[:not_valid] = _('Yes or no, please')
-        end
-      else
-        true
-      end
-    end
   end
 
   class Aur
@@ -115,7 +103,7 @@ module Aurb
         'specified was/were found in the community repository?') if packages.empty?
 
       say _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
-      if yes_or_no? _('Proceed? [yn] ')
+      if $have_lib[:highline] ? agree(_('Proceed? [yn] ')) : true
         packages.each do |package|
           begin
             Dir.chdir @config[:path] do
