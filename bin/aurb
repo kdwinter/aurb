@@ -41,7 +41,7 @@ require 'rubygems'
   rescue LoadError
     if required
       abort <<-ERR
-You're missing '#{lib}'.
+You're missing '#{path}'.
 Please make sure you have the necessary rubygems installed.
       ERR
     else
