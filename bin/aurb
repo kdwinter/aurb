@@ -102,7 +102,7 @@ module Aurb
       abort _('ERROR: No package(s) to download. Possibly the package(s) you ' +
         'specified was/were found in the community repository?') if packages.empty?
 
-      say _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
+      $stdout.puts _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
       if $have_lib[:highline] ? agree(_('Proceed? [yn] ')) : true
         packages.each do |package|
           begin
