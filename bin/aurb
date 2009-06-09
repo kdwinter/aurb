@@ -1,23 +1,4 @@
 #!/usr/bin/env ruby
-# aurb
-#
-# Copyright (C) 2009 Gigamo
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-# Inspired by arson (http://evaryont.github.com/arson)
 require 'rubygems'
 
 {
@@ -73,6 +54,7 @@ module Aurb
       if @config[:color] && $have_lib[:ansicode]
         text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear
       end
+
       text
     end
   end
@@ -103,6 +85,7 @@ module Aurb
         'specified was/were found in the community repository?') if packages.empty?
 
       $stdout.puts _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
+
       if $have_lib[:highline] ? agree(_('Proceed? [yn] ')) : true
         packages.each do |package|
           begin
@@ -112,8 +95,10 @@ module Aurb
             end
           rescue OpenURI::HTTPError
             warn _("WARN: Something went wrong downloading '#{package}'. Are you sure it exists?")
+
             package == packages.last ? exit : next
           end
+
           $stdout.puts _("(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}")
         end
       end
@@ -123,9 +108,12 @@ module Aurb
       packages.each do |package|
         list(package).each do |id|
           result = json @config[:rpc]['info', id]
+
           unless result['type'] =~ /error/
             result = result['results']
+
             next if in_sync? result['Name']
+
             if package.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
               $stdout.puts _("[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
                 "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}")
@@ -138,18 +126,24 @@ module Aurb
     def check_upgrade
       if $have_lib[:version]
         upgradable ||= []
+
         IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
           name, version = line.chomp.split
           result = json @config[:rpc]['info', name]
+
           unless result['type'] =~ /error/
             result = result['results']
+
             next if in_sync? result['Name']
+
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
               upgradable << result['Name']
+
               $stdout.puts _("> #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}")
             end
           end
         end
+
         upgradable.any? ? ($stdout.puts; download upgradable) : ($stdout.puts _('Nothing to update'))
       else
         warn _('WARN: You need the facets rubygem installed to check for updates')
@@ -163,11 +157,13 @@ module Aurb
 
     def list package
       list, info = [], json(@config[:rpc]['search', URI.escape(package)])
+
       unless info['type'] =~ /error/
         info['results'].each do |result|
           list << result['ID']
         end
       end
+
       list.sort
     end
 
