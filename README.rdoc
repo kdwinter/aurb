@@ -6,14 +6,14 @@ See <tt>aurb --help</tt> for a full list of commands.
 
 Required options:
 
-<b>--download</b>:: Downloads a specified package and untars it
-<b>--search</b>:: Searches the AUR for a specified name or description
-<b>--upgrade</b>:: Searches the AUR for updates to foreign local packages
+<tt>--download</tt>:: Downloads a specified package and untars it
+<tt>--search</tt>:: Searches the AUR for a specified name or description
+<tt>--upgrade</tt>:: Searches the AUR for updates to foreign local packages
 
 Optional options:
 
-<b>--no-color</b>:: Suppress colored output
-<b>--path</b>:: Override the default save path (defined as DlPath)
+<tt>--no-color</tt>:: Suppress colored output
+<tt>--path</tt>:: Override the default save path (defined as DlPath)
 
 Other:
 
@@ -47,6 +47,20 @@ There is also a github gem available:
 === Dependencies
 
 Aurb requires the 'facets', 'json' and 'highline' rubygems to be installed.
+
+Facets for:
+
+* Checking version numbers
+* Coloring text
+* Untarring
+
+JSON for:
+
+* Parsing the AUR
+
+Highline for:
+
+* Interactivity
 
 == Todo
 
