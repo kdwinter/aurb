@@ -21,10 +21,7 @@ require 'rubygems'
     $have_lib[key] = true
   rescue LoadError
     if required
-      abort <<-ERR
-You're missing '#{path}'.
-Please make sure you have the necessary rubygems installed.
-      ERR
+      abort "You're missing '#{path}'.\nPlease make sure you have the necessary rubygems installed."
     else
       $have_lib[key] = false
     end
@@ -240,7 +237,7 @@ Usage:
   #{name = File.basename $0} [options]
 
 Options (Required):
-  -d, --download PACKAGE      Download a package.
+  -d, --download PACKAGE      Download package(s).
   -s, --search PACKAGE        Search for package(s).
   -u, --upgrade               Search for package updates.
 
