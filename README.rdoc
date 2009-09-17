@@ -17,7 +17,7 @@ Optional options:
 
 Other:
 
-<b>--version</b>:: Print version and exit
+<tt>--version</tt>:: Print version and exit
 
 == Installation
 
