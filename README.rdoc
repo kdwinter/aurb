@@ -46,7 +46,7 @@ There is also a github gem available:
 
 === Dependencies
 
-Aurb requires the 'facets', 'json' and 'highline' rubygems to be installed.
+Aurb requires the 'facets', 'yajl-ruby' and 'highline' rubygems to be installed.
 
 Facets for:
 
