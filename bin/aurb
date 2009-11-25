@@ -125,7 +125,7 @@ module Aurb
             next if in_sync? result['Name']
             if VersionNumber.new(result['Version']) > VersionNumber.new(version)
               upgradables << result['Name']
-              $stdout.puts _("> #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}")
+              $stdout.puts _("* #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}")
             end
           end
         end
