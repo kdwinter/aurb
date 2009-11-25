@@ -5,43 +5,22 @@
 # Copyright protects this work.
 # See LICENSE file for details.
 #++
-require 'rubygems'
-
-{              # Path               # Required
-  :getopt   => ['getoptlong',       true ],
-  :pathname => ['pathname',         false],
-  :zlib     => ['zlib',             true ],
-  :openuri  => ['open-uri',         true ],
-  #:json     => ['json',             true ],
-  #:yajl     => ['yajl/json_gem',    false],
-  :yajl     => ['yajl/http_stream', true ],
-  :gettext  => ['gettext',          false],
-  :ansicode => ['facets/ansicode',  false],
-  :minitar  => ['facets/minitar',   false],
-  :version  => ['facets/version',   false],
-}.each do |key, info|
-  path, required = info[0, 2]
-  $have_lib ||= {}
-
+%w[rubygems getoptlong pathname zlib open-uri yajl gettext
+   facets/ansicode facets/minitar facets/version].each do |lib|
   begin
-    require path
-    $have_lib[key] = true
+    require lib
   rescue LoadError
-    if required
-      abort "F: You're missing '#{path}'.\nPlease make sure you have the necessary rubygems installed."
-    else
-      $have_lib[key] = false
-    end
+    abort "F: You're missing '#{lib}'.\nPlease make sure you have the necessary rubygems installed."
   end
 end
 
 def _ str
-  $have_lib[:gettext] ? GetText::_(str) : str
+  GetText::_(str)
 end
 
 module Aurb
   DlPath = File.join ENV['HOME'], 'abs'
-  PrInfo = {:name => 'Aurb', :version => [0, 9, 1].join('.'), :release => '2009-11-23'}
+  PrInfo = {:name => 'Aurb', :version => [0, 9, 2].join('.'), :release => '2009-11-25'}
 
   class << self
     def aur
@@ -52,10 +31,7 @@ module Aurb
 
   module Util
     def ansi text, effect
-      if @config[:color] && $have_lib[:ansicode]
-        text = ANSICode.send(effect.to_sym) << text.to_s << ANSICode.clear
-      end
-      text
+      (@config[:color] ? ANSICode.send(effect.to_sym) : '') << text.to_s << ANSICode.clear
     end
   end
 
@@ -105,7 +81,7 @@ module Aurb
           unless result['type'] =~ /error/
             result = result['results']
             next if in_sync? result['Name']
-            if package.split.any? {|pac| result['Name'].include?(pac) || result['Description'].include?(pac)}
+            if package.split.any? {|pac| (result['Name'] + result['Description']).include?(pac)}
               $stdout.puts _("[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
                 "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}")
             end
@@ -115,24 +91,20 @@ module Aurb
     end
 
     def check_upgrade
-      if $have_lib[:version]
-        upgradables ||= []
-        IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
-          name, version = line.chomp.split
-          result = json @config[:rpc]['info', name]
-          unless result['type'] =~ /error/
-            result = result['results']
-            next if in_sync? result['Name']
-            if VersionNumber.new(result['Version']) > VersionNumber.new(version)
-              upgradables << result['Name']
-              $stdout.puts _("* #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}")
-            end
+      upgradables = []
+      IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
+        name, version = line.chomp.split
+        result = json @config[:rpc]['info', name]
+        unless result['type'] =~ /error/
+          result = result['results']
+          next if in_sync? result['Name']
+          if VersionNumber.new(result['Version']) > VersionNumber.new(version)
+            upgradables << result['Name']
+            $stdout.puts _("* #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}")
           end
         end
-        upgradables.any? ? ($stdout.puts; download upgradables) : ($stdout.puts _('Nothing to update'))
-      else
-        warn _('W: You need the facets rubygem installed to check for updates')
       end
+      upgradables.any? ? ($stdout.puts; download upgradables) : ($stdout.puts _('Nothing to update'))
     end
 
   private
@@ -141,13 +113,14 @@ module Aurb
     end
 
     def list package
-      list, info = [], json(@config[:rpc]['search', URI.escape(package)])
+      list = []
+      info = json @config[:rpc]['search', URI.escape(package)]
       unless info['type'] =~ /error/
         info['results'].each do |result|
           list << result['ID']
         end
       end
-      list.sort
+      list
     end
 
     def fetch package
@@ -159,15 +132,10 @@ module Aurb
     end
 
     def untar package
-      if $have_lib[:minitar]
-        Archive::Tar::Minitar.unpack \
-          Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
-          Dir.pwd
-
-        File.delete "#{package}.tar.gz"
-      else
-        warn _('W: You need the facets rubygem installed to untar the package')
-      end
+      Archive::Tar::Minitar.unpack \
+        Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
+        Dir.pwd
+      File.delete "#{package}.tar.gz"
     end
 
     def json item
@@ -179,7 +147,8 @@ module Aurb
     attr_reader :config, :cmd
 
     def initialize
-      @config, @cmd = {:path => DlPath, :color => true}, []
+      @cmd    = []
+      @config = {:path => DlPath, :color => true}
 
       parse!
       self
@@ -210,10 +179,10 @@ module Aurb
           else
             warn _("W: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n")
           end
-        when '--version' then $stdout.puts _('%s %s (%s)' %
-          [:name, :version, :release].map {|key| PrInfo[key]})
+        when '--version'
+          $stdout.puts _('%s %s (%s)' % [:name, :version, :release].map {|key| PrInfo[key]})
           exit -1
-        when '--help'    then print_help
+        when '--help' then print_help
         end
       end
     rescue GetoptLong::Error; exit 2
@@ -237,18 +206,14 @@ Optional:
 
 Other:
       --version               Show version and exit.
-      --help                  This message.
+      --help                  You're looking at it.
 
 Examples:
   #{name} -d 'package1 package2' --path ~/downloads
   #{name} -s 'package1 package2' --no-color
   #{name} --upgrade
 
-You can also chain commands, like so:
-
-  #{name} -d 'thispackage' -s 'thatpackage' -u
-
-Aurb was inspired by arson. Do have a look at http://evaryont.github.com/arson
+Aurb was inspired by arson. Have a look at http://evaryont.github.com/arson
       HELP
       exit -1
     end
