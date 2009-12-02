@@ -36,7 +36,7 @@ There is also a ruby gemspec available.
 
 === Dependencies
 
-Aurb requires the 'facets', 'yajl-ruby' and 'highline' rubygems to be installed.
+Aurb requires the 'facets' and 'yajl-ruby' rubygems to be installed.
 
 Facets for:
 
@@ -47,10 +47,6 @@ Facets for:
 Yajl for:
 
 * Parsing the AUR
-
-Highline for:
-
-* Interactivity
 
 == Todo
 
