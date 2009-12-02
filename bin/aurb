@@ -29,8 +29,6 @@ module Aurb
   end
 
   class Aur
-    attr_reader :opts, :config
-
     include Aurb::Util
 
     class << self
