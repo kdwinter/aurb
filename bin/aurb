@@ -20,14 +20,7 @@ end
 
 module Aurb
   DlPath = File.join ENV['HOME'], 'abs'
-  PrInfo = {:name => 'Aurb', :version => [0, 9, 2].join('.'), :release => '2009-11-25'}
-
-  class << self
-    def aur
-      @aur ||= Aur.new \
-        :rpc => proc {|type, arg| "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"}
-    end
-  end
+  PrInfo = {:name => 'Aurb', :version => [0, 9, 3].join('.'), :release => '2009-12-02'}
 
   module Util
     def ansi text, effect
@@ -36,29 +29,34 @@ module Aurb
   end
 
   class Aur
+    attr_reader :opts, :config
+
     include Aurb::Util
 
-    def start
-      trap :INT do
-        $stderr.puts _("\nInterrupt signal received\n\n")
-        exit 0
-      end
+    class << self
+      def start
+        trap :INT do
+          $stderr.puts _("\nInterrupt signal received\n\n")
+          exit 0
+        end
 
-      @opts.cmd.each do |cmd|
-        cmd.length == 1 ? __send__(cmd.first) : __send__(cmd.first, cmd.last)
-        $stdout.puts "\n\n-----" unless cmd == @opts.cmd.last
+        self.new :rpc => proc {|type, arg| "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"}
       end
     end
 
     def initialize config
-      @opts   = Opts.new
-      @config = config.merge(@opts.config)
+      opts    = Opts.new
+      @config = config.merge(opts.config)
+
+      opts.cmd.each do |cmd|
+        cmd.length == 1 ? __send__(cmd.first) : __send__(cmd.first, cmd.last)
+        $stdout.puts "\n\n-----" unless cmd == opts.cmd.last
+      end
     end
 
     def download packages
       packages.delete_if {|pkg| in_sync?(pkg)}
-      abort _('E: No package(s) to download. Possibly the package(s) you ' +
-        'specified was/were found in the community repository?') if packages.empty?
+      abort _('E: The package(s) you specified was/were found in the community repository') if packages.empty?
       $stdout.puts _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
       packages.each do |package|
         begin
@@ -104,7 +102,7 @@ module Aurb
           end
         end
       end
-      upgradables.any? ? ($stdout.puts; download upgradables) : ($stdout.puts _('Nothing to update'))
+      upgradables.any? ? (download upgradables) : ($stdout.puts _('Nothing to update'))
     end
 
   private
@@ -223,6 +221,6 @@ end
 at_exit do
   if __FILE__ == $0
     raise $! if $!
-    Aurb.aur.start
+    Aurb::Aur.start
   end
 end
