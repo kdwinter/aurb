@@ -111,11 +111,9 @@ module Aurb
     def list package
       list = []
       info = json @config[:rpc]['search', URI.escape(package)]
-      unless info['type'] =~ /error/
-        info['results'].each do |result|
-          list << result['ID']
-        end
-      end
+      info['results'].each do |result|
+        list << result['ID']
+      end unless info['type'] =~ /error/
       list
     end
 
