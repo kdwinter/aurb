@@ -19,7 +19,7 @@ def _ str
 end
 
 module Aurb
-  DlPath = File.join ENV['HOME'], 'abs'
+  DlPath = File.join ENV[:HOME], 'abs'
   PrInfo = {:name => 'Aurb', :version => [0, 9, 3].join('.'), :release => '2009-12-02'}
 
   module Util
