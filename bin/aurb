@@ -109,12 +109,10 @@ module Aurb
     end
 
     def list package
-      list = []
       info = json @config[:rpc]['search', URI.escape(package)]
-      info['results'].each do |result|
-        list << result['ID']
+      info['results'].inject([]) do |ary, result|
+        ary << result['ID']
       end unless info['type'] =~ /error/
-      list
     end
 
     def fetch package
