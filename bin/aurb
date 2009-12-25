@@ -103,116 +103,112 @@ module Aurb
       upgradables.any? ? (download upgradables) : ($stdout.puts _('Nothing to update'))
     end
 
-  private
-    def in_sync? package
-      !!Dir["/var/lib/pacman/sync/community/#{package}-*"].first
-    end
-
-    def list package
-      info = json @config[:rpc]['search', URI.escape(package)]
-      info['results'].map {|result| result['ID']} unless info['type'] =~ /error/
-    end
-
-    def fetch package
-      open "http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz" do |remote|
-        File.open "#{package}.tar.gz", 'wb' do |local|
-          local.write remote.read
-        end
+    private
+      def in_sync? package
+        !!Dir["/var/lib/pacman/sync/community/#{package}-*"].first
       end
-    end
 
-    def untar package
-      Archive::Tar::Minitar.unpack \
-        Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
-        Dir.pwd
-      File.delete "#{package}.tar.gz"
-    end
+      def list package
+        info = json @config[:rpc]['search', URI.escape(package)]
+        info['results'].map {|result| result['ID']} unless info['type'] =~ /error/
+      end
 
-    def json item
-      Yajl::Parser.new.parse(open(item).read)
-    end
-  end
-
-  class Opts
-    attr_reader :config, :cmd
-
-    def initialize
-      @cmd    = []
-      @config = {:path => DlPath, :color => true}
-
-      parse!
-      self
-    end
-
-  private
-    def parse!
-      ARGV.unshift '-h' if ARGV.empty?
-
-      gopts = GetoptLong.new \
-        ['--download', '-d', GetoptLong::REQUIRED_ARGUMENT],
-        ['--search',   '-s', GetoptLong::REQUIRED_ARGUMENT],
-        ['--upgrade',  '-u', GetoptLong::NO_ARGUMENT      ],
-        ['--no-color',       GetoptLong::NO_ARGUMENT      ],
-        ['--path',           GetoptLong::OPTIONAL_ARGUMENT],
-        ['--version',  '-v', GetoptLong::NO_ARGUMENT      ],
-        ['--help',     '-h', GetoptLong::NO_ARGUMENT      ]
-
-      gopts.each do |opt, arg|
-        case opt
-        when '--download' then @cmd << ['download', arg.split]
-        when '--search'   then @cmd << ['search',   arg.split]
-        when '--upgrade'  then @cmd << ['check_upgrade'      ]
-        when '--no-color' then @config[:color] = false
-        when '--path'
-          if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
-            @config[:path] = Pathname.new(arg).realpath || File.expand_path(arg)
-          else
-            warn _("W: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n")
+      def fetch package
+        open "http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz" do |remote|
+          File.open "#{package}.tar.gz", 'wb' do |local|
+            local.write remote.read
           end
-        when '--version'
-          $stdout.puts _('%s %s (%s)' % [:name, :version, :release].map {|key| PrInfo[key]})
-          exit -1
-        when '--help' then print_help
         end
       end
-    rescue GetoptLong::Error; exit 2
+
+      def untar package
+        Archive::Tar::Minitar.unpack \
+          Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
+          Dir.pwd
+        File.delete "#{package}.tar.gz"
+      end
+
+      def json item
+        Yajl::Parser.new.parse(open(item).read)
+      end
     end
 
-    def print_help out = $stdout
-      out.puts _(<<-HELP)
-Aurb - An AUR (Arch User Repository) script
+    class Opts
+      attr_reader :config, :cmd
 
-Usage:
-  #{name = File.basename $0} [options]
+      def initialize
+        @cmd    = []
+        @config = {:path => DlPath, :color => true}
 
-Options (Required):
-  -d, --download PACKAGE      Download package(s).
-  -s, --search PACKAGE        Search for package(s).
-  -u, --upgrade               Search for package updates.
+        parse!
+        self
+      end
 
-Optional:
-      --no-color              Disable colored output.
-      --path [PATH]           Override the default save path. [#{@config[:path]}]
+    private
+      def parse!
+        ARGV.unshift '-h' if ARGV.empty?
 
-Other:
-      --version               Show version and exit.
-      --help                  You're looking at it.
+        gopts = GetoptLong.new \
+          ['--download', '-d', GetoptLong::REQUIRED_ARGUMENT],
+          ['--search',   '-s', GetoptLong::REQUIRED_ARGUMENT],
+          ['--upgrade',  '-u', GetoptLong::NO_ARGUMENT      ],
+          ['--no-color',       GetoptLong::NO_ARGUMENT      ],
+          ['--path',           GetoptLong::OPTIONAL_ARGUMENT],
+          ['--version',  '-v', GetoptLong::NO_ARGUMENT      ],
+          ['--help',     '-h', GetoptLong::NO_ARGUMENT      ]
 
-Examples:
-  #{name} -d 'package1 package2' --path ~/downloads
-  #{name} -s 'package1 package2' --no-color
-  #{name} --upgrade
+        gopts.each do |opt, arg|
+          case opt
+          when '--download' then @cmd << ['download', arg.split]
+          when '--search'   then @cmd << ['search',   arg.split]
+          when '--upgrade'  then @cmd << ['check_upgrade'      ]
+          when '--no-color' then @config[:color] = false
+          when '--path'
+            if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
+              @config[:path] = Pathname.new(arg).realpath || File.expand_path(arg)
+            else
+              warn _("W: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n")
+            end
+          when '--version'
+            $stdout.puts _('%s %s (%s)' % [:name, :version, :release].map {|key| PrInfo[key]})
+            exit -1
+          when '--help' then print_help
+          end
+        end
+      rescue GetoptLong::Error; exit 2
+      end
 
-Aurb was inspired by arson. Have a look at http://evaryont.github.com/arson
-      HELP
-      exit -1
-    end
+      def print_help
+        $stdout.puts _(<<-HELP)
+  Aurb - An AUR (Arch User Repository) script
+
+  Usage:
+    #{name = File.basename $0} [options]
+
+  Options (Required):
+    -d, --download PACKAGE      Download package(s).
+    -s, --search PACKAGE        Search for package(s).
+    -u, --upgrade               Search for package updates.
+
+  Optional:
+        --no-color              Disable colored output.
+        --path [PATH]           Override the default save path. [#{@config[:path]}]
+
+  Other:
+        --version               Show version and exit.
+        --help                  You're looking at it.
+
+  Examples:
+    #{name} -d 'package1 package2' --path ~/downloads
+    #{name} -s 'package1 package2' --no-color
+    #{name} --upgrade
+
+  Aurb was inspired by arson. Have a look at http://evaryont.github.com/arson
+        HELP
+        exit -1
+      end
+    # private
   end
 end
 
-at_exit do
-  if __FILE__ == $0
-    raise $! if $!
-    Aurb::Aur.start
-  end
-end
+Aurb::Aur.start if __FILE__ == $0
