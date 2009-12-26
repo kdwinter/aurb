@@ -79,7 +79,7 @@ module Aurb
             next if in_sync? result['Name']
             if package.split.any? {|pac| (result['Name'] + result['Description']).include?(pac)}
               $stdout.puts _("[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
-                "#{ansi result['Name'], :blue} (#{result['Version']})\n    #{result['Description']}")
+                "#{ansi result['Name'], :yellow} (#{result['Version']})\n    #{result['Description']}")
             end
           end
         end
