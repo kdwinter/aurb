@@ -56,7 +56,7 @@ module Aurb
       packages.delete_if {|pkg| in_sync?(pkg)}
       abort _('E: The package(s) you specified was/were found in the community repository') if packages.empty?
       $stdout.puts _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
-      packages.each do |package|
+      packages.each_with_index do |package, index|
         begin
           Dir.chdir @config[:path] do
             fetch package
@@ -66,7 +66,7 @@ module Aurb
           warn _("W: Something went wrong downloading '#{package}'. Are you sure it exists?")
           package == packages.last ? exit : next
         end
-        $stdout.puts _("(#{packages.index(package)+1}/#{packages.length}) downloaded #{package}")
+        $stdout.puts _("(#{index+1}/#{packages.length}) downloaded #{package}")
       end
     end
 
