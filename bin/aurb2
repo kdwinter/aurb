@@ -6,8 +6,7 @@
 # See LICENSE file for details.
 #++
 
-$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..')
-require 'lib/aurb'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/aurb')
 
 Aurb.logger.info 'Beaming it all up...'
 puts "Aurb #{Aurb::Version}"

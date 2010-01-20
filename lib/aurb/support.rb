@@ -59,12 +59,13 @@ class String
   # Colors a string with +color+.
   # Uses the ANSICode library provided by +facets+.
   #
-  #   "Hello".colorize(:blue) # => "\e[34mHello\e[K"
+  #   "Hello".colorize(:blue) # => "\e[34mHello\e[0m"
   #
   # For more information on available effects, see
   # http://facets.rubyforge.org/apidoc/api/more/classes/ANSICode.html
   def colorize(effect)
-    raise AurbError, 'ANSICode not available' and return unless defined?(ANSICode)
     ANSICode.send(effect.to_sym) << self << ANSICode.clear
+  rescue
+    self
   end
 end

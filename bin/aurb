@@ -1,0 +1,214 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+#
+#--
+# Copyright protects this work.
+# See LICENSE file for details.
+#++
+%w[rubygems getoptlong pathname zlib open-uri yajl gettext
+   facets/ansicode facets/minitar facets/version].each do |lib|
+  begin
+    require lib
+  rescue LoadError
+    abort "F: You're missing '#{lib}'.\nPlease make sure you have the necessary rubygems installed."
+  end
+end
+
+def _ str
+  GetText::_(str)
+end
+
+module Aurb
+  DlPath = File.join ENV[:HOME], 'abs'
+  PrInfo = {:name => 'Aurb', :version => [0, 9, 3].join('.'), :release => '2009-12-02'}
+
+  module Util
+    def ansi text, effect
+      (@config[:color] ? ANSICode.send(effect.to_sym) : '') << text.to_s << ANSICode.clear
+    end
+  end
+
+  class Aur
+    include Aurb::Util
+
+    class << self
+      def start
+        trap :INT do
+          $stderr.puts _("\nInterrupt signal received\n\n")
+          exit 0
+        end
+
+        self.new :rpc => proc {|type, arg| "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"}
+      end
+    end
+
+    def initialize config
+      opts    = Opts.new
+      @config = config.merge(opts.config)
+
+      opts.cmd.each do |cmd|
+        cmd.length == 1 ? __send__(cmd.first) : __send__(cmd.first, cmd.last)
+        $stdout.puts "\n\n-----" unless cmd == opts.cmd.last
+      end
+    end
+
+    def download packages
+      packages.delete_if {|pkg| in_sync?(pkg)}
+      abort _('E: The package(s) you specified was/were found in the community repository') if packages.empty?
+      $stdout.puts _("Targets (#{ansi packages.length, :magenta}): #{packages.join(', ')}")
+      packages.each_with_index do |package, index|
+        begin
+          Dir.chdir @config[:path] do
+            fetch package
+            untar package
+          end
+        rescue OpenURI::HTTPError
+          warn _("W: Something went wrong downloading '#{package}'. Are you sure it exists?")
+          package == packages.last ? exit : next
+        end
+        $stdout.puts _("(#{index+1}/#{packages.length}) downloaded #{package}")
+      end
+    end
+
+    def search packages
+      packages.each do |package|
+        list(package).each do |id|
+          result = json @config[:rpc]['info', id]
+          unless result['type'] =~ /error/
+            result = result['results']
+            next if in_sync? result['Name']
+            if package.split.any? {|pac| (result['Name'] + result['Description']).include?(pac)}
+              $stdout.puts _("[#{result['OutOfDate'] == '1' ? ansi('✘', :red) : ansi('✔', :green)}] " +
+                "#{ansi result['Name'], :yellow} (#{result['Version']})\n    #{result['Description']}")
+            end
+          end
+        end
+      end
+    end
+
+    def check_upgrade
+      upgradables = []
+      IO.popen('pacman -Qm', IO::RDONLY) {|pm| pm.read.lines}.each do |line|
+        name, version = line.chomp.split
+        result = json @config[:rpc]['info', name]
+        unless result['type'] =~ /error/
+          result = result['results']
+          next if in_sync? result['Name']
+          if VersionNumber.new(result['Version']) > VersionNumber.new(version)
+            upgradables << result['Name']
+            $stdout.puts _("* #{name}: #{ansi version, :red} => #{ansi result['Version'], :green}")
+          end
+        end
+      end
+      upgradables.any? ? (download upgradables) : ($stdout.puts _('Nothing to update'))
+    end
+
+    private
+      def in_sync? package
+        !!Dir["/var/lib/pacman/sync/community/#{package}-*"].first
+      end
+
+      def list package
+        info = json @config[:rpc]['search', URI.escape(package)]
+        info['results'].map {|result| result['ID']} unless info['type'] =~ /error/
+      end
+
+      def fetch package
+        open "http://aur.archlinux.org/packages/#{package}/#{package}.tar.gz" do |remote|
+          File.open "#{package}.tar.gz", 'wb' do |local|
+            local.write remote.read
+          end
+        end
+      end
+
+      def untar package
+        Archive::Tar::Minitar.unpack \
+          Zlib::GzipReader.new(File.open("#{package}.tar.gz", 'rb')),
+          Dir.pwd
+        File.delete "#{package}.tar.gz"
+      end
+
+      def json item
+        Yajl::Parser.new.parse(open(item).read)
+      end
+    end
+
+    class Opts
+      attr_reader :config, :cmd
+
+      def initialize
+        @cmd    = []
+        @config = {:path => DlPath, :color => true}
+
+        parse!
+        self
+      end
+
+    private
+      def parse!
+        ARGV.unshift '-h' if ARGV.empty?
+
+        gopts = GetoptLong.new \
+          ['--download', '-d', GetoptLong::REQUIRED_ARGUMENT],
+          ['--search',   '-s', GetoptLong::REQUIRED_ARGUMENT],
+          ['--upgrade',  '-u', GetoptLong::NO_ARGUMENT      ],
+          ['--no-color',       GetoptLong::NO_ARGUMENT      ],
+          ['--path',           GetoptLong::OPTIONAL_ARGUMENT],
+          ['--version',  '-v', GetoptLong::NO_ARGUMENT      ],
+          ['--help',     '-h', GetoptLong::NO_ARGUMENT      ]
+
+        gopts.each do |opt, arg|
+          case opt
+          when '--download' then @cmd << ['download', arg.split]
+          when '--search'   then @cmd << ['search',   arg.split]
+          when '--upgrade'  then @cmd << ['check_upgrade'      ]
+          when '--no-color' then @config[:color] = false
+          when '--path'
+            if File.exists? arg = (arg[0...1] == '/' ? arg : File.join(Dir.pwd, arg))
+              @config[:path] = Pathname.new(arg).realpath || File.expand_path(arg)
+            else
+              warn _("W: '#{arg}' does not exist. Fell back to [#{@config[:path]}]\n")
+            end
+          when '--version'
+            $stdout.puts _('%s %s (%s)' % [:name, :version, :release].map {|key| PrInfo[key]})
+            exit -1
+          when '--help' then print_help
+          end
+        end
+      rescue GetoptLong::Error; exit 2
+      end
+
+      def print_help
+        $stdout.puts _(<<-HELP)
+  Aurb - An AUR (Arch User Repository) script
+
+  Usage:
+    #{name = File.basename $0} [options]
+
+  Options (Required):
+    -d, --download PACKAGE      Download package(s).
+    -s, --search PACKAGE        Search for package(s).
+    -u, --upgrade               Search for package updates.
+
+  Optional:
+        --no-color              Disable colored output.
+        --path [PATH]           Override the default save path. [#{@config[:path]}]
+
+  Other:
+        --version               Show version and exit.
+        --help                  You're looking at it.
+
+  Examples:
+    #{name} -d 'package1 package2' --path ~/downloads
+    #{name} -s 'package1 package2' --no-color
+    #{name} --upgrade
+
+  Aurb was inspired by arson. Have a look at http://evaryont.github.com/arson
+        HELP
+        exit -1
+      end
+    # private
+  end
+end
+
+Aurb::Aur.start if __FILE__ == $0

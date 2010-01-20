@@ -19,14 +19,15 @@ module Aurb
       #   search(['aurb']) # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
       def search(packages)
         if packages.is_a?(Array)
-          results = packages.map {|package| list_search_results(package)}.flatten
-        elsif packages.is_a?(String)
+          results = packages.map do |package|
+            list_search_results(package)
+          end.flatten
+        elsif packages.is_a?(String) || packages.is_a?(Symbol)
           results = list_search_results(packages)
         else
           raise AurbError, 'Invalid search arguments'
         end
 
-        Aurb.logger.debug results
         results
       end
 
@@ -44,7 +45,7 @@ module Aurb
         # Returns an array containing a hash of search results
         # for a given +package+.
         def list_search_results(package)
-          json = parse_json(Aurb.aur_path(:search, URI.escape(package)))
+          json = parse_json(Aurb.aur_path(:search, URI.escape(package.to_s)))
           ids  = json.results.map(&:ID)
           results = []
 
