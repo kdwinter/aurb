@@ -24,7 +24,7 @@ class AurTest < Test::Unit::TestCase
 
     context 'download' do
       setup do
-        @url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
+        @url = lambda {|p| "http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
         @package_working = 'awesome-git'
         @package_faulty  = 'awesome'
       end

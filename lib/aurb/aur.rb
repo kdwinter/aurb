@@ -41,7 +41,7 @@ module Aurb
         end
         raise AurbArgumentError and return unless packages.is_a?(Array)
 
-        url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
+        url = lambda {|p| "http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
 
         downloadables = packages.map do |package|
           url.call(URI.escape(package.to_s))
