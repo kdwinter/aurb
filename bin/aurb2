@@ -16,4 +16,5 @@ class Session
 
   puts search ARGV
   puts download ARGV
+  #puts upgrade ['aurb 0.0.0.0']
 end

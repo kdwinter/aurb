@@ -6,11 +6,27 @@ class AurTest < Test::Unit::TestCase
       @session = Session()
     end
 
+    context 'upgrade' do
+      setup do
+        @list = ['aurb 0.0.0.0',
+                 'aurb 0.9.9.9']
+      end
+
+      should 'return an array' do
+        assert @session.upgrade(@list).is_a?(Array)
+      end
+
+      should 'contain only upgradable packages' do
+        assert_not_equal [:aurb, :aurb], @session.upgrade(@list)
+        assert_equal [:aurb], @session.upgrade(@list)
+      end
+    end
+
     context 'download' do
       setup do
         @url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
-        @packages_working = ['aurb', 'awesome-git']
-        @packages_faulty  = ['aurb', 'awesome']
+        @packages_working = [:aurb, :"awesome-git"]
+        @packages_faulty  = [:aurb, :awesome]
       end
 
       should 'return an array' do
@@ -24,7 +40,7 @@ class AurTest < Test::Unit::TestCase
       end
 
       should 'filter out non-existant packages' do
-        assert_equal [@url.call('aurb')], @session.download(@packages_faulty)
+        assert_equal [@url.call(:aurb)], @session.download(@packages_faulty)
       end
     end
 

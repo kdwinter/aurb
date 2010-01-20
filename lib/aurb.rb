@@ -10,8 +10,8 @@ require 'pathname'
 require 'zlib'
 require 'open-uri'
 require 'yajl'
-require 'facets/ansicode'
-require 'facets/minitar'
+require 'ansi'
+require 'archive/tar/minitar'
 require 'facets/version'
 
 module Aurb
@@ -31,7 +31,7 @@ module Aurb
     @logger ||= Logger.new(STDOUT)
   end
 
-  # Returns an URL which will be used for JSON parsing
+  # Returns an URL which will be used for JSON parsing.
   def self.aur_path(type, arg)
     "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
   end
