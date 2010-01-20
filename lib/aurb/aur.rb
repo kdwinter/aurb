@@ -13,7 +13,7 @@ module Aurb
     end
 
     module ClassMethods
-      # Search the AUR for given *packages*.
+      # Search the AUR for given +packages+.
       # Returns an array of results.
       #
       #   search(['aurb']) # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
@@ -25,10 +25,30 @@ module Aurb
         elsif packages.is_a?(String) || packages.is_a?(Symbol)
           results = list_search_results(packages)
         else
-          raise AurbError, 'Invalid search arguments'
+          raise AurbArgumentError
         end
 
         results
+      end
+
+      # Download +packages+ from the AUR.
+      # Returns an array of downloadable packages.
+      #
+      #   download(['aurb']) # => ['http://.../aurb.tar.gz']
+      def download(packages)
+        if packages.is_a?(Array)
+          url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
+
+          downloadables = packages.map do |package|
+            url.call(package)
+          end.select do |package|
+            downloadable?(package)
+          end
+        else
+          raise AurbArgumentError
+        end
+
+        downloadables
       end
 
       private
@@ -40,6 +60,11 @@ module Aurb
         # Shortcut to the +Yajl+ JSON parser.
         def parse_json(json)
           Yajl::Parser.new.parse(open(json).read)
+        end
+
+        # Check if +package+ is available for download.
+        def downloadable?(package)
+          open package rescue false
         end
 
         # Returns an array containing a hash of search results
