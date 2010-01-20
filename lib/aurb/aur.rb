@@ -37,14 +37,14 @@ module Aurb
       #   download(['aurb']) # => ['http://.../aurb.tar.gz']
       def download(packages)
         if packages.is_a?(String) || packages.is_a?(Symbol)
-          packages ||= packages.to_s.split
+          packages = packages.to_s.split(/\s+/)
         end
         raise AurbArgumentError and return unless packages.is_a?(Array)
 
         url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
 
-        downloadables = packages.to_s.split.map do |package|
-          url.call(package)
+        downloadables = packages.map do |package|
+          url.call(URI.escape(package.to_s))
         end.select do |package|
           downloadable?(package)
         end

@@ -25,46 +25,49 @@ class AurTest < Test::Unit::TestCase
     context 'download' do
       setup do
         @url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
-        @packages_working = [:aurb, :"awesome-git"]
-        @packages_faulty  = [:aurb, :awesome]
+        @package_working = 'awesome-git'
+        @package_faulty  = 'awesome'
+      end
+
+      should 'accept arrays, symbols and strings' do
+        assert_nothing_raised { @session.download(@package_working.to_s) }
+        assert_nothing_raised { @session.download(@package_working.split) }
+        assert_nothing_raised { @session.download(@package_working.to_sym) }
       end
 
       should 'return an array' do
-        assert @session.download(@packages_working).is_a?(Array)
-        assert @session.download(@packages_faulty).is_a?(Array)
+        assert @session.download(@package_working).is_a?(Array)
+        assert @session.download(@package_faulty).is_a?(Array)
       end
 
       should 'return download links' do
-        assert_equal @packages_working.map {|p| @url.call(p)},
-          @session.download(@packages_working)
+        assert_equal [@url.call(@package_working)], @session.download(@package_working)
       end
 
       should 'filter out non-existant packages' do
-        assert_equal [@url.call(:aurb)], @session.download(@packages_faulty)
+        assert_equal [], @session.download(@package_faulty)
       end
     end
 
     context 'search' do
       setup do
-        @package_s   = 'aurb'
-        @package_a   = ['aurb']
-        @package_sym = :aurb
+        @package = 'aurb'
       end
 
       should 'accept arrays, symbols and strings' do
-        assert_nothing_raised { @session.search(@package_s)   }
-        assert_nothing_raised { @session.search(@package_a)   }
-        assert_nothing_raised { @session.search(@package_sym) }
+        assert_nothing_raised { @session.search(@package.to_s)   }
+        assert_nothing_raised { @session.search(@package.split)   }
+        assert_nothing_raised { @session.search(@package.to_sym) }
       end
 
       should 'return an array of results' do
-        assert @session.search(@package_s).is_a?(Array)
-        assert @session.search(@package_a).is_a?(Array)
+        assert @session.search(@package.to_s).is_a?(Array)
+        assert @session.search(@package.split).is_a?(Array)
       end
 
       context 'result' do
         setup do
-          @result = @session.search(@package_s).first
+          @result = @session.search(@package).first
         end
 
         should 'return an array containing hashes' do
