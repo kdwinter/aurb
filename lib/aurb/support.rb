@@ -3,6 +3,13 @@
 #
 # Most of these extracted from Rails source (http://github.com/rails/rails)
 
+class Object
+  # An object is blank if it's false, empty or a whitespace string.
+  def blank?
+    respond_to?(:empty?) ? empty? : !self
+  end
+end
+
 class Symbol
   # Turns the symbol into a proc, useful for enumerations.
   #
@@ -10,7 +17,7 @@ class Symbol
   #   # Does the same as
   #   items.select {|i| i.cool?}.map {|i| i.name}
   def to_proc
-    Proc.new {|*args| args.shift.__send__(self, *args)}
+    Proc.new {|obj| obj.__send__(self)}
   end
 end
 
@@ -26,6 +33,11 @@ class Hash
   # Destructively converts all keys to symbols.
   def symbolize_keys!
     self.replace(self.symbolize_keys)
+  end
+
+  # Delegation
+  def method_missing(key)
+    self.symbolize_keys[key.to_sym]
   end
 end
 
