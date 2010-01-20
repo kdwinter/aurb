@@ -14,5 +14,6 @@ puts "Aurb #{Aurb::Version}"
 class Session
   include Aurb::Aur
 
-  search ARGV
+  puts search ARGV
+  puts download ARGV
 end
