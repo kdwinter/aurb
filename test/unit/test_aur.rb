@@ -66,9 +66,5 @@ class AurTest < Test::Unit::TestCase
         end
       end
     end
-
-    should 'return true' do
-      assert true
-    end
   end
 end

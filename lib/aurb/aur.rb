@@ -67,6 +67,10 @@ module Aurb
           open package rescue false
         end
 
+        # Compare version of local +package+ with the one on the AUR.
+        def upgrade_available?(package, version)
+        end
+
         # Returns an array containing a hash of search results
         # for a given +package+.
         def list_search_results(package)
