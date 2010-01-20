@@ -9,13 +9,13 @@
 require File.expand_path(File.dirname(__FILE__) + '/../lib/aurb')
 
 Aurb.logger.info 'Beaming it all up...'
-puts "Aurb #{Aurb::Version}"
+puts "Aurb #{Aurb::Version}".colorize(:yellow)
 
 class Session
   include Aurb::Aur
 
   # TODO: Optionparsing here
-  puts search (ARGV.blank? ? :aurb : ARGV)
-  puts download (ARGV.blank? ? :aurb : ARGV)
-  puts upgrade ['aurb 0.0.0.0']
+  puts search(ARGV.blank? ? :aurb : ARGV).map(&:Name).inspect
+  puts download(ARGV.blank? ? :aurb : ARGV).inspect
+  puts upgrade(['aurb 0.0.0.0']).inspect
 end
