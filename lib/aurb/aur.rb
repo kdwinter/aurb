@@ -51,6 +51,17 @@ module Aurb
         downloadables
       end
 
+      def upgrade(list)
+        upgradables = []
+
+        list.each do |line|
+          name, version = line.split
+          upgradables << name if upgradable?(name, version)
+        end
+
+        upgradables.map(&:to_sym)
+      end
+
       private
         # See if +package+ is available in the community repository.
         def in_community?(package)
@@ -68,7 +79,14 @@ module Aurb
         end
 
         # Compare version of local +package+ with the one on the AUR.
-        def upgrade_available?(package, version)
+        def upgradable?(package, version)
+          json = parse_json(Aurb.aur_path(:info, package.to_s))
+          remote_package = json.results
+
+          local_version  = VersionNumber.new(version)
+          remote_version = VersionNumber.new(remote_package.Version)
+
+          local_version < remote_version && !in_community?(package)
         end
 
         # Returns an array containing a hash of search results
