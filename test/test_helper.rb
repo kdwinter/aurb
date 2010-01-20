@@ -5,11 +5,9 @@ require 'shoulda'
 class Test::Unit::TestCase
   include Aurb
 
-  def Session(&block)
+  def Session
     klass = Class.new do
       include Aurb::Aur
-
-      class_eval(&block) if block_given?
     end
 
     klass
