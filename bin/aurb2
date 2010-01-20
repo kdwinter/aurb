@@ -9,7 +9,7 @@
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..')
 require 'lib/aurb'
 
-Aurb.logger.debug 'Beaming it all up...'
+Aurb.logger.info 'Beaming it all up...'
 puts "Aurb #{Aurb::Version}"
 
 class Session
