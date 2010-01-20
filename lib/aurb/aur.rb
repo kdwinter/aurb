@@ -13,8 +13,21 @@ module Aurb
     end
 
     module ClassMethods
-      def search(*args)
-        Aurb.logger.debug list_search_results('aurb').inspect
+      # Search the AUR for given *packages*.
+      # Returns an array of results.
+      #
+      #   search(['aurb']) # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
+      def search(packages)
+        if packages.is_a?(Array)
+          results = packages.map {|package| list_search_results(package)}.flatten
+        elsif packages.is_a?(String)
+          results = list_search_results(packages)
+        else
+          raise AurbError, 'Invalid search arguments'
+        end
+
+        Aurb.logger.debug results
+        results
       end
 
       private
@@ -28,15 +41,16 @@ module Aurb
           Yajl::Parser.new.parse(open(json).read)
         end
 
-        # Returns a hash of search results for a given +package+.
+        # Returns an array containing a hash of search results
+        # for a given +package+.
         def list_search_results(package)
-          json = parse_json(Aurb.aur_path(:search, URI.escape(package))).symbolize_keys
-          ids  = json[:results].map(&:ID)
+          json = parse_json(Aurb.aur_path(:search, URI.escape(package)))
+          ids  = json.results.map(&:ID)
           results = []
 
           ids.each do |id|
-            json     = parse_json(Aurb.aur_path(:info, id)).symbolize_keys
-            result   = json[:results].symbolize_keys
+            json     = parse_json(Aurb.aur_path(:info, id))
+            result   = json.results.symbolize_keys
             results << result unless in_community?(result[:Name])
           end
 
