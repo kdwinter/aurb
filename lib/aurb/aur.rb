@@ -14,11 +14,11 @@ module Aurb
 
     module ClassMethods
       def search(*args)
-        puts args
+        Aurb.logger.debug list_search_results('aurb').inspect
       end
 
       private
-        # See if a package is available in the community repository.
+        # See if +package+ is available in the community repository.
         def in_community?(package)
           Dir["/var/lib/pacman/sync/community/#{package}-*"].any?
         end
@@ -26,6 +26,21 @@ module Aurb
         # Shortcut to the +Yajl+ JSON parser.
         def parse_json(json)
           Yajl::Parser.new.parse(open(json).read)
+        end
+
+        # Returns a hash of search results for a given +package+.
+        def list_search_results(package)
+          json = parse_json(Aurb.aur_path(:search, URI.escape(package))).symbolize_keys
+          ids  = json[:results].map(&:ID)
+          results = []
+
+          ids.each do |id|
+            json     = parse_json(Aurb.aur_path(:info, id)).symbolize_keys
+            result   = json[:results].symbolize_keys
+            results << result unless in_community?(result[:Name])
+          end
+
+          results
         end
       # private
     end

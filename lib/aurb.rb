@@ -20,7 +20,12 @@ module Aurb
 
   # Make a +Logger+ object available.
   def self.logger
+    require 'logger' unless defined?(Logger)
     @logger ||= Logger.new(STDOUT)
+  end
+
+  def self.aur_path(type, arg)
+    "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
   end
 end
 
