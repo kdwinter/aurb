@@ -64,7 +64,7 @@ class String
   # For more information on available effects, see
   # http://facets.rubyforge.org/apidoc/api/more/classes/ANSICode.html
   def colorize(effect)
-    ANSICode.send(effect.to_sym) << self << ANSICode.clear
+    ANSI::Code.send(effect.to_sym) << self << ANSI::Code.clear
   rescue
     self
   end

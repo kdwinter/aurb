@@ -14,7 +14,8 @@ puts "Aurb #{Aurb::Version}"
 class Session
   include Aurb::Aur
 
-  puts search ARGV
-  puts download ARGV
-  #puts upgrade ['aurb 0.0.0.0']
+  # TODO: Optionparsing here
+  puts search (ARGV.blank? ? :aurb : ARGV)
+  puts download (ARGV.blank? ? :aurb : ARGV)
+  puts upgrade ['aurb 0.0.0.0']
 end
