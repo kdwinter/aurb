@@ -25,32 +25,39 @@ module Aurb
         elsif packages.is_a?(String) || packages.is_a?(Symbol)
           results = list_search_results(packages)
         else
-          raise AurbArgumentError
+          raise AurbArgumentError and return
         end
 
         results
       end
 
       # Download +packages+ from the AUR.
-      # Returns an array of downloadable packages.
+      # Returns an array of downloadable package urls.
       #
       #   download(['aurb']) # => ['http://.../aurb.tar.gz']
       def download(packages)
-        if packages.is_a?(Array)
-          url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
+        if packages.is_a?(String) || packages.is_a?(Symbol)
+          packages ||= packages.to_s.split
+        end
+        raise AurbArgumentError and return unless packages.is_a?(Array)
 
-          downloadables = packages.map do |package|
-            url.call(package)
-          end.select do |package|
-            downloadable?(package)
-          end
-        else
-          raise AurbArgumentError
+        url = ->(p) {"http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
+
+        downloadables = packages.to_s.split.map do |package|
+          url.call(package)
+        end.select do |package|
+          downloadable?(package)
         end
 
         downloadables
       end
 
+      # Returns a +list+ of names of packages that have an upgrade
+      # available to them, which could then in turn be passed on to
+      # the +download+ method.
+      #
+      #   # With Aurb on the AUR as version [0, 8, 2, 1]
+      #   upgrade(['aurb 0.0.0.0', 'aurb 0.9.9.9']) # => [:aurb]
       def upgrade(list)
         upgradables = []
 
