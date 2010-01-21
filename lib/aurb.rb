@@ -6,7 +6,8 @@
 # See LICENSE file for details.
 #++
 
-require 'pathname'
+require 'logger'
+require 'getoptlong'
 require 'zlib'
 require 'open-uri'
 require 'yajl'
@@ -27,7 +28,6 @@ module Aurb
 
   # Make a +Logger+ object available.
   def self.logger
-    require 'logger' unless defined?(Logger)
     @logger ||= Logger.new(STDOUT)
   end
 
