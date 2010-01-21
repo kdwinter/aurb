@@ -63,6 +63,7 @@ module Aurb
 
         list.each do |line|
           name, version = line.split
+          next if in_community?(name)
           upgradables << name if upgradable?(name, version)
         end
 
@@ -88,23 +89,26 @@ module Aurb
         # Compare version of local +package+ with the one on the AUR.
         def upgradable?(package, version)
           json = parse_json(Aurb.aur_path(:info, package.to_s))
+          return if json.type =~ /error/
           remote_package = json.results
 
           local_version  = VersionNumber.new(version)
           remote_version = VersionNumber.new(remote_package.Version)
 
-          local_version < remote_version && !in_community?(package)
+          local_version < remote_version
         end
 
         # Returns an array containing a hash of search results
         # for a given +package+.
         def list_search_results(package)
           json = parse_json(Aurb.aur_path(:search, URI.escape(package.to_s)))
+          return if json.type =~ /error/
           ids  = json.results.map(&:ID)
           results = []
 
           ids.each do |id|
             json     = parse_json(Aurb.aur_path(:info, id))
+            next if json.type =~ /error/
             result   = json.results.symbolize_keys
             results << result unless in_community?(result[:Name])
           end
