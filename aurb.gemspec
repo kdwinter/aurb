@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{aurb}
-  s.version = "1.0.0"
+  s.version = "1.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Gigamo"]
@@ -15,12 +15,15 @@ Gem::Specification.new do |s|
   s.executables = ["aurb"]
   s.extra_rdoc_files = [
     "LICENSE",
-     "README.md"
+     "README.rdoc"
   ]
   s.files = [
     ".gitignore",
      "LICENSE",
-     "README.md",
+     "README.rdoc",
+     "Rakefile",
+     "VERSION",
+     "aurb.gemspec",
      "bin/aurb",
      "lib/aurb.rb",
      "lib/aurb/aur.rb",
