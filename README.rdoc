@@ -22,6 +22,12 @@ Look for upgrades to packages you have installed from the AUR:
 
   $ aurb --upgrade
 
+== Tests
+
+Just clone the project, and run
+
+  $ rake test:units
+
 == Copyright
 
 Copyright (c) 2009-2010 Gigamo. See LICENSE for details.
