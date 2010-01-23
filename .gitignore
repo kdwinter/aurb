@@ -2,3 +2,6 @@
 InstalledFiles
 *.swp
 *.rbc
+doc
+pkg
+.yardoc
