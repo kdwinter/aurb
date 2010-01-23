@@ -1,0 +1,27 @@
+= Aurb
+
+An AUR (Arch User Repository) utility.
+
+Aurb can download from, search and look for updates on the AUR.
+
+== Install
+
+  $ gem install aurb
+
+== Usage
+
+Download one or more packages:
+
+  $ aurb --download "firefox-nightly opera chromium-browser-svn"
+
+Search for one or more packages:
+
+  $ aurb --search "firefox opera"
+
+Look for upgrades to packages you have installed from the AUR:
+
+  $ aurb --upgrade
+
+== Copyright
+
+Copyright (c) 2009-2010 Gigamo. See LICENSE for details.
