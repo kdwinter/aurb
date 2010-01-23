@@ -28,6 +28,10 @@ Just clone the project, and run
 
   $ rake test:units
 
+== Documentation
+
+See http://rdoc.info/projects/gigamo/aurb
+
 == Copyright
 
 Copyright (c) 2009-2010 Gigamo. See LICENSE for details.
