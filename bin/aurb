@@ -51,7 +51,6 @@ class Session
         end
       when '--search'
         packages = search(args.split)
-        Aurb.logger.debug packages.inspect
         puts 'No results found' and return if packages.blank?
         packages.each do |package|
           status  = package.OutOfDate == '1' ? '✘'.colorize(:red) : '✔'.colorize(:green)
