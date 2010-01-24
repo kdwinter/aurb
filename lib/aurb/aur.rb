@@ -28,7 +28,7 @@ module Aurb
           raise AurbArgumentError and return
         end
 
-        results
+        results.delete_if(&:blank?)
       end
 
       # Download +packages+ from the AUR.
@@ -49,7 +49,7 @@ module Aurb
           downloadable?(package)
         end
 
-        downloadables
+        downloadables.delete_if(&:blank?)
       end
 
       # Returns a +list+ of names of packages that have an upgrade
