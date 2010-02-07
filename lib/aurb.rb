@@ -44,6 +44,10 @@ module Aurb #:nodoc:
       "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
     end
 
+    def aur_download_path(pkg)
+      "http://aur.archlinux.org/packages/#{pkg}/#{pkg}.tar.gz"
+    end
+
     def aur
       @aur ||= Aur.new
     end

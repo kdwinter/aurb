@@ -24,7 +24,6 @@ class AurTest < Test::Unit::TestCase
 
     context 'download' do
       setup do
-        @url = lambda {|p| "http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
         @package_working = ['awesome-git']
         @package_faulty  = ['awesome']
       end
@@ -35,7 +34,7 @@ class AurTest < Test::Unit::TestCase
       end
 
       should 'return download links' do
-        assert_equal [@url.call(@package_working.join)], @aur.download(@package_working)
+        assert_equal [Aurb.aur_download_path(@package_working.join)], @aur.download(@package_working)
       end
 
       should 'filter out non-existant packages' do
