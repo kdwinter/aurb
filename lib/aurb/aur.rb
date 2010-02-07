@@ -23,10 +23,8 @@ module Aurb
     #
     #   download(['aurb']) # => ['http://.../aurb.tar.gz']
     def download(packages)
-      url = lambda {|p| "http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
-
       packages.map do |package|
-        url.call(URI.escape(package.to_s))
+        Aurb.aur_download_path URI.escape(package.to_s)
       end.select do |package|
         downloadable?(package)
       end.delete_if(&:blank?)
@@ -64,29 +62,33 @@ module Aurb
 
     # Compare version of local +package+ with the one on the AUR.
     def upgradable?(package, version)
-      json = parse_json(Aurb.aur_path(:info, package.to_s))
-      return if json.type =~ /error/
-      remote_package = json.results
+      parse_json(Aurb.aur_path(:info, package.to_s)) do |json|
+        return false if json.type =~ /error/
 
-      local_version  = VersionNumber.new(version)
-      remote_version = VersionNumber.new(remote_package.Version)
+        remote_package = json.results
 
-      local_version < remote_version
+        local_version  = VersionNumber.new(version)
+        remote_version = VersionNumber.new(remote_package.Version)
+
+        local_version < remote_version
+      end
     end
 
     # Returns an array containing a hash of search results
     # for a given +package+.
     def list_search_results(package)
       json = parse_json(Aurb.aur_path(:search, URI.escape(package.to_s)))
-      return if json.type =~ /error/
+      return [] if json.type =~ /error/
+
       ids  = json.results.map(&:ID)
       results = []
 
       ids.each do |id|
-        json     = parse_json(Aurb.aur_path(:info, id))
-        next if json.type =~ /error/
-        result   = json.results.symbolize_keys
-        results << result unless in_community?(result[:Name])
+        parse_json(Aurb.aur_path(:info, id)) do |json|
+          next if json.type =~ /error/
+          result = json.results.symbolize_keys
+          results << result unless in_community?(result.Name)
+        end
       end
 
       results
@@ -96,7 +98,13 @@ module Aurb
 
     # Shortcut to the +Yajl+ JSON parser.
     def parse_json(json)
-      Yajl::Parser.new.parse(open(json).read)
+      json = Yajl::Parser.new.parse(open(json).read)
+
+      if block_given?
+        yield json
+      else
+        json
+      end
     end
   end
 end
