@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
      "bin/aurb",
      "lib/aurb.rb",
      "lib/aurb/aur.rb",
+     "lib/aurb/cli.rb",
      "lib/aurb/support.rb",
      "test/test_helper.rb",
      "test/unit/test_aur.rb",
