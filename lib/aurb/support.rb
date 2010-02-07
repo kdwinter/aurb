@@ -10,17 +10,6 @@ class Object
   end
 end
 
-class Symbol
-  # Turns the symbol into a proc, useful for enumerations.
-  #
-  #   items.select(&:cool?).map(&:name)
-  #   # Does the same as
-  #   items.select {|i| i.cool?}.map {|i| i.name}
-  def to_proc
-    Proc.new {|obj| obj.__send__(self)}
-  end
-end
-
 class Hash
   # Returns a new hash with all keys converted to symbols.
   def symbolize_keys

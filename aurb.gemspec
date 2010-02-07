@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{aurb}
-  s.version = "1.0.2"
+  s.version = "1.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Gigamo"]
-  s.date = %q{2010-01-24}
+  s.date = %q{2010-02-07}
   s.default_executable = %q{aurb}
   s.email = %q{gigamo@gmail.com}
   s.executables = ["aurb"]
@@ -28,7 +28,6 @@ Gem::Specification.new do |s|
      "lib/aurb.rb",
      "lib/aurb/aur.rb",
      "lib/aurb/support.rb",
-     "lib/aurb/version.rb",
      "test/test_helper.rb",
      "test/unit/test_aur.rb",
      "test/unit/test_support.rb"
@@ -50,12 +49,14 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<yajl-ruby>, [">= 0"])
+      s.add_runtime_dependency(%q<thor>, [">= 0"])
       s.add_runtime_dependency(%q<ansi>, [">= 0"])
       s.add_runtime_dependency(%q<archive-tar-minitar>, [">= 0"])
       s.add_runtime_dependency(%q<facets>, [">= 0"])
       s.add_development_dependency(%q<shoulda>, [">= 0"])
     else
       s.add_dependency(%q<yajl-ruby>, [">= 0"])
+      s.add_dependency(%q<thor>, [">= 0"])
       s.add_dependency(%q<ansi>, [">= 0"])
       s.add_dependency(%q<archive-tar-minitar>, [">= 0"])
       s.add_dependency(%q<facets>, [">= 0"])
@@ -63,6 +64,7 @@ Gem::Specification.new do |s|
     end
   else
     s.add_dependency(%q<yajl-ruby>, [">= 0"])
+    s.add_dependency(%q<thor>, [">= 0"])
     s.add_dependency(%q<ansi>, [">= 0"])
     s.add_dependency(%q<archive-tar-minitar>, [">= 0"])
     s.add_dependency(%q<facets>, [">= 0"])

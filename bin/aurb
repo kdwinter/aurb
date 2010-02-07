@@ -6,88 +6,11 @@
 # See LICENSE file for details.
 #++
 
-require File.expand_path(File.dirname(__FILE__) + '/../lib/aurb')
+require File.expand_path(File.dirname(__FILE__) + '/../lib/aurb/cli')
 
-class Session
-  include Aurb::Aur
-
-  @@path ||= ENV[:HOME] + '/abs'
-
-  def self.parse_options
-    ARGV.unshift '-h' if ARGV.empty?
-
-    gopts = GetoptLong.new(
-      ['--download', '-d', GetoptLong::REQUIRED_ARGUMENT],
-      ['--search',   '-s', GetoptLong::REQUIRED_ARGUMENT],
-      ['--upgrade',  '-u', GetoptLong::NO_ARGUMENT      ],
-      ['--version',  '-v', GetoptLong::NO_ARGUMENT      ],
-      ['--help',     '-h', GetoptLong::NO_ARGUMENT      ]
-    )
-
-    gopts.each do |opt, args|
-      case opt
-      when '--download'
-        packages = download(args.split)
-        puts 'No downloadable packages found' and return if packages.blank?
-        packages.each_with_index do |package, index|
-          current = index + 1
-          total   = packages.size
-          local   = package.split('/')[-1]
-
-          Dir.chdir(@@path) do
-            open(package) do |remote|
-              File.open(local, 'wb') do |local|
-                local.write remote.read
-              end
-            end
-
-            Archive::Tar::Minitar.unpack(
-              Zlib::GzipReader.new(File.open(local, 'rb')), Dir.pwd
-            )
-            File.delete local
-          end
-
-          puts "(#{current}/#{total}) downloaded #{local}"
-        end
-      when '--search'
-        packages = search(args.split)
-        puts 'No results found' and return if packages.blank?
-        packages.each do |package|
-          status  = package.OutOfDate == '1' ? '✘'.colorize(:red) : '✔'.colorize(:green)
-          name    = package.Name.colorize(:yellow)
-          version = package.Version
-          description = package.Description
-
-          puts "[#{status}] #{name} (#{version})\n    #{description}"
-        end
-      when '--upgrade'
-        local_list = `pacman -Qm`.split(/\n/)
-        packages = upgrade(local_list)
-        puts 'Nothing to upgrade' and return if packages.blank?
-        packages.each do |package|
-          puts "#{package} has an upgrade available"
-        end
-      when '--version'
-        puts Aurb::Version
-      when '--help'
-        puts %{
-  Aurb - An AUR (Arch User Repository) script
-
-  Usage:
-    #{name = File.basename $0} [options]
-
-  Options (Required):
-    -d, --download "packages"   Download package(s).
-    -s, --search "packages"     Search package(s).
-    -u, --upgrade               Search for package upgrades.
-
-  Other:
-        --version               Show version and exit.
-        --help                  You're looking at it.
-        }
-      end
-    end
-  end
+begin
+  Aurb::CLI.start
+rescue Aurb::AurbError => e
+  puts e.message.colorize(:red)
+  exit e.status_code
 end
-
-Session.parse_options

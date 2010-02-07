@@ -11,6 +11,7 @@ Jeweler::Tasks.new do |gem|
   gem.authors = ['Gigamo']
   
   gem.add_dependency('yajl-ruby')
+  gem.add_dependency('thor')
   gem.add_dependency('ansi')
   gem.add_dependency('archive-tar-minitar')
   gem.add_dependency('facets')
