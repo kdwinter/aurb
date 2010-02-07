@@ -8,36 +8,48 @@
 
 require 'logger'
 require 'getoptlong'
-require 'zlib'
 require 'open-uri'
+
+require 'zlib'
 require 'yajl'
 require 'ansi'
 require 'archive/tar/minitar'
 require 'facets/version'
 
-module Aurb
-  # Generic Aurb error.
-  class AurbError < StandardError; end
+module Aurb #:nodoc:
+  VERSION = '1.1.0'
 
-  # Raised for faulty arguments.
-  class AurbArgumentError < AurbError
-    def initialize
-      super('Invalid arguments')
+  class AurbError < StandardError
+    def self.status_code(code = nil)
+      return @code unless code
+      @code = code
+    end
+
+    def status_code
+      self.class.status_code
     end
   end
 
-  # Make a +Logger+ object available.
-  def self.logger
-    @logger ||= Logger.new(STDOUT)
-  end
+  class AurbDownloadError < AurbError; status_code(10); end
+  class AurbArgumentError < AurbError; status_code(12); end
 
-  # Returns an URL which will be used for JSON parsing.
-  def self.aur_path(type, arg)
-    "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
+  class << self
+    attr_reader :aur
+
+    def logger
+      @logger ||= Logger.new(STDOUT)
+    end
+
+    def aur_path(type, arg)
+      "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
+    end
+
+    def aur
+      @aur ||= Aur.new
+    end
   end
 end
 
-$LOAD_PATH.unshift File.dirname(__FILE__)
-require 'aurb/support'
+$LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__))
 require 'aurb/aur'
-require 'aurb/version'
+require 'aurb/support'

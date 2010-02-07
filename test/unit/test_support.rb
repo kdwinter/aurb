@@ -7,17 +7,6 @@ class SupportTest < Test::Unit::TestCase
       assert nil.blank?
     end
 
-    context 'for symbol' do
-      setup do
-        @stub = ['HELLO']
-      end
-
-      should 'allow for to_proc on enumerations' do
-        assert_equal @stub.map {|s| s.downcase}, @stub.map(&:downcase)
-        assert_equal ['hello'], @stub.map(&:downcase)
-      end
-    end
-
     context 'for hash' do
       setup do
         @hash_s = {'hello' => 'world'}
