@@ -12,15 +12,15 @@ Aurb can download from, search and look for updates on the AUR.
 
 Download one or more packages:
 
-  $ aurb --download "firefox-nightly opera chromium-browser-svn"
+  $ aurb download "firefox-nightly opera chromium-browser-svn"
 
 Search for one or more packages:
 
-  $ aurb --search "firefox opera"
+  $ aurb search "firefox opera"
 
 Look for upgrades to packages you have installed from the AUR:
 
-  $ aurb --upgrade
+  $ aurb upgrade
 
 == Tests
 
