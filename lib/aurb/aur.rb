@@ -50,8 +50,8 @@ module Aurb
     # available to them, which could then in turn be passed on to
     # the +download+ method.
     #
-    #   # With Aurb on the AUR as version [0, 8, 2, 1]
-    #   upgrade(['aurb 0.0.0.0', 'aurb 0.9.9.9']) # => [:aurb]
+    #   # With Aurb on the AUR as version 1.1.2-1
+    #   upgrade(['aurb 0.0.0-0', 'aurb 0.9.9-9']) # => [:aurb]
     def upgrade(list)
       list.inject([]) do |ary, line|
         name, version = line.split
