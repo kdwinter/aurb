@@ -77,18 +77,15 @@ module Aurb
       json = parse_json(Aurb.aur_path(:search, URI.escape(package.to_s)))
       return [] if json.type =~ /error/
 
-      ids  = json.results.map(&:ID)
-      results = []
-
-      ids.each do |id|
+      ids = json.results.map(&:ID)
+      ids.inject([]) do |ary, id|
         parse_json(Aurb.aur_path(:info, id)) do |json|
           next if json.type =~ /error/
           result = json.results.symbolize_keys
-          results << result unless in_community?(result.Name)
+          ary << result unless in_community?(result.Name)
         end
+        ary
       end
-
-      results
     end
 
     private
