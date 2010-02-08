@@ -17,7 +17,7 @@ require 'ansi'
 require 'archive/tar/minitar'
 
 module Aurb #:nodoc:
-  VERSION = '1.1.1'
+  VERSION = '1.1.2'
 
   autoload :Aur, 'aurb/aur'
 
