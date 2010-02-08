@@ -5,6 +5,7 @@ class SupportTest < Test::Unit::TestCase
     should 'be able to check for blank' do
       assert ''.blank?
       assert nil.blank?
+      assert [].blank?
     end
   end
 
