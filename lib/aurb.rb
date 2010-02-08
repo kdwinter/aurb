@@ -1,10 +1,5 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-#
-#--
-# Copyright protects this work.
-# See LICENSE file for details.
-#++
 
 $LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__))
 

@@ -1,10 +1,5 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
-#
-#--
-# Copyright protects this work.
-# See LICENSE file for details.
-#++
 
 module Aurb
   class Aur
