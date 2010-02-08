@@ -30,20 +30,6 @@ class Hash
   end
 end
 
-class Array
-  # Extracts options from a set of arguments.
-  #
-  #   def options(*args)
-  #     args.extract_options!
-  #   end
-  #
-  #   options(1, 2)           # => {}
-  #   options(1, 2, :a => :b) # => {:a=>:b}
-  def extract_options!
-    last.is_a?(Hash) ? pop : {}
-  end
-end
-
 class String
   # Colors a string with +color+.
   # Uses the ANSICode library provided by +facets+.
