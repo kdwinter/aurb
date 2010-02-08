@@ -26,7 +26,7 @@ class AurTest < Test::Unit::TestCase
           versions = [
             {:old => '1',       :new => '2'      },
             {:old => '1-3',     :new => '2-1'    },
-            {:old => '1.0.0-2', :new => '2.0.0-3'},
+            {:old => '1.0.0-2', :new => '2.0.0-3'}
           ]
 
           versions.each do |version|

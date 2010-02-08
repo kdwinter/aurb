@@ -30,7 +30,7 @@ module Aurb
       opts = options.dup
       path = opts[:path][0] == '/' ? opts[:path] : File.join(Dir.pwd, opts[:path])
       if File.exist?(path)
-        opts[:path] = File.expand_path(path)
+        path = File.expand_path(path)
       else
         raise AurbDownloadError, "'#{path}' is not a valid path"
       end
@@ -40,9 +40,9 @@ module Aurb
         total   = pkgs.size
         local   = package.split('/')[-1]
 
-        Dir.chdir(opts[:path]) do
-          open(package) do |remote|
-            File.open(local, 'wb') do |local|
+        Dir.chdir path do
+          open package do |remote|
+            File.open local, 'wb' do |local|
               local.write remote.read
             end
           end
