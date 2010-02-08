@@ -37,15 +37,12 @@ module Aurb
     #   # With Aurb on the AUR as version [0, 8, 2, 1]
     #   upgrade(['aurb 0.0.0.0', 'aurb 0.9.9.9']) # => [:aurb]
     def upgrade(list)
-      upgradables = []
-
-      list.each do |line|
+      list.inject([]) do |ary, line|
         name, version = line.split
         next if in_community?(name)
-        upgradables << name.to_sym if upgradable?(name, version)
+        ary << name.to_sym if upgradable?(name, version)
+        ary
       end
-
-      upgradables
     end
 
     protected
