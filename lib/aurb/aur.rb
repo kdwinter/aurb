@@ -3,7 +3,10 @@
 
 module Aurb
   class Aur
-    # Compare package versions
+    # Compare package versions.
+    #
+    #   Version.new('1.0.0') < Version.new('2.0.0') # => true
+    #   Version.new('1.1-1') < Version.new('1.0-6') # => false
     class Version
       include Comparable
 
