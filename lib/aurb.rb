@@ -15,7 +15,6 @@ require 'zlib'
 require 'yajl'
 require 'ansi'
 require 'archive/tar/minitar'
-require 'facets/version'
 
 module Aurb #:nodoc:
   VERSION = '1.1.1'
@@ -37,8 +36,6 @@ module Aurb #:nodoc:
   class AurbArgumentError < AurbError; status_code(12); end
 
   class << self
-    attr_reader :aur
-
     def logger
       @logger ||= Logger.new(STDOUT)
     end

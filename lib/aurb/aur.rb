@@ -8,6 +8,24 @@
 
 module Aurb
   class Aur
+    # Compare package versions
+    class Version
+      include Comparable
+
+      attr_reader :version
+
+      def initialize(*args)
+        @version = args.join('.').split(/\W+/).map(&:to_i)
+      end
+
+      def <=>(other)
+        [self.version.size, other.version.size].max.times do |i|
+          c = self.version[i] <=> other.version[i]
+          return c if c != 0
+        end
+      end
+    end
+
     # Search the AUR for given +packages+.
     # Returns an array of results.
     #
@@ -59,17 +77,15 @@ module Aurb
 
     # Compare version of local +package+ with the one on the AUR.
     def upgradable?(package, version)
+      local_version  = Version.new(version)
+      remote_version = nil
+
       parse_json(Aurb.aur_path(:info, package.to_s)) do |json|
-        return false if json.type =~ /error/
-
-        remote_package = json.results
-
-        # TODO: Drop Facets#VersionNumber and do this myself
-        local_version  = VersionNumber.new(version)
-        remote_version = VersionNumber.new(remote_package.Version)
-
-        local_version < remote_version
+        return if json.type =~ /error/
+        remote_version = Version.new(json.results.Version)
       end
+
+      remote_version && local_version < remote_version
     end
 
     # Returns an array containing a hash of search results
