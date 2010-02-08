@@ -6,6 +6,8 @@
 # See LICENSE file for details.
 #++
 
+$LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__))
+
 require 'logger'
 require 'open-uri'
 
@@ -17,6 +19,8 @@ require 'facets/version'
 
 module Aurb #:nodoc:
   VERSION = '1.1.1'
+
+  autoload :Aur, 'aurb/aur'
 
   class AurbError < StandardError
     def self.status_code(code = nil)
@@ -53,6 +57,4 @@ module Aurb #:nodoc:
   end
 end
 
-$LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__))
-require 'aurb/aur'
 require 'aurb/support'
