@@ -17,7 +17,7 @@ require 'archive/tar/minitar'
 require 'facets/version'
 
 module Aurb #:nodoc:
-  VERSION = '1.1.0'
+  VERSION = '1.1.1'
 
   class AurbError < StandardError
     def self.status_code(code = nil)
