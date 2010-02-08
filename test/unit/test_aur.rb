@@ -1,6 +1,23 @@
 require File.expand_path(File.dirname(__FILE__) + '/../test_helper')
 
 class AurTest < Test::Unit::TestCase
+  context 'Aurb::Aur ::' do
+    context 'Version' do
+      should 'be able to compare versions and return the newest' do
+        versions = [
+          {:old => '1',       :new => '2'      },
+          {:old => '1-3',     :new => '2-1'    },
+          {:old => '1.0.0-2', :new => '2.0.0-3'},
+          {:old => '1.0.pre', :new => '1.0.1'  }
+        ]
+
+        versions.each do |version|
+          assert Aurb::Aur::Version.new(version[:old]) < Aurb::Aur::Version.new(version[:new])
+        end
+      end
+    end
+  end
+
   context 'Aurb::Aur #' do
     context 'upgrade' do
       setup do
@@ -15,21 +32,6 @@ class AurTest < Test::Unit::TestCase
       should 'contain only upgradable packages' do
         assert_not_equal [:aurb, :aurb], Aurb.aur.upgrade(@list)
         assert_equal [:aurb], Aurb.aur.upgrade(@list)
-      end
-
-      context 'version' do
-        should 'be able to compare versions and return the newest' do
-          versions = [
-            {:old => '1',       :new => '2'      },
-            {:old => '1-3',     :new => '2-1'    },
-            {:old => '1.0.0-2', :new => '2.0.0-3'},
-            {:old => '1.0.pre', :new => '1.0.1'  }
-          ]
-
-          versions.each do |version|
-            assert Aurb::Aur::Version.new(version[:old]) < Aurb::Aur::Version.new(version[:new])
-          end
-        end
       end
     end
 
