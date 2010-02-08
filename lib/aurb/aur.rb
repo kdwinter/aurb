@@ -64,6 +64,7 @@ module Aurb
 
         remote_package = json.results
 
+        # TODO: Drop Facets#VersionNumber and do this myself
         local_version  = VersionNumber.new(version)
         remote_version = VersionNumber.new(remote_package.Version)
 
