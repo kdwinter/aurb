@@ -7,7 +7,6 @@
 #++
 
 require 'logger'
-require 'getoptlong'
 require 'open-uri'
 
 require 'zlib'
