@@ -11,19 +11,29 @@ class SupportTest < Test::Unit::TestCase
 
   context 'Hash' do
     setup do
-      @hash_s = {'hello' => 'world'}
+      @hash_str = {'hello' => 'world'}
       @hash_sym = {:hello => 'world'}
     end
 
     should 'be able to symbolize keys' do
-      assert_equal @hash_sym, @hash_s.symbolize_keys
-      symbolized = @hash_s.symbolize_keys!
+      assert_equal @hash_sym, @hash_str.symbolize_keys
+      symbolized = @hash_str.symbolize_keys!
       assert_equal @hash_sym, symbolized
     end
 
     should 'provide methods for its keys through method_missing' do
-      assert_equal 'world', @hash_s.hello
+      assert_equal 'world', @hash_str.hello
       assert_equal 'world', @hash_sym.hello
+    end
+  end
+
+  context 'String' do
+    setup do
+      @str = 'foo'
+    end
+
+    should 'be able to colorize itself through the ansi library' do
+      assert_equal "\e[34mfoo\e[0m", @str.colorize(:blue)
     end
   end
 end
