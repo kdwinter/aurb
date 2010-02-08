@@ -44,16 +44,21 @@ class AurTest < Test::Unit::TestCase
 
     context 'search' do
       setup do
-        @package = ['aurb']
+        @package_working = ['aurb']
+        @package_faulty  = ['foobarbaz']
       end
 
       should 'return an array of results' do
-        assert @aur.search(@package).is_a?(Array)
+        assert @aur.search(@package_working).is_a?(Array)
+      end
+
+      should 'filter out non-existant packages' do
+        assert_equal [], @aur.search(@package_faulty)
       end
 
       context 'result' do
         setup do
-          @result = @aur.search(@package).first
+          @result = @aur.search(@package_working).first
         end
 
         should 'return an array containing hashes' do
