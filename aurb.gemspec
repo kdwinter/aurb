@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Gigamo"]
-  s.date = %q{2010-02-08}
+  s.date = %q{2010-02-09}
   s.default_executable = %q{aurb}
   s.email = %q{gigamo@gmail.com}
   s.executables = ["aurb"]
@@ -53,14 +53,12 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<thor>, [">= 0"])
       s.add_runtime_dependency(%q<ansi>, [">= 0"])
       s.add_runtime_dependency(%q<archive-tar-minitar>, [">= 0"])
-      s.add_runtime_dependency(%q<facets>, [">= 0"])
       s.add_development_dependency(%q<shoulda>, [">= 0"])
     else
       s.add_dependency(%q<yajl-ruby>, [">= 0"])
       s.add_dependency(%q<thor>, [">= 0"])
       s.add_dependency(%q<ansi>, [">= 0"])
       s.add_dependency(%q<archive-tar-minitar>, [">= 0"])
-      s.add_dependency(%q<facets>, [">= 0"])
       s.add_dependency(%q<shoulda>, [">= 0"])
     end
   else
@@ -68,7 +66,6 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<thor>, [">= 0"])
     s.add_dependency(%q<ansi>, [">= 0"])
     s.add_dependency(%q<archive-tar-minitar>, [">= 0"])
-    s.add_dependency(%q<facets>, [">= 0"])
     s.add_dependency(%q<shoulda>, [">= 0"])
   end
 end
