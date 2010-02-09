@@ -14,7 +14,6 @@ Jeweler::Tasks.new do |gem|
   gem.add_dependency('thor')
   gem.add_dependency('ansi')
   gem.add_dependency('archive-tar-minitar')
-  gem.add_dependency('facets')
   
   gem.add_development_dependency('shoulda')
 end
