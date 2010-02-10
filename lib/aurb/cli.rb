@@ -6,7 +6,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../aurb')
 
 module Aurb
   class CLI < Thor
-    ARGV   = ::ARGV.dup
+    ARGV = ::ARGV.dup
 
     map '-d' => :download
     map '-s' => :search
