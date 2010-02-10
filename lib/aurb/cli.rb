@@ -31,9 +31,7 @@ module Aurb
       end
 
       pkgs.each_with_index do |package, index|
-        current = index + 1
-        total   = pkgs.size
-        local   = package.split('/')[-1]
+        local = package.split('/')[-1]
 
         Dir.chdir path do
           open package do |remote|
@@ -41,14 +39,13 @@ module Aurb
               local.write remote.read
             end
           end
-
           Archive::Tar::Minitar.unpack(
             Zlib::GzipReader.new(File.open(local, 'rb')), Dir.pwd
           )
           File.delete local
         end
 
-        puts "(#{current}/#{total}) downloaded #{local}"
+        puts "(#{index+1}/#{pkgs.size}) downloaded #{local}"
       end
     end
 
@@ -76,7 +73,7 @@ module Aurb
       puts 'Nothing to upgrade' and return if pkgs.blank?
 
       pkgs.each do |package|
-        puts "#{package} has an upgrade available"
+        puts "#{package.colorize(:yellow)} has an upgrade available"
       end
     end
   end

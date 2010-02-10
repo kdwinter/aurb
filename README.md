@@ -1,18 +1,22 @@
-= Aurb
+# Aurb
 
 An AUR (Arch User Repository) utility.
 
 Aurb can download from, search and look for updates on the AUR.
 
-== Install
+## Install
 
-  $ gem install aurb
+For Arch users, aurb is [available on the aur](http://aur.archlinux.org/packages.php?ID=24395).
 
-== Usage
+If you rather install it as a gem, you could:
+
+  # gem install aurb
+
+## Usage
 
 Download one or more packages:
 
-  $ aurb download "firefox-nightly opera chromium-browser-svn"
+  $ aurb download "hon ioquake3"
 
 Search for one or more packages:
 
@@ -22,16 +26,16 @@ Look for upgrades to packages you have installed from the AUR:
 
   $ aurb upgrade
 
-== Tests
+## Tests
 
-Just clone the project, and run
+Clone the project, and run
 
   $ rake test:units
 
-== Documentation
+## Documentation
 
 See http://rdoc.info/projects/gigamo/aurb
 
-== Copyright
+## Copyright
 
 Copyright (c) 2009-2010 Gigamo. See LICENSE for details.
