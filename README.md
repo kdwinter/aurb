@@ -28,13 +28,13 @@ Look for upgrades to packages you have installed from the AUR:
 
 ## Tests
 
-Clone the project, and run
+Clone the project, and run:
 
     $ rake test:units
 
 ## Documentation
 
-See http://rdoc.info/projects/gigamo/aurb
+See [rdoc.info](http://rdoc.info/projects/gigamo/aurb).
 
 ## Copyright
 
