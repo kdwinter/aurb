@@ -10,27 +10,27 @@ For Arch users, aurb is [available on the aur](http://aur.archlinux.org/packages
 
 If you rather install it as a gem, you could:
 
-  # gem install aurb
+    # gem install aurb
 
 ## Usage
 
 Download one or more packages:
 
-  $ aurb download "hon ioquake3"
+    $ aurb download "hon ioquake3"
 
 Search for one or more packages:
 
-  $ aurb search "firefox opera"
+    $ aurb search "firefox opera"
 
 Look for upgrades to packages you have installed from the AUR:
 
-  $ aurb upgrade
+    $ aurb upgrade
 
 ## Tests
 
 Clone the project, and run
 
-  $ rake test:units
+    $ rake test:units
 
 ## Documentation
 
