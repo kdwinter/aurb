@@ -5,22 +5,22 @@
 
 Gem::Specification.new do |s|
   s.name = %q{aurb}
-  s.version = "1.1.2"
+  s.version = "1.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Gigamo"]
-  s.date = %q{2010-02-09}
+  s.date = %q{2010-03-04}
   s.default_executable = %q{aurb}
   s.email = %q{gigamo@gmail.com}
   s.executables = ["aurb"]
   s.extra_rdoc_files = [
     "LICENSE",
-     "README.rdoc"
+     "README.md"
   ]
   s.files = [
     ".gitignore",
      "LICENSE",
-     "README.rdoc",
+     "README.md",
      "Rakefile",
      "VERSION",
      "aurb.gemspec",
