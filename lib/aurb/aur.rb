@@ -78,7 +78,7 @@ module Aurb
       local_version  = Version.new(version)
       remote_version = nil
 
-      parse_json Aurb.aur_path(:info, package.to_s) do |json|
+      parse_json Aurb.aur_rpc_path(:info, package.to_s) do |json|
         return if json.type =~ /error/
         remote_version = Version.new(json.results.Version)
       end
@@ -89,12 +89,12 @@ module Aurb
     # Returns an array containing a hash of search results
     # for a given +package+.
     def list_search_results(package)
-      json = parse_json(Aurb.aur_path(:search, URI.escape(package.to_s)))
+      json = parse_json(Aurb.aur_rpc_path(:search, URI.escape(package.to_s)))
       return [] if json.type =~ /error/
 
       ids = json.results.map(&:ID)
       ids.inject([]) do |ary, id|
-        parse_json Aurb.aur_path(:info, id) do |json|
+        parse_json Aurb.aur_rpc_path(:info, id) do |json|
           next if json.type =~ /error/
           result = json.results.symbolize_keys
           ary << result unless in_community?(result.Name)
