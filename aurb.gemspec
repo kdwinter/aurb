@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Gigamo"]
-  s.date = %q{2010-03-04}
+  s.date = %q{2010-03-05}
   s.default_executable = %q{aurb}
   s.email = %q{gigamo@gmail.com}
   s.executables = ["aurb"]
@@ -28,7 +28,11 @@ Gem::Specification.new do |s|
      "lib/aurb.rb",
      "lib/aurb/aur.rb",
      "lib/aurb/cli.rb",
-     "lib/aurb/support.rb",
+     "lib/aurb/core_ext.rb",
+     "lib/aurb/core_ext/hash.rb",
+     "lib/aurb/core_ext/object.rb",
+     "lib/aurb/core_ext/string.rb",
+     "lib/aurb/version.rb",
      "test/test_helper.rb",
      "test/unit/test_aur.rb",
      "test/unit/test_support.rb"
