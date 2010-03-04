@@ -27,8 +27,8 @@ module Aurb
     # Search the AUR for given +packages+.
     # Returns an array of results.
     #
-    #   search(['aurb']) # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
-    def search(packages)
+    #   search('aurb') # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
+    def search(*packages)
       packages.map do |package|
         list_search_results(package)
       end.flatten.delete_if(&:blank?)
@@ -37,8 +37,8 @@ module Aurb
     # Download +packages+ from the AUR.
     # Returns an array of downloadable package urls.
     #
-    #   download(['aurb']) # => ['http://.../aurb.tar.gz']
-    def download(packages)
+    #   download('aurb') # => ['http://.../aurb.tar.gz']
+    def download(*packages)
       packages.map do |package|
         Aurb.aur_download_path URI.escape(package.to_s)
       end.select do |package|

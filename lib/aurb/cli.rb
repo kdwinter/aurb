@@ -18,7 +18,7 @@ module Aurb
                   :default => File.join(ENV[:HOME], 'abs'),
                   :banner  => 'Specify the path to download to'
     def download(pkgs)
-      pkgs = Aurb.aur.download(pkgs.split)
+      pkgs = Aurb.aur.download(*pkgs.split)
 
       puts 'No downloadable packages found' and return if pkgs.blank?
 
@@ -51,7 +51,7 @@ module Aurb
 
     desc 'search "PACKAGES"', 'Search for packages'
     def search(pkgs)
-      pkgs = Aurb.aur.search(pkgs.split)
+      pkgs = Aurb.aur.search(*pkgs.split)
 
       puts 'No results found' and return if pkgs.blank?
 
