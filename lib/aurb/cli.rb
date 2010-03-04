@@ -8,9 +8,10 @@ module Aurb
   class CLI < Thor
     ARGV = ::ARGV.dup
 
-    map '-d' => :download
-    map '-s' => :search
-    map '-u' => :upgrade
+    map %w[-d --download] => :download,
+        %w[-s --search]   => :search,
+        %w[-u --upgrade]  => :upgrade,
+        %w[-v --version]  => :version
 
     desc 'download PACKAGES', 'Download packages'
     method_option :path,
@@ -66,6 +67,13 @@ module Aurb
       pkgs.each do |package|
         puts "#{package.to_s.colorize(:yellow)} has an upgrade available"
       end
+    end
+
+    desc 'version', 'Show version and exit'
+    def version
+      require 'thor/version' unless defined?(Thor::VERSION)
+      puts "Aurb v#{Aurb::VERSION} - Thor v#{Thor::VERSION}"
+      puts 'Copyright (c) 2009-2010 Gigamo <gigamo@gmail.com>'
     end
   end
 end
