@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
+$LOAD_PATH.unshift File.dirname(__FILE__) + '/..'
 require 'thor'
-require File.expand_path(File.dirname(__FILE__) + '/../aurb')
+require 'aurb'
 
 module Aurb
   class CLI < Thor
@@ -71,7 +72,8 @@ module Aurb
 
     desc 'version', 'Show version and exit'
     def version
-      require 'thor/version' unless defined?(Thor::VERSION)
+      require 'aurb/version'
+      require 'thor/version'
       puts "Aurb v#{Aurb::VERSION} - Thor v#{Thor::VERSION}"
       puts 'Copyright (c) 2009-2010 Gigamo <gigamo@gmail.com>'
     end

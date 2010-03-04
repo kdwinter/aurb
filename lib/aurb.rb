@@ -12,8 +12,6 @@ require 'ansi'
 require 'archive/tar/minitar'
 
 module Aurb #:nodoc:
-  VERSION = '1.2.0'
-
   autoload :Aur, 'aurb/aur'
 
   class AurbError < StandardError
@@ -35,7 +33,7 @@ module Aurb #:nodoc:
       @logger ||= Logger.new(STDOUT)
     end
 
-    def aur_path(type, arg)
+    def aur_rpc_path(type, arg)
       "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
     end
 
