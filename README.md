@@ -16,11 +16,11 @@ If you rather install it as a gem, you could:
 
 Download one or more packages:
 
-    $ aurb download "hon ioquake3"
+    $ aurb download hon ioquake3
 
 Search for one or more packages:
 
-    $ aurb search "firefox opera"
+    $ aurb search firefox opera
 
 Look for upgrades to packages you have installed from the AUR:
 
@@ -30,7 +30,7 @@ Look for upgrades to packages you have installed from the AUR:
 
 Clone the project, and run:
 
-    $ rake test:units
+    $ rake test
 
 ## Documentation
 

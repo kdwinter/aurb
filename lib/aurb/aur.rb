@@ -61,7 +61,7 @@ module Aurb
       end
     end
 
-    protected
+  protected
 
     # See if +package+ is available in the community repository.
     def in_community?(package)
@@ -103,17 +103,12 @@ module Aurb
       end
     end
 
-    private
+  private
 
     # Shortcut to the +Yajl+ JSON parser.
     def parse_json(json)
       json = Yajl::Parser.new.parse(open(json).read)
-
-      if block_given?
-        yield json
-      else
-        json
-      end
+      yield json rescue json
     end
   end
 end
