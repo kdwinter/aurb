@@ -42,7 +42,7 @@ module Aurb
       packages.map do |package|
         Aurb.aur_download_path URI.escape(package.to_s)
       end.select do |package|
-        downloadable?(package)
+        !!(open package rescue false)
       end.delete_if(&:blank?)
     end
 
@@ -55,7 +55,7 @@ module Aurb
     def upgrade(list)
       list.inject([]) do |ary, line|
         name, version = line.split
-        next if in_community?(name)
+        next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
         ary << name.to_sym if upgradable?(name, version)
         ary
       end
@@ -63,26 +63,14 @@ module Aurb
 
   protected
 
-    # See if +package+ is available in the community repository.
-    def in_community?(package)
-      Dir["/var/lib/pacman/sync/community/#{package}-*"].any?
-    end
-
-    # Check if +package+ is available for download.
-    def downloadable?(package)
-      open package rescue false
-    end
-
     # Compare version of local +package+ with the one on the AUR.
     def upgradable?(package, version)
       local_version  = Version.new(version)
       remote_version = nil
-
       parse_json Aurb.aur_rpc_path(:info, package.to_s) do |json|
         return if json.type =~ /error/
         remote_version = Version.new(json.results.Version)
       end
-
       remote_version && local_version < remote_version
     end
 
@@ -91,13 +79,11 @@ module Aurb
     def list_search_results(package)
       json = parse_json(Aurb.aur_rpc_path(:search, URI.escape(package.to_s)))
       return [] if json.type =~ /error/
-
       ids = json.results.map(&:ID)
       ids.inject([]) do |ary, id|
         parse_json Aurb.aur_rpc_path(:info, id) do |json|
           next if json.type =~ /error/
-          result = json.results.symbolize_keys
-          ary << result unless in_community?(result.Name)
+          ary << json.results.symbolize_keys
         end
         ary
       end
