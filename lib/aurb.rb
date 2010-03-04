@@ -47,4 +47,4 @@ module Aurb #:nodoc:
   end
 end
 
-require 'aurb/support'
+require 'aurb/core_ext'
