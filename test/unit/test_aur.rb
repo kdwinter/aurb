@@ -21,8 +21,7 @@ class AurTest < Test::Unit::TestCase
   context 'Aurb::Aur #' do
     context 'upgrade' do
       setup do
-        @list = ['aurb 0.0.0-0',
-                 'aurb 9.9.9-9']
+        @list = "aurb 0.0.0-0\naurb 9.9.9-9".split(/\n/)
       end
 
       should 'return an array' do
