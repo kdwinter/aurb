@@ -25,7 +25,7 @@ module Aurb
     def download(*pkgs)
       pkgs = Aurb.aur.download(*pkgs)
       puts 'No downloadable packages found'.colorize(:red) and return if pkgs.blank?
-      path = options[:path][0] == '/' ? options[:path] : File.join(Dir.pwd, options[:path])
+      path = options.path[0] == '/' ? options.path : File.join(Dir.pwd, options.path)
       if File.exist?(path)
         path = File.expand_path(path)
       else
