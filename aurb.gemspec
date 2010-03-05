@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{aurb}
-  s.version = "1.2.1"
+  s.version = "1.2.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Gigamo"]
@@ -33,6 +33,7 @@ Gem::Specification.new do |s|
      "lib/aurb/core_ext/object.rb",
      "lib/aurb/core_ext/string.rb",
      "lib/aurb/version.rb",
+     "performance/aur.rb",
      "test/test_helper.rb",
      "test/unit/test_aur.rb",
      "test/unit/test_support.rb"
