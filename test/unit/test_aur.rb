@@ -12,7 +12,7 @@ class AurTest < Test::Unit::TestCase
         ]
 
         versions.each do |version|
-          assert Aurb::Aur::Version.new(version[:old]) < Aurb::Aur::Version.new(version[:new])
+          assert_operator Aurb::Aur::Version.new(version[:old]), :<, Aurb::Aur::Version.new(version[:new])
         end
       end
     end
@@ -39,7 +39,6 @@ class AurTest < Test::Unit::TestCase
       setup do
         @package_working = 'aurb'
         @package_faulty  = 'foobarbaz'
-        @package_multi   = 'aurb', 'yaourt'
       end
 
       should 'return an array' do
@@ -61,7 +60,6 @@ class AurTest < Test::Unit::TestCase
       setup do
         @package_working = 'aurb'
         @package_faulty  = 'foobarbaz'
-        @package_multi   = 'aurb', 'yaourt'
       end
 
       should 'return an array of results' do
