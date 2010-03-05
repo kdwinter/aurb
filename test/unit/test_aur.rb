@@ -26,12 +26,12 @@ class AurTest < Test::Unit::TestCase
       end
 
       should 'return an array' do
-        assert_operator Array, :===, Aurb.aur.upgrade(@list)
+        assert_operator Array, :===, Aurb.aur.upgrade(*@list)
       end
 
       should 'contain only upgradable packages' do
-        assert_not_equal [:aurb, :aurb], Aurb.aur.upgrade(@list)
-        assert_equal [:aurb], Aurb.aur.upgrade(@list)
+        assert_not_equal [:aurb, :aurb], Aurb.aur.upgrade(*@list)
+        assert_equal [:aurb], Aurb.aur.upgrade(*@list)
       end
     end
 

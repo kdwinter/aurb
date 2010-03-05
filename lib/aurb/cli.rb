@@ -63,7 +63,7 @@ module Aurb
     desc 'upgrade', 'Search for upgrades to installed packages'
     def upgrade
       list = `pacman -Qm`.split(/\n/)
-      pkgs = Aurb.aur.upgrade(list)
+      pkgs = Aurb.aur.upgrade(*list)
       puts 'Nothing to upgrade'.colorize(:red) and return if pkgs.blank?
       pkgs.each do |package|
         puts "#{package.to_s.colorize(:yellow)} has an upgrade available"

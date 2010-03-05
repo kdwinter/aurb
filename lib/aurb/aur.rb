@@ -51,14 +51,17 @@ module Aurb
     # the +download+ method.
     #
     #   # With Aurb on the AUR as version 1.1.2-1
-    #   upgrade(['aurb 0.0.0-0', 'aurb 0.9.9-9']) # => [:aurb]
-    def upgrade(list)
+    #   upgrade('aurb 0.0.0-0', 'aurb 0.9.9-9') # => [:aurb]
+    def upgrade(*list)
+      upgradables = []
       list.inject([]) do |ary, line|
-        name, version = line.split
-        next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
-        ary << name.to_sym if upgradable?(name, version)
-        ary
-      end
+        ary << Thread.new do
+          name, version = line.split
+          next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
+          upgradables << name.to_sym if upgradable?(name, version)
+        end
+      end.each(&:join)
+      upgradables
     end
 
   protected
