@@ -25,8 +25,17 @@ module Aurb #:nodoc:
     end
   end
 
-  class AurbDownloadError < AurbError; status_code(10); end
-  class AurbArgumentError < AurbError; status_code(12); end
+  class NoResultsError < AurbError
+    status_code 7
+
+    def initialize
+      super('No results found')
+    end
+  end
+
+  class DownloadError < AurbError
+    status_code 10
+  end
 
   class << self
     def logger

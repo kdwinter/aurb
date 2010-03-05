@@ -24,12 +24,12 @@ module Aurb
                   :banner  => 'Keep the tarball after downloading'
     def download(*pkgs)
       pkgs = Aurb.aur.download(*pkgs)
-      puts 'No downloadable packages found'.colorize(:red) and return if pkgs.blank?
+      raise Aurb::NoResultsError if pkgs.blank?
       path = options.path[0] == '/' ? options.path : File.join(Dir.pwd, options.path)
       if File.exist?(path)
         path = File.expand_path(path)
       else
-        raise AurbDownloadError, "'#{path}' is not a valid path"
+        raise Aurb::DownloadError, "'#{path}' is not a valid path"
       end
       pkgs.each_with_index do |package, index|
         local = package.split('/')[-1]
@@ -49,7 +49,7 @@ module Aurb
     desc 'search PACKAGES', 'Search for packages'
     def search(*pkgs)
       pkgs = Aurb.aur.search(*pkgs)
-      puts 'No results found'.colorize(:red) and return if pkgs.blank?
+      raise Aurb::NoResultsError if pkgs.blank?
       pkgs.each do |package|
         status = package.OutOfDate == '1' ? '✘'.colorize(:red) : '✔'.colorize(:green)
         name, version, description = package.Name.colorize(:yellow),
@@ -63,7 +63,7 @@ module Aurb
     def upgrade
       list = `pacman -Qm`.split(/\n/)
       pkgs = Aurb.aur.upgrade(*list)
-      puts 'Nothing to upgrade'.colorize(:red) and return if pkgs.blank?
+      raise Aurb::NoResultsError if pkgs.blank?
       pkgs.each do |package|
         puts "#{package.to_s.colorize(:yellow)} has an upgrade available"
       end
