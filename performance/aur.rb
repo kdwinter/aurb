@@ -5,12 +5,20 @@ $LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__) + '/../lib')
 
 require 'aurb'
 
-Benchmark.bm 7 do |x|
-  x.report 'search' do
+Benchmark.bm 20 do |x|
+  x.report 'aurb upgrade' do
+    Aurb.aur.upgrade *`pacman -Qm`.split(/\n/)
+  end
+
+  x.report 'aurb search' do
     Aurb.aur.search *:quake
   end
 
-  x.report 'upgrade' do
-    Aurb.aur.upgrade *`pacman -Qm`.split(/\n/)
+  x.report 'slurpy search' do
+    `slurpy --search quake`
+  end
+
+  x.report 'bauerbill search' do
+    `bauerbill -Ss quake --aur`
   end
 end
