@@ -24,7 +24,7 @@ require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
   test.libs << 'test'
   test.ruby_opts << '-rubygems'
-  test.pattern = 'test/**/test_*.rb'
+  test.pattern = 'test/**/*_test.rb'
   test.verbose = true
 end
  
@@ -32,7 +32,7 @@ namespace :test do
   Rake::TestTask.new(:units) do |test|
     test.libs << 'test'
     test.ruby_opts << '-rubygems'
-    test.pattern = 'test/unit/**/test_*.rb'
+    test.pattern = 'test/unit/**/*_test.rb'
     test.verbose = true
   end
 end
