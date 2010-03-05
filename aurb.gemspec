@@ -35,8 +35,8 @@ Gem::Specification.new do |s|
      "lib/aurb/version.rb",
      "performance/aur.rb",
      "test/test_helper.rb",
-     "test/unit/test_aur.rb",
-     "test/unit/test_support.rb"
+     "test/unit/aur_test.rb",
+     "test/unit/support_test.rb"
   ]
   s.homepage = %q{http://github.com/gigamo/aurb}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -44,8 +44,8 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{An AUR (Arch User Repository) utility}
   s.test_files = [
-    "test/unit/test_aur.rb",
-     "test/unit/test_support.rb",
+    "test/unit/aur_test.rb",
+     "test/unit/support_test.rb",
      "test/test_helper.rb"
   ]
 
