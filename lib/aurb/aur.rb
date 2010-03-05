@@ -80,18 +80,11 @@ module Aurb
     # Returns an array containing a hash of search results
     # for a given +package+.
     def list_search_results(package)
-      json = parse_json(Aurb.aur_rpc_path(:search, URI.escape(package.to_s)))
-      return [] if json.type =~ /error/
-      ids = json.results.map(&:ID)
       results = []
-      ids.inject([]) do |ary, id|
-        ary << Thread.new do
-          parse_json Aurb.aur_rpc_path(:info, id) do |json|
-            next if json.type =~ /error/
-            results << json.results.symbolize_keys
-          end
-        end
-      end.each(&:join)
+      parse_json Aurb.aur_rpc_path(:search, URI.escape(package.to_s)) do |json|
+        next if json.type =~ /error/
+        results << json.results
+      end
       results
     end
 
