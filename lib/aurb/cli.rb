@@ -25,8 +25,7 @@ module Aurb
     def download(*pkgs)
       pkgs = Aurb.aur.download(*pkgs)
       puts 'No downloadable packages found'.colorize(:red) and return if pkgs.blank?
-      opts = options.dup
-      path = opts[:path][0] == '/' ? opts[:path] : File.join(Dir.pwd, opts[:path])
+      path = options[:path][0] == '/' ? options[:path] : File.join(Dir.pwd, options[:path])
       if File.exist?(path)
         path = File.expand_path(path)
       else
@@ -41,7 +40,7 @@ module Aurb
             end
           end
           Archive::Tar::Minitar.unpack Zlib::GzipReader.new(File.open(local, 'rb')), Dir.pwd
-          File.delete local unless opts.keep?
+          File.delete local unless options.keep?
         end
         puts "(#{index+1}/#{pkgs.size}) downloaded #{local}"
       end
