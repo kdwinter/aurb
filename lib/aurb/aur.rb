@@ -61,7 +61,7 @@ module Aurb
           upgradables << name.to_sym if upgradable?(name, version)
         end
       end.each(&:join)
-      upgradables
+      upgradables.delete_if(&:blank?)
     end
 
   protected
@@ -83,13 +83,16 @@ module Aurb
       json = parse_json(Aurb.aur_rpc_path(:search, URI.escape(package.to_s)))
       return [] if json.type =~ /error/
       ids = json.results.map(&:ID)
+      results = []
       ids.inject([]) do |ary, id|
-        parse_json Aurb.aur_rpc_path(:info, id) do |json|
-          next if json.type =~ /error/
-          ary << json.results.symbolize_keys
+        ary << Thread.new do
+          parse_json Aurb.aur_rpc_path(:info, id) do |json|
+            next if json.type =~ /error/
+            results << json.results.symbolize_keys
+          end
         end
-        ary
-      end
+      end.each(&:join)
+      results
     end
 
   private
