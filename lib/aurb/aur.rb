@@ -29,9 +29,16 @@ module Aurb
     #
     #   search('aurb') # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
     def search(*packages)
-      packages.map do |package|
-        list_search_results(package)
-      end.flatten.delete_if(&:blank?)
+      results = []
+      packages.inject([]) do |ary, package|
+        ary << Thread.new do
+          parse_json Aurb.aur_rpc_path(:search, URI.escape(package.to_s)) do |json|
+            next if json.type =~ /error/
+            results << json.results
+          end
+        end
+      end.each(&:join)
+      results.flatten.delete_if(&:blank?)
     end
 
     # Download +packages+ from the AUR.
@@ -76,19 +83,6 @@ module Aurb
       end
       remote_version && local_version < remote_version
     end
-
-    # Returns an array containing a hash of search results
-    # for a given +package+.
-    def list_search_results(package)
-      results = []
-      parse_json Aurb.aur_rpc_path(:search, URI.escape(package.to_s)) do |json|
-        next if json.type =~ /error/
-        results << json.results
-      end
-      results
-    end
-
-  private
 
     # Shortcut to the +Yajl+ JSON parser.
     def parse_json(json)
