@@ -72,18 +72,8 @@ class AurTest < Test::Unit::TestCase
       end
 
       context 'result' do
-        setup do
-          @result = Aurb.aur.search(*@package_working).first
-        end
-
         should 'return an array containing hashes' do
-          assert_operator Hash, :===, @result
-        end
-
-        context 'keys' do
-          should 'be symbolized' do
-            assert_operator Symbol, :===, @result.keys.first
-          end
+          assert_operator Hash, :===, Aurb.aur.search(*@package_working).first
         end
       end
     end
