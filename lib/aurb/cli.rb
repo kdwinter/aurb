@@ -66,7 +66,7 @@ module Aurb
       info.each do |key, value|
         print key.colorize(:yellow)
         (key.size..11).each { print ' ' }
-        print value, "\n"
+        puts value
       end
     end
 
