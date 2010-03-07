@@ -19,6 +19,22 @@ class AurTest < Test::Unit::TestCase
   end
 
   context 'Aurb::Aur #' do
+    context 'info' do
+      setup do
+        @package_working = 'aurb'
+        @package_faulty  = 'foobarbaz'
+      end
+
+      should 'return a hash of results' do
+        assert_operator Hash, :===, Aurb.aur.info(@package_working)
+      end
+
+      should 'return nothing when a package does not exist' do
+        assert Aurb.aur.info(@package_faulty).blank?
+        assert_nil Aurb.aur.info(@package_faulty)
+      end
+    end
+
     context 'upgrade' do
       setup do
         @list = "aurb 0.0.0-0\naurb 9.9.9-9".split(/\n/)
