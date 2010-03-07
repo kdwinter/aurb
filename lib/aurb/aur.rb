@@ -53,6 +53,16 @@ module Aurb
       end.delete_if(&:blank?)
     end
 
+    # Returns all available info for a given package name.
+    #
+    #   info('aurb') # => {:ID => ..., :Name => 'aurb', ...}
+    def info(package)
+      parse_json Aurb.aur_rpc_path(:info, package.to_s) do |json|
+        return if json.type =~ /error/
+        json.results
+      end
+    end
+
     # Returns a +list+ of names of packages that have an upgrade
     # available to them, which could then in turn be passed on to
     # the +download+ method.
@@ -73,6 +83,14 @@ module Aurb
 
   protected
 
+    # Shortcut to the +Yajl+ JSON parser.
+    def parse_json(json)
+      json = Yajl::Parser.new.parse(open(json).read)
+      yield json rescue json
+    end
+
+  private
+
     # Compare version of local +package+ with the one on the AUR.
     def upgradable?(package, version)
       local_version  = Version.new(version)
@@ -82,12 +100,6 @@ module Aurb
         remote_version = Version.new(json.results.Version)
       end
       remote_version && local_version < remote_version
-    end
-
-    # Shortcut to the +Yajl+ JSON parser.
-    def parse_json(json)
-      json = Yajl::Parser.new.parse(open(json).read)
-      yield json rescue json
     end
   end
 end

@@ -59,6 +59,17 @@ module Aurb
       end
     end
 
+    desc 'info PACKAGE', 'List all available information for a given package'
+    def info(pkg)
+      info = Aurb.aur.info(pkg)
+      raise Aurb::NoResultsError if info.blank?
+      info.each do |key, value|
+        print key.colorize(:yellow)
+        (12 - key.size).times { print ' ' }
+        print value, "\n"
+      end
+    end
+
     desc 'upgrade', 'Search for upgrades to installed packages'
     def upgrade
       list = `pacman -Qm`.split(/\n/)

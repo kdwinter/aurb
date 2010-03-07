@@ -22,6 +22,10 @@ Search for one or more packages:
 
     $ aurb search firefox opera
 
+List all available info for a given package:
+
+    $ aurb info aurb
+
 Look for upgrades to packages you have installed from the AUR:
 
     $ aurb upgrade
