@@ -65,7 +65,7 @@ module Aurb
       raise Aurb::NoResultsError if info.blank?
       info.each do |key, value|
         print key.colorize(:yellow)
-        (12 - key.size).times { print ' ' }
+        (key.size..11).each { print ' ' }
         print value, "\n"
       end
     end
