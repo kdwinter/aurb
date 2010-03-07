@@ -6,6 +6,10 @@ $LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__) + '/../lib')
 require 'aurb'
 
 Benchmark.bm 20 do |x|
+  x.report 'aurb info' do
+    Aurb.aur.info :aurb
+  end
+
   x.report 'aurb upgrade' do
     Aurb.aur.upgrade *`pacman -Qm`.split(/\n/)
   end
