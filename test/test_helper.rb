@@ -1,4 +1,4 @@
-require File.expand_path(File.dirname(__FILE__) + '/../lib/aurb')
+require File.expand_path('../../lib/aurb', __FILE__)
 
 require 'shoulda'
 
