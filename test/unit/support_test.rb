@@ -28,13 +28,10 @@ class SupportTest < Test::Unit::TestCase
   end
 
   context 'String' do
-    setup do
-      @str = 'foo'
-    end
-
     should 'be able to colorize itself through the ansi library' do
-      assert @str.colorize(:blue)
-      assert_equal "\e[34mfoo\e[0m", @str.colorize(:blue)
+      str = 'foo'
+      assert str.colorize(:blue)
+      assert_equal "\e[34mfoo\e[0m", str.colorize(:blue)
     end
   end
 end

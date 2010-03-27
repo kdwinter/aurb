@@ -10,7 +10,6 @@ class AurTest < Test::Unit::TestCase
           {:old => '1.0.0-2', :new => '2.0.0-3'},
           {:old => '1.0.pre', :new => '1.0.1'  }
         ]
-
         versions.each do |version|
           assert_operator Aurb::Aur::Version.new(version[:old]), :<, Aurb::Aur::Version.new(version[:new])
         end
