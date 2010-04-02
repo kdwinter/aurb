@@ -52,10 +52,9 @@ module Aurb
       raise Aurb::NoResultsError if pkgs.blank?
       pkgs.each do |package|
         status = package.OutOfDate == '1' ? '✘'.colorize(:red) : '✔'.colorize(:green)
-        name, version, description = package.Name.colorize(:yellow),
-                                     package.Version,
-                                     package.Description
-        puts "[#{status}] #{name} (#{version})\n    #{description}"
+        name, version, description, votes =
+          package.Name.colorize(:yellow), package.Version, package.Description, package.NumVotes.colorize(:blue)
+        puts "[#{status}] #{name} #{version} (#{votes})\n    #{description}"
       end
     end
 
