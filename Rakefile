@@ -1,24 +1,15 @@
 require 'rake'
-require 'jeweler'
 require 'yard'
 require 'yard/rake/yardoc_task'
- 
-Jeweler::Tasks.new do |gem|
-  gem.name = 'aurb'
-  gem.summary = %Q{An AUR (Arch User Repository) utility}
-  gem.email = 'gigamo@gmail.com'
-  gem.homepage = 'http://github.com/gigamo/aurb'
-  gem.authors = ['Gigamo']
-  
-  gem.add_dependency('yajl-ruby')
-  gem.add_dependency('thor')
-  gem.add_dependency('ansi')
-  gem.add_dependency('archive-tar-minitar')
-  
-  gem.add_development_dependency('shoulda')
+require File.expand_path('../lib/aurb/version', __FILE__)
+
+task :build do
+  system 'gem build aurb.gemspec'
 end
  
-Jeweler::GemcutterTasks.new
+task :release => :build do
+  system "gem push aurb-#{Aurb::VERSION}.gem"
+end
 
 require 'rake/testtask'
 Rake::TestTask.new(:test) do |test|
