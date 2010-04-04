@@ -17,7 +17,7 @@ Gem::Specification.new do |gem|
   gem.executables        = ['aurb']
   gem.default_executable = 'aurb'
 
-  gem.files      = Dir['{bin,lib,test,performance}/**/*', 'LICENSE', 'README.md'] & `git ls-files -z`.split("\0")
+  gem.files = Dir['{bin,lib,test,performance}/**/*', 'LICENSE', 'README.md'] & `git ls-files -z`.split("\0")
 
   gem.add_runtime_dependency 'yajl-ruby'
   gem.add_runtime_dependency 'thor'
