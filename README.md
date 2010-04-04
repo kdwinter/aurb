@@ -18,6 +18,8 @@ Download one or more packages:
 
     $ aurb download hon ioquake3
 
+*By default, this will save the package to $HOME/abs. Override with `--path=/mypath`*
+
 Search for one or more packages:
 
     $ aurb search firefox opera
