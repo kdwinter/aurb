@@ -3,12 +3,10 @@
 
 $LOAD_PATH.unshift File.expand_path(__FILE__)
 
-require 'logger'
 require 'open-uri'
 
 require 'zlib'
 require 'yajl'
-require 'ansi'
 require 'archive/tar/minitar'
 
 module Aurb #:nodoc:
@@ -38,10 +36,6 @@ module Aurb #:nodoc:
   end
 
   class << self
-    def logger
-      @logger ||= Logger.new(STDOUT)
-    end
-
     def aur_rpc_path(type, arg)
       "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
     end

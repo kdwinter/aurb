@@ -4,15 +4,17 @@
 module Aurb
   module CoreExt
     module String
+      COLORS = [:gray, :red, :green, :yellow, :blue, :purple, :cyan, :white]
+
       # Colors a string with +color+.
-      # Uses the ANSICode library provided by +facets+.
       #
-      #   "Hello".colorize(:blue) # => "\e[34mHello\e[0m"
-      #
-      # For more information on available effects, see
-      # http://facets.rubyforge.org/apidoc/api/more/classes/ANSICode.html
+      #   "Hello".colorize(:blue)
       def colorize(effect)
-        ANSI::Code.send(effect.to_sym) << self << ANSI::Code.clear
+        if STDOUT.tty? && ENV['TERM']
+          "\033[0;#{30+COLORS.index(effect.to_sym)}m#{self}\033[0m"
+        else
+          self
+        end
       rescue
         self
       end
