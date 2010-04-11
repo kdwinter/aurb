@@ -29,7 +29,6 @@ namespace :test do
 end
  
 task :default => :test
-task :test => :check_dependencies
 
 YARD::Rake::YardocTask.new(:doc) do |t|
   t.options = ['--legacy'] if RUBY_VERSION < '1.9.0'

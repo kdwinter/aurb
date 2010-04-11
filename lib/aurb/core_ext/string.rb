@@ -4,6 +4,7 @@
 module Aurb
   module CoreExt
     module String
+      # Available colors for <tt>String#colorize</tt>.
       COLORS = [:gray, :red, :green, :yellow, :blue, :purple, :cyan, :white]
 
       # Colors a string with +color+.

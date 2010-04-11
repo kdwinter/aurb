@@ -9,7 +9,7 @@ require 'zlib'
 require 'yajl'
 require 'archive/tar/minitar'
 
-module Aurb #:nodoc:
+module Aurb # :nodoc:
   autoload :Aur, 'aurb/aur'
 
   class AurbError < StandardError
