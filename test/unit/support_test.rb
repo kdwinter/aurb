@@ -29,9 +29,11 @@ class SupportTest < Test::Unit::TestCase
 
   context 'String' do
     should 'be able to colorize itself through the ansi library' do
-      str = 'foo'
-      assert str.colorize(:blue)
-      assert_equal "\e[34mfoo\e[0m", str.colorize(:blue)
+      String::COLORS.each_with_index do |color, i|
+        str = 'foo'
+        assert str.colorize(color)
+        assert_equal "\e[0;#{30+i}mfoo\e[0m", str.colorize(color)
+      end
     end
   end
 end
