@@ -14,12 +14,12 @@ module Aurb
 
       # Destructively converts all keys to symbols.
       def symbolize_keys!
-        self.replace(self.symbolize_keys)
+        replace(symbolize_keys)
       end
 
       # Delegation
       def method_missing(key)
-        self.symbolize_keys[key.to_sym]
+        symbolize_keys[key.to_sym]
       end
     end
   end
