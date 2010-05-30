@@ -30,14 +30,14 @@ module Aurb
     #   search('aurb') # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
     def search(*packages)
       results = []
-      packages.inject([]) do |ary, package|
+      packages.inject([]) { |ary, package|
         ary << Thread.new do
           parse_json Aurb.aur_rpc_path(:search, URI.escape(package.to_s)) do |json|
             next if json.type =~ /error/
             results << json.results
           end
         end
-      end.each(&:join)
+      }.each(&:join)
       results.flatten.delete_if(&:blank?)
     end
 
@@ -46,11 +46,11 @@ module Aurb
     #
     #   download('aurb') # => ['http://.../aurb.tar.gz']
     def download(*packages)
-      packages.map do |package|
+      packages.map { |package|
         Aurb.aur_download_path URI.escape(package.to_s)
-      end.select do |package|
+      }.select { |package|
         !!(open package rescue false)
-      end.delete_if(&:blank?)
+      }.delete_if(&:blank?)
     end
 
     # Returns all available info for a given package name.
@@ -71,13 +71,13 @@ module Aurb
     #   upgrade('aurb 0.0.0-0', 'aurb 9.9.9-9') # => [:aurb]
     def upgrade(*list)
       upgradables = []
-      list.inject([]) do |ary, line|
+      list.inject([]) { |ary, line|
         ary << Thread.new do
           name, version = line.split
           next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
           upgradables << name.to_sym if upgradable?(name, version)
         end
-      end.each(&:join)
+      }.each(&:join)
       upgradables.delete_if(&:blank?)
     end
 
@@ -86,7 +86,7 @@ module Aurb
     # Shortcut to the +Yajl+ JSON parser.
     def parse_json(json)
       json = Yajl::Parser.new.parse(open(json).read)
-      yield json rescue json
+      block_given? ? yield(json) : json
     end
 
   private

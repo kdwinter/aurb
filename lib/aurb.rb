@@ -12,27 +12,10 @@ require 'archive/tar/minitar'
 module Aurb # :nodoc:
   autoload :Aur, 'aurb/aur'
 
-  class AurbError < StandardError
-    def self.status_code(code = nil)
-      return @code unless code
-      @code = code
-    end
-
-    def status_code
-      self.class.status_code
-    end
-  end
-
+  class AurbError < StandardError; end
+  class DownloadError < AurbError; end
   class NoResultsError < AurbError
-    status_code 7
-
-    def initialize
-      super('No results found')
-    end
-  end
-
-  class DownloadError < AurbError
-    status_code 10
+    def initialize(message = 'No results found'); end
   end
 
   class << self

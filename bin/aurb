@@ -6,6 +6,5 @@ require File.expand_path('../../lib/aurb/cli', __FILE__)
 begin
   Aurb::CLI.start
 rescue Aurb::AurbError => e
-  puts e.message.colorize(:red)
-  exit e.status_code
+  abort e.message.colorize(:red)
 end

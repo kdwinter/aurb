@@ -63,8 +63,8 @@ module Aurb
       info = Aurb.aur.info(pkg)
       raise Aurb::NoResultsError if info.blank?
       info.each do |key, value|
-        print key.colorize(:yellow)
-        (key.size..11).each { print ' ' }
+        (key.size..10).each { print ' ' }
+        print key.colorize(:yellow) + ' '
         puts value
       end
     end
