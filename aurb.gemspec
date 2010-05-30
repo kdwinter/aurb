@@ -21,7 +21,6 @@ Gem::Specification.new do |gem|
 
   gem.add_runtime_dependency 'yajl-ruby'
   gem.add_runtime_dependency 'thor'
-  gem.add_runtime_dependency 'ansi'
   gem.add_runtime_dependency 'archive-tar-minitar'
   gem.add_development_dependency 'shoulda'
 
