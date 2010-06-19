@@ -14,7 +14,7 @@ module Aurb
 
       # Destructively converts all keys to symbols.
       def symbolize_keys!
-        replace(symbolize_keys)
+        replace symbolize_keys
       end
 
       # Delegation

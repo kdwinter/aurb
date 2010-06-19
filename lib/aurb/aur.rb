@@ -13,7 +13,7 @@ module Aurb
       attr_reader :version
 
       def initialize(*args)
-        @version = args.join('.').split(/\W+/).map(&:to_i)
+        @version = args.join('.').split(/\W+/).map &:to_i
       end
 
       def <=>(other)
@@ -30,14 +30,18 @@ module Aurb
     #   search('aurb') # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
     def search(*packages)
       results = []
+
       packages.inject([]) { |ary, package|
         ary << Thread.new do
-          parse_json Aurb.aur_rpc_path(:search, URI.escape(package.to_s)) do |json|
+          package = URI.escape(package.to_s)
+
+          parse_json Aurb.aur_rpc_path(:search, package) do |json|
             next if json.type =~ /error/
             results << json.results
           end
         end
       }.each(&:join)
+
       results.flatten.delete_if(&:blank?)
     end
 
@@ -47,7 +51,7 @@ module Aurb
     #   download('aurb') # => ['http://.../aurb.tar.gz']
     def download(*packages)
       packages.map { |package|
-        Aurb.aur_download_path URI.escape(package.to_s)
+        Aurb.aur_download_path(URI.escape(package.to_s))
       }.select { |package|
         !!(open package rescue false)
       }.delete_if(&:blank?)
@@ -57,7 +61,9 @@ module Aurb
     #
     #   info('aurb') # => {:ID => ..., :Name => 'aurb', ...}
     def info(package)
-      parse_json Aurb.aur_rpc_path(:info, package.to_s) do |json|
+      package = URI.escape(package.to_s)
+
+      parse_json Aurb.aur_rpc_path(:info, package) do |json|
         return if json.type =~ /error/
         json.results
       end
@@ -71,13 +77,16 @@ module Aurb
     #   upgrade('aurb 0.0.0-0', 'aurb 9.9.9-9') # => [:aurb]
     def upgrade(*list)
       upgradables = []
+
       list.inject([]) { |ary, line|
         ary << Thread.new do
           name, version = line.split
+
           next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
           upgradables << name.to_sym if upgradable?(name, version)
         end
       }.each(&:join)
+
       upgradables.delete_if(&:blank?)
     end
 
@@ -93,13 +102,16 @@ module Aurb
 
     # Compare version of local +package+ with the one on the AUR.
     def upgradable?(package, version)
+      package        = URI.escape(package.to_s)
       local_version  = Version.new(version)
       remote_version = nil
-      parse_json Aurb.aur_rpc_path(:info, package.to_s) do |json|
+
+      parse_json Aurb.aur_rpc_path(:info, package) do |json|
         return if json.type =~ /error/
         remote_version = Version.new(json.results.Version)
       end
-      remote_version && local_version < remote_version
+
+      remote_version and local_version < remote_version
     end
   end
 end

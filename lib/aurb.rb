@@ -1,24 +1,23 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-$LOAD_PATH.unshift File.expand_path(__FILE__)
-
 require 'open-uri'
-
 require 'zlib'
 require 'yajl'
 require 'archive/tar/minitar'
 
-module Aurb # :nodoc:
-  autoload :Aur, 'aurb/aur'
+module Aurb
+  autoload :Aur, File.expand_path('../aurb/aur', __FILE__)
 
   class AurbError < StandardError; end
   class DownloadError < AurbError; end
   class NoResultsError < AurbError
-    def initialize(message = 'No results found'); end
+    def initialize
+      super('No results found')
+    end
   end
 
-  class << self
+  class << self # :nodoc:
     def aur_rpc_path(type, arg)
       "http://aur.archlinux.org/rpc.php?type=#{type}&arg=#{arg}"
     end
@@ -28,9 +27,9 @@ module Aurb # :nodoc:
     end
 
     def aur
-      @aur ||= Aur.new
+      @_aur ||= Aur.new
     end
   end
 end
 
-require 'aurb/core_ext'
+require File.expand_path('../aurb/core_ext', __FILE__)
