@@ -2,7 +2,32 @@
 # encoding: utf-8
 
 module Aurb
-  class Aur
+  # Generic Aurb error class
+  class Error < StandardError; end
+
+  # Raised when a download location wasn't found
+  class DownloadError < Error; end
+
+  # Raised when a search returns no results
+  class NoResultsError < Error
+    def initialize
+      super('No results found')
+    end
+  end
+
+  # The path to save downloaded packages to
+  SavePath = '~/abs'
+
+  # The URL to retrieve package info from
+  SearchPath = lambda {|t, a| "http://aur.archlinux.org/rpc.php?type=#{t}&arg=#{a}"}
+
+  # The URL to retrieve packages from
+  DownloadPath = lambda {|p| "http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
+
+  # Main Aurb class, interacting with the AUR
+  module Base
+    extend self
+
     # Compare package versions.
     #
     #   Version.new('1.0.0') < Version.new('2.0.0') # => true
@@ -35,14 +60,14 @@ module Aurb
         ary << Thread.new do
           package = URI.escape(package.to_s)
 
-          parse_json Aurb.aur_rpc_path(:search, package) do |json|
+          parse_json Aurb::SearchPath[:search, package] do |json|
             next if json.type =~ /error/
             results << json.results
           end
         end
-      }.each(&:join)
+      }.each &:join
 
-      results.flatten.delete_if(&:blank?)
+      results.flatten.delete_if &:blank?
     end
 
     # Download +packages+ from the AUR.
@@ -51,10 +76,10 @@ module Aurb
     #   download('aurb') # => ['http://.../aurb.tar.gz']
     def download(*packages)
       packages.map { |package|
-        Aurb.aur_download_path(URI.escape(package.to_s))
+        Aurb::DownloadPath[URI.escape(package.to_s)]
       }.select { |package|
         !!(open package rescue false)
-      }.delete_if(&:blank?)
+      }.delete_if &:blank?
     end
 
     # Returns all available info for a given package name.
@@ -63,7 +88,7 @@ module Aurb
     def info(package)
       package = URI.escape(package.to_s)
 
-      parse_json Aurb.aur_rpc_path(:info, package) do |json|
+      parse_json Aurb::SearchPath[:info, package] do |json|
         return if json.type =~ /error/
         json.results
       end
@@ -85,9 +110,9 @@ module Aurb
           next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
           upgradables << name.to_sym if upgradable?(name, version)
         end
-      }.each(&:join)
+      }.each &:join
 
-      upgradables.delete_if(&:blank?)
+      upgradables.delete_if &:blank?
     end
 
   protected
@@ -106,7 +131,7 @@ module Aurb
       local_version  = Version.new(version)
       remote_version = nil
 
-      parse_json Aurb.aur_rpc_path(:info, package) do |json|
+      parse_json Aurb::SearchPath[:info, package] do |json|
         return if json.type =~ /error/
         remote_version = Version.new(json.results.Version)
       end

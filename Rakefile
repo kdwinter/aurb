@@ -6,7 +6,7 @@ require File.expand_path('../lib/aurb/version', __FILE__)
 task :build do
   system 'gem build aurb.gemspec'
 end
- 
+
 task :release => :build do
   system "gem push aurb-#{Aurb::VERSION}.gem"
 end
@@ -18,7 +18,7 @@ Rake::TestTask.new(:test) do |test|
   test.pattern = 'test/**/*_test.rb'
   test.verbose = true
 end
- 
+
 namespace :test do
   Rake::TestTask.new(:units) do |test|
     test.libs << 'test'
@@ -27,9 +27,9 @@ namespace :test do
     test.verbose = true
   end
 end
- 
+
 task :default => :test
 
 YARD::Rake::YardocTask.new(:doc) do |t|
   t.options = ['--legacy'] if RUBY_VERSION < '1.9.0'
-end 
+end
