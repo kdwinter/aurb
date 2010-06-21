@@ -6,7 +6,7 @@ require 'thor'
 require File.expand_path('../../aurb', __FILE__)
 
 module Aurb
-  class CLI < Thor
+  class Main < Thor
     ARGV = ::ARGV.dup
 
     map %w[-d --download] => :download,
@@ -17,16 +17,20 @@ module Aurb
     desc 'download PACKAGES', 'Download packages'
     method_option :path,
                   :type    => :string,
-                  :default => File.join(ENV['HOME'], 'abs'),
+                  :default => Aurb::SavePath,
                   :banner  => 'Specify the path to download to'
     method_option :keep,
                   :type    => :boolean,
                   :banner  => 'Keep the tarball after downloading'
     def download(*pkgs)
-      pkgs = Aurb.aur.download(*pkgs)
+      pkgs = Aurb::Base.download(*pkgs)
       raise Aurb::NoResultsError if pkgs.blank?
 
-      path = options.path.start_with?('/') ? options.path : File.join(Dir.pwd, options.path)
+      path = if options.path.start_with?('/')
+               options.path
+             else
+               File.join(Dir.pwd, options.path)
+             end
 
       if File.exist?(path)
         path = File.expand_path(path)
@@ -55,13 +59,14 @@ module Aurb
 
     desc 'search PACKAGES', 'Search for packages'
     def search(*pkgs)
-      pkgs = Aurb.aur.search(*pkgs)
+      pkgs = Aurb::Base.search(*pkgs)
       raise Aurb::NoResultsError if pkgs.blank?
 
       pkgs.each do |package|
         status = package.OutOfDate == '1' ? '✘'.colorize(:red) : '✔'.colorize(:green)
         name, version, description, votes =
-          package.Name.colorize(:yellow), package.Version, package.Description, package.NumVotes.colorize(:blue)
+          package.Name.colorize(:yellow), package.Version, package.Description,
+          package.NumVotes.colorize(:blue)
 
         puts "[#{status}] #{name} #{version} (#{votes})\n    #{description}"
       end
@@ -69,7 +74,7 @@ module Aurb
 
     desc 'info PACKAGE', 'List all available information for a given package'
     def info(pkg)
-      info = Aurb.aur.info(pkg)
+      info = Aurb::Base.info(pkg)
       raise Aurb::NoResultsError if info.blank?
 
       info.each do |key, value|
@@ -82,7 +87,7 @@ module Aurb
     desc 'upgrade', 'Search for upgrades to installed packages'
     def upgrade
       list = `pacman -Qm`.split(/\n/)
-      pkgs = Aurb.aur.upgrade(*list)
+      pkgs = Aurb::Base.upgrade(*list)
       raise Aurb::NoResultsError if pkgs.blank?
 
       pkgs.each do |package|

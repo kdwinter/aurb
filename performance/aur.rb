@@ -1,21 +1,10 @@
-require 'pp'
+require 'rubygems' if RUBY_DESCRIPTION =~ /rubinius/i
 require 'benchmark'
-
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-
-require 'aurb'
+require File.expand_path('../../lib/aurb', __FILE__)
 
 Benchmark.bm 20 do |x|
-  x.report 'aurb info' do
-    Aurb.aur.info :aurb
-  end
-
-  x.report 'aurb upgrade' do
-    Aurb.aur.upgrade *`pacman -Qm`.split(/\n/)
-  end
-
   x.report 'aurb search' do
-    Aurb.aur.search *:quake
+    Aurb.aur.search :quake
   end
 
   x.report 'slurpy search' do
