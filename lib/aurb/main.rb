@@ -23,7 +23,7 @@ module Aurb
                   :type    => :boolean,
                   :banner  => 'Keep the tarball after downloading'
     def download(*pkgs)
-      pkgs = Aurb::Base.download(*pkgs)
+      pkgs = Aurb.download(*pkgs)
       raise Aurb::NoResultsError if pkgs.blank?
 
       path = if options.path.start_with?('/')
@@ -59,7 +59,7 @@ module Aurb
 
     desc 'search PACKAGES', 'Search for packages'
     def search(*pkgs)
-      pkgs = Aurb::Base.search(*pkgs)
+      pkgs = Aurb.search(*pkgs)
       raise Aurb::NoResultsError if pkgs.blank?
 
       pkgs.each do |package|
@@ -74,7 +74,7 @@ module Aurb
 
     desc 'info PACKAGE', 'List all available information for a given package'
     def info(pkg)
-      info = Aurb::Base.info(pkg)
+      info = Aurb.info(pkg)
       raise Aurb::NoResultsError if info.blank?
 
       info.each do |key, value|
@@ -87,7 +87,7 @@ module Aurb
     desc 'upgrade', 'Search for upgrades to installed packages'
     def upgrade
       list = `pacman -Qm`.split(/\n/)
-      pkgs = Aurb::Base.upgrade(*list)
+      pkgs = Aurb.upgrade(*list)
       raise Aurb::NoResultsError if pkgs.blank?
 
       pkgs.each do |package|

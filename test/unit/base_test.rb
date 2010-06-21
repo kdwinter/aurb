@@ -1,6 +1,6 @@
 require File.expand_path('../../test_helper', __FILE__)
 
-class AurTest < Test::Unit::TestCase
+class BaseTest < Test::Unit::TestCase
   context 'Aurb::Base' do
     context 'Version' do
       should 'be able to compare versions and return the newest' do

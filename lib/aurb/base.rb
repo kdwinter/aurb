@@ -2,29 +2,29 @@
 # encoding: utf-8
 
 module Aurb
-  # Generic Aurb error class
+  # Generic Aurb error class.
   class Error < StandardError; end
 
-  # Raised when a download location wasn't found
+  # Raised when a download location wasn't found.
   class DownloadError < Error; end
 
-  # Raised when a search returns no results
+  # Raised when a search returns no results.
   class NoResultsError < Error
     def initialize
       super('No results found')
     end
   end
 
-  # The path to save downloaded packages to
+  # The path to save downloaded packages to.
   SavePath = '~/abs'
 
-  # The URL to retrieve package info from
+  # The URL to retrieve package info from.
   SearchPath = lambda {|t, a| "http://aur.archlinux.org/rpc.php?type=#{t}&arg=#{a}"}
 
-  # The URL to retrieve packages from
+  # The URL to retrieve packages from.
   DownloadPath = lambda {|p| "http://aur.archlinux.org/packages/#{p}/#{p}.tar.gz"}
 
-  # Main Aurb class, interacting with the AUR
+  # Main Aurb class, interacting with the AUR.
   module Base
     extend self
 
@@ -137,6 +137,16 @@ module Aurb
       end
 
       remote_version and local_version < remote_version
+    end
+  end
+
+  # Check if +Base+ responds to this unknown method and delegate the method to
+  # +Base+ if so.
+  def self.method_missing(method, args, &block)
+    if Base.respond_to?(method)
+      Base.send method, *args, &block
+    else
+      super
     end
   end
 end
