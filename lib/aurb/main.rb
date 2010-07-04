@@ -24,7 +24,7 @@ module Aurb
                   :banner  => 'Keep the tarball after downloading'
     def download(*pkgs)
       pkgs = Aurb.download(*pkgs)
-      raise Aurb::NoResultsError if pkgs.blank?
+      raise Aurb::NoResultsError if pkgs.empty?
 
       path = if options.path.start_with?('/')
                options.path
@@ -60,7 +60,7 @@ module Aurb
     desc 'search PACKAGES', 'Search for packages'
     def search(*pkgs)
       pkgs = Aurb.search(*pkgs)
-      raise Aurb::NoResultsError if pkgs.blank?
+      raise Aurb::NoResultsError if pkgs.empty?
 
       pkgs.each do |package|
         status = package.OutOfDate == '1' ? '✘'.colorize(:red) : '✔'.colorize(:green)
@@ -75,7 +75,7 @@ module Aurb
     desc 'info PACKAGE', 'List all available information for a given package'
     def info(pkg)
       info = Aurb.info(pkg)
-      raise Aurb::NoResultsError if info.blank?
+      raise Aurb::NoResultsError if info.empty?
 
       info.each do |key, value|
         (key.size..10).each { print ' ' }
@@ -88,7 +88,7 @@ module Aurb
     def upgrade
       list = `pacman -Qm`.split(/\n/)
       pkgs = Aurb.upgrade(*list)
-      raise Aurb::NoResultsError if pkgs.blank?
+      raise Aurb::NoResultsError if pkgs.empty?
 
       pkgs.each do |package|
         puts "#{package.to_s.colorize(:yellow)} has an upgrade available"
