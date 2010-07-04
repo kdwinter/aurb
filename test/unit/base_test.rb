@@ -29,7 +29,7 @@ class BaseTest < Test::Unit::TestCase
       end
 
       should 'return nothing when a package does not exist' do
-        assert Aurb::Base.info(@package_faulty).blank?
+        assert Aurb::Base.info(@package_faulty).nil?
         assert_nil Aurb::Base.info(@package_faulty)
       end
     end
@@ -65,7 +65,7 @@ class BaseTest < Test::Unit::TestCase
       end
 
       should 'filter out non-existant packages' do
-        assert Aurb::Base.download(*@package_faulty).blank?
+        assert Aurb::Base.download(*@package_faulty).empty?
         assert_equal [], Aurb::Base.download(*@package_faulty)
       end
     end
@@ -82,7 +82,7 @@ class BaseTest < Test::Unit::TestCase
       end
 
       should 'filter out non-existant packages' do
-        assert Aurb::Base.search(*@package_faulty).blank?
+        assert Aurb::Base.search(*@package_faulty).empty?
         assert_equal [], Aurb::Base.search(*@package_faulty)
       end
 
