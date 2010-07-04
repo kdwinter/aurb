@@ -54,20 +54,16 @@ module Aurb
     #
     #   search('aurb') # => [{:ID => ..., :Name => 'aurb', ...}, {...}]
     def search(*packages)
-      results = []
-
-      packages.inject([]) { |ary, package|
-        ary << Thread.new do
-          package = URI.escape(package.to_s)
-
-          parse_json Aurb::SearchPath[:search, package] do |json|
-            next if json.type =~ /error/
-            results << json.results
+      [].tap { |results|
+        packages.map {|p| URI.escape(p.to_s)}.inject([]) { |ary, package|
+          ary << Thread.new do
+            parse_json Aurb::SearchPath[:search, package] do |json|
+              next if json.type =~ /error/
+              results << json.results
+            end
           end
-        end
-      }.each &:join
-
-      results.flatten.delete_if &:blank?
+        }.each &:join
+      }.flatten.compact
     end
 
     # Download +packages+ from the AUR.
@@ -79,16 +75,14 @@ module Aurb
         Aurb::DownloadPath[URI.escape(package.to_s)]
       }.select { |package|
         !!(open package rescue false)
-      }.delete_if &:blank?
+      }.compact
     end
 
     # Returns all available info for a given package name.
     #
     #   info('aurb') # => {:ID => ..., :Name => 'aurb', ...}
     def info(package)
-      package = URI.escape(package.to_s)
-
-      parse_json Aurb::SearchPath[:info, package] do |json|
+      parse_json Aurb::SearchPath[:info, URI.escape(package.to_s)] do |json|
         return if json.type =~ /error/
         json.results
       end
@@ -101,18 +95,16 @@ module Aurb
     #   # With Aurb on the AUR as version 1.1.2-1
     #   upgrade('aurb 0.0.0-0', 'aurb 9.9.9-9') # => [:aurb]
     def upgrade(*list)
-      upgradables = []
+      [].tap { |upgradables|
+        list.inject([]) { |ary, line|
+          ary << Thread.new do
+            name, version = line.split
 
-      list.inject([]) { |ary, line|
-        ary << Thread.new do
-          name, version = line.split
-
-          next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
-          upgradables << name.to_sym if upgradable?(name, version)
-        end
-      }.each &:join
-
-      upgradables.delete_if &:blank?
+            next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
+            upgradables << name.to_sym if upgradable?(name, version)
+          end
+        }.each &:join
+      }.compact
     end
 
   protected

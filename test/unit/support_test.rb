@@ -1,14 +1,6 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class SupportTest < Test::Unit::TestCase
-  context 'Object' do
-    should 'be able to check for blank' do
-      assert ''.blank?
-      assert nil.blank?
-      assert [].blank?
-    end
-  end
-
   context 'Hash' do
     setup do
       @hash_str = {'hello' => 'world'}
