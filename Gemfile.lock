@@ -1,0 +1,14 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    archive-tar-minitar (0.5.2)
+    thor (0.13.7)
+    yajl-ruby (0.7.6)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  archive-tar-minitar (~> 0.5.2)
+  thor (~> 0.13.7)
+  yajl-ruby (~> 0.7.6)
