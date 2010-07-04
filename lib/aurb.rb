@@ -3,9 +3,8 @@
 
 require 'open-uri'
 require 'zlib'
-
-require 'bundler'
-Bundler.require :default
+require 'yajl'
+require 'archive/tar/minitar'
 
 libdir = File.dirname(__FILE__)
 $LOAD_PATH.unshift libdir unless $LOAD_PATH.include?(libdir)
