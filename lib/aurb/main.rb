@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-require 'rubygems' if RUBY_DESCRIPTION =~ /rubinius/i
+require 'rubygems' if RUBY_DESCRIPTION =~ /(rubinius|jruby)/i
 require 'thor'
 require File.expand_path('../../aurb', __FILE__)
 
