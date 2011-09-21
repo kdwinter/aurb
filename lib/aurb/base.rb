@@ -16,7 +16,7 @@ module Aurb
   end
 
   # The path to save downloaded packages to.
-  SavePath = '~/abs'
+  SavePath = ENV['HOME'] + '/abs'
 
   # The URL to retrieve package info from.
   SearchPath = lambda {|t, a| "http://aur.archlinux.org/rpc.php?type=#{t}&arg=#{a}"}
