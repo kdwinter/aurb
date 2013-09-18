@@ -49,6 +49,7 @@ module Aurb2
 
     def join_threads!
       $threads.each(&:join)
+      $threads.clear
     end
   end
 
