@@ -81,7 +81,7 @@ module Aurb2
       if json && json["resultcount"] > 0
         @attributes = json["results"]
       else
-        puts "couldn't retrieve attributes for #{name}."
+        puts "      couldn't retrieve attributes for #{name}."
       end
     end
 
@@ -129,7 +129,7 @@ module Aurb2
     end
 
     def print_help
-      $stdout.puts "aurb2 #{VERSION}"
+      $stdout.puts "aurb.rb #{VERSION}"
       $stdout.puts
       $stdout.puts "USAGE: #{$0} [action] [arg] ([action2] [arg2]...)"
       $stdout.puts
