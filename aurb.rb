@@ -144,7 +144,7 @@ module Aurb2
     end
 
     def download(package_name)
-      $stdout.print "downloading #{package_name} into #{SAVE_PATH}... "
+      $stdout.print "----> downloading #{package_name} into #{SAVE_PATH}... "
 
       package    = Package.new(package_name)
       local_path = File.join(SAVE_PATH, package.name) + ".tar.gz"
@@ -167,17 +167,17 @@ module Aurb2
     end
 
     def info(package_name)
-      $stdout.puts "printing information for #{package_name}:\n\n"
+      $stdout.puts "----> printing information for #{package_name}:\n\n"
 
       package = Package.new(package_name, attributes: true)
       package.attributes.each do |key, value|
-        $stdout.print key.rjust(15)
+        $stdout.print key.rjust(20)
         $stdout.puts " " + value.to_s
       end if package.attributes
     end
 
     def check_updates
-      $stdout.puts "checking for updates...\n\n"
+      $stdout.puts "----> checking for updates...\n\n"
 
       aur_packages = `pacman -Qm`.split("\n")
       batch_size = aur_packages.size / THREAD_AMOUNT
@@ -193,11 +193,11 @@ module Aurb2
             new_package = Package.new(name, attributes: true)
 
             if not new_package.attributes.empty? and old_package < new_package
-              $stdout.puts "%s has an update available (%s -> %s}" % [
+              $stdout.puts "   -> %s has an update available (%s -> %s)\n" % [
                 name, old_package.attributes['Version'], new_package.attributes['Version']
               ]
             else
-              $stdout.puts "#{name} is up to date"
+              $stdout.puts "      #{name} is up to date\n"
             end
           end
         end
@@ -207,7 +207,7 @@ module Aurb2
     end
 
     def search(term)
-      $stdout.print "searching for #{term}... "
+      $stdout.print "----> searching for #{term}... "
 
       search_url = RPC_URL % ["search", term]
       uri        = open(search_url)
@@ -219,7 +219,7 @@ module Aurb2
         json["results"].each do |result|
           package = Package.new(result["Name"], attributes: result)
 
-          $stdout.puts "[%s] %s %s (%d)\n    %s" % [
+          $stdout.puts "      [%s] %s %s (%d)\n          %s" % [
             package.attributes["OutOfDate"] == 1 ? "x" : "v",
             package.attributes["Name"],
             package.attributes["Version"],
@@ -228,7 +228,7 @@ module Aurb2
           ]
         end
       else
-        $stderr.puts "failed to find any results for #{term}."
+        $stderr.puts "      failed to find any results for #{term}."
       end
     end
   end
