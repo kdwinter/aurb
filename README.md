@@ -2,46 +2,28 @@
 
 An AUR (Arch User Repository) utility.
 
-Aurb can download from, search and look for updates on the AUR.
-
-## Install
-
-For Arch users, aurb is [available on the aur](http://aur.archlinux.org/packages.php?ID=24395).
-
-If you rather install it as a gem, you could:
-
-    # gem install aurb
+Aurb can download from, search, and look for updates on the AUR.
 
 ## Usage
 
 Download one or more packages:
 
-    $ aurb download hon ioquake3
+    $ ruby aurb.rb -D hon -D ioquake3
 
-*By default, this will save the package to $HOME/abs. Override with `--path=/mypath`*
+By default, this will save the package to $HOME/pkgbuilds. Edit SAVE_PATH in the script to change this.
 
 Search for one or more packages:
 
-    $ aurb search firefox opera
+    $ ruby aurb.rb -S firefox
 
 List all available info for a given package:
 
-    $ aurb info aurb
+    $ ruby aurb.rb -I aurbuild
 
 Look for upgrades to packages you have installed from the AUR:
 
-    $ aurb upgrade
-
-## Tests
-
-Clone the project, and run:
-
-    $ rake test
-
-## Documentation
-
-See [rdoc.info](http://rdoc.info/projects/gigamo/aurb).
+    $ ruby aurb.rb -U
 
 ## Copyright
 
-Copyright (c) 2009-2010 Gigamo. See LICENSE for details.
+Copyright (c) 2013 Gigamo. See LICENSE for details.
