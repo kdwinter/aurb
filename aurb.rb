@@ -173,7 +173,7 @@ module Aurb2
       package.attributes.each do |key, value|
         $stdout.print key.rjust(15)
         $stdout.puts " " + value.to_s
-      end
+      end if package.attributes
     end
 
     def check_updates
