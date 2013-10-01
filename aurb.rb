@@ -54,8 +54,7 @@ module Aurb2
 
     def retrieve_attributes
       info_url = RPC_URL % "info&arg=" + URI.escape(name)
-      uri      = open(info_url)
-      json     = JSON.parse(uri.read)
+      json     = JSON.parse(open(info_url).read)
 
       if json && json["resultcount"] > 0
         @attributes = json["results"]
@@ -129,8 +128,7 @@ module Aurb2
       package    = Package.new(package_name)
       local_path = File.join(SAVE_PATH, package.name) + ".tar.gz"
       tarball    = File.open(local_path, "wb")
-      uri        = open(package.download_url)
-      tarball.write(uri.read)
+      tarball.write(open(package.download_url).read)
       tarball.close
 
       # untar if possible
@@ -159,33 +157,33 @@ module Aurb2
     def check_updates
       $stdout.puts "----> checking for updates...\n\n"
 
-      aur_packages = `pacman -Qm`.split("\n")
-      info_url     = RPC_URL % "multiinfo&arg[]=" + aur_packages.map { |p|
-        URI.escape(p.split[0])
+      local_aur_packages = `pacman -Qm`.split("\n").delete_if { |p|
+        # skip packages that are in community by now
+        Dir["/var/lib/pacman/sync/community/#{p.split.join("-")}"].any?
+      }.map { |line|
+        line = line.split
+        Package.new(line[0], attributes: {"Version" => line[1]})
+      }
+
+      info_url = RPC_URL % "multiinfo&arg[]=" + local_aur_packages.map { |package|
+        URI.escape(package.name)
       }.join("&arg[]=")
-      uri          = open(info_url)
-      json         = JSON.parse(uri.read)
+      json     = JSON.parse(open(info_url).read)
 
       if json && json["resultcount"] > 0
-        aur_packages.each do |line|
-          name, version = line.split
+        local_aur_packages.each do |package|
+          hot_package = Package.new(package.name, attributes:
+            json["results"].find { |result| result["Name"] == package.name }
+          )
 
-          # don't do anything if this package is in community by now
-          next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
-
-          old_package = Package.new(name, attributes: {"Version" => version})
-          new_package = Package.new(name, attributes: json["results"].find { |h|
-            h["Name"] == name
-          })
-
-          if not (new_package.attributes && new_package.attributes.empty?) and old_package < new_package
+          if not (hot_package.attributes && hot_package.attributes.empty?) and package < hot_package
             $stdout.puts "   #{ansi("->", :cyan)} %s has an update available (%s -> %s)\n" % [
-              name,
-              ansi(old_package.attributes["Version"], :red),
-              ansi(new_package.attributes["Version"], :green)
+              package.name,
+              ansi(package.attributes["Version"], :red),
+              ansi(hot_package.attributes["Version"], :green)
             ]
           else
-            $stdout.puts "      #{name} is up to date\n"
+            $stdout.puts "      #{package.name} is up to date\n"
           end
         end
       end
@@ -195,8 +193,7 @@ module Aurb2
       $stdout.print "----> searching for #{term}... "
 
       search_url = RPC_URL % "search&arg=" + URI.escape(term)
-      uri        = open(search_url)
-      json       = JSON.parse(uri.read)
+      json       = JSON.parse(open(search_url).read)
 
       if json && json["resultcount"] > 0
         $stdout.puts "found #{json["resultcount"]} results:\n\n"
