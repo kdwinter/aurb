@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require "open-uri"
+require "json"
 
 $untar = true
 begin
@@ -9,47 +10,25 @@ rescue LoadError
   $untar = false
 end
 
-$yajl = true
-begin
-  require "yajl"
-rescue LoadError
-  $yajl = false
-  require "json"
-end
-
-$threads = []
-
 module Aurb2
   VERSION = "v2.0.0".freeze
 
   # saves pkgbuilds to this dir
   SAVE_PATH = File.join(ENV["HOME"], "pkgbuilds")
 
-  # rpc endpoint
-  RPC_URL = "https://aur.archlinux.org/rpc.php?type=%s&arg=%s"
+  # rpc endpoint for multiinfo
+  RPC_URL = "https://aur.archlinux.org/rpc.php?type=%s"
 
   # download endpoint
   DOWNLOAD_URL = "https://aur.archlinux.org/packages/%s/%s/%s.tar.gz"
 
-  # amount of threads for update check
-  THREAD_AMOUNT = 4
-
   module Helpers
-    def parse_json(json)
-      if $yajl
-        return Yajl::Parser.new.parse(json)
-      else
-        return JSON.parse(json)
+    COLORS = [:grey, :red, :green, :yellow, :blue, :purple, :cyan, :white]
+    def ansi(text, effect)
+      if $stdout.tty? && ENV["TERM"]
+        return "\033[0;#{30+COLORS.index(effect.to_sym)}m#{text}\033[0m"
       end
-    end
-
-    def in_thread
-      $threads << Thread.new(&Proc.new)
-    end
-
-    def join_threads!
-      $threads.each(&:join)
-      $threads.clear
+      return text
     end
   end
 
@@ -74,18 +53,19 @@ module Aurb2
     end
 
     def retrieve_attributes
-      info_url = RPC_URL % ["info", URI.escape(name)]
+      info_url = RPC_URL % "info&arg=" + URI.escape(name)
       uri      = open(info_url)
-      json     = parse_json(uri.read)
+      json     = JSON.parse(uri.read)
 
       if json && json["resultcount"] > 0
         @attributes = json["results"]
       else
-        puts "      couldn't retrieve attributes for #{name}."
+        $stderr.puts "    #{ansi("!", :yellow)} couldn't retrieve attributes for #{name}."
       end
     end
 
     def version
+      return 0 if !attributes
       return attributes["Version"].split(/\W+/).map(&:to_i)
     end
 
@@ -180,38 +160,43 @@ module Aurb2
       $stdout.puts "----> checking for updates...\n\n"
 
       aur_packages = `pacman -Qm`.split("\n")
-      batch_size = aur_packages.size / THREAD_AMOUNT
-      aur_packages.each_slice(batch_size) do |lines|
-        lines.each do |line|
+      info_url     = RPC_URL % "multiinfo&arg[]=" + aur_packages.map { |p|
+        URI.escape(p.split[0])
+      }.join("&arg[]=")
+      uri          = open(info_url)
+      json         = JSON.parse(uri.read)
+
+      if json && json["resultcount"] > 0
+        aur_packages.each do |line|
           name, version = line.split
 
           # don't do anything if this package is in community by now
           next if Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
 
-          in_thread do
-            old_package = Package.new(name, attributes: {'Version' => version})
-            new_package = Package.new(name, attributes: true)
+          old_package = Package.new(name, attributes: {"Version" => version})
+          new_package = Package.new(name, attributes: json["results"].find { |h|
+            h["Name"] == name
+          })
 
-            if not new_package.attributes.empty? and old_package < new_package
-              $stdout.puts "   -> %s has an update available (%s -> %s)\n" % [
-                name, old_package.attributes['Version'], new_package.attributes['Version']
-              ]
-            else
-              $stdout.puts "      #{name} is up to date\n"
-            end
+          if not (new_package.attributes && new_package.attributes.empty?) and old_package < new_package
+            $stdout.puts "   #{ansi("->", :cyan)} %s has an update available (%s -> %s)\n" % [
+              name,
+              ansi(old_package.attributes["Version"], :red),
+              ansi(new_package.attributes["Version"], :green)
+            ]
+          else
+            $stdout.puts "      #{name} is up to date\n"
           end
         end
-
-        join_threads!
       end
     end
 
     def search(term)
       $stdout.print "----> searching for #{term}... "
 
-      search_url = RPC_URL % ["search", term]
+      search_url = RPC_URL % "search&arg=" + URI.escape(term)
       uri        = open(search_url)
-      json       = parse_json(uri.read)
+      json       = JSON.parse(uri.read)
 
       if json && json["resultcount"] > 0
         $stdout.puts "found #{json["resultcount"]} results:\n\n"
@@ -220,7 +205,7 @@ module Aurb2
           package = Package.new(result["Name"], attributes: result)
 
           $stdout.puts "      [%s] %s %s (%d)\n          %s" % [
-            package.attributes["OutOfDate"] == 1 ? "x" : "v",
+            package.attributes["OutOfDate"] == 1 ? ansi("x", :red) : ansi("v", :green),
             package.attributes["Name"],
             package.attributes["Version"],
             package.attributes["NumVotes"],
@@ -228,7 +213,7 @@ module Aurb2
           ]
         end
       else
-        $stderr.puts "      failed to find any results for #{term}."
+        $stderr.puts "failed to find any results for #{term}."
       end
     end
   end
