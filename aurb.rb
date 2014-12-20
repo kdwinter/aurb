@@ -11,16 +11,18 @@ rescue LoadError
 end
 
 module Aurb2
-  VERSION = "v2.0.0".freeze
+  VERSION = "v2.1.0".freeze
 
-  # saves pkgbuilds to this dir
-  SAVE_PATH = File.join(ENV["HOME"], "pkgbuilds")
+  module Config
+    # saves pkgbuilds to this dir
+    SAVE_PATH = File.join(ENV["HOME"], "pkgbuilds")
 
-  # rpc endpoint for multiinfo
-  RPC_URL = "https://aur.archlinux.org/rpc.php?type=%s"
+    # rpc endpoint
+    RPC_URL = "https://aur.archlinux.org/rpc.php?type=%s"
 
-  # download endpoint
-  DOWNLOAD_URL = "https://aur.archlinux.org/packages/%s/%s/%s.tar.gz"
+    # download endpoint
+    DOWNLOAD_URL = "https://aur.archlinux.org/packages/%s/%s/%s.tar.gz"
+  end
 
   module Helpers
     COLORS = [:grey, :red, :green, :yellow, :blue, :purple, :cyan, :white]
@@ -29,6 +31,17 @@ module Aurb2
         return "\033[0;#{30+COLORS.index(effect.to_sym)}m#{text}\033[0m"
       end
       return text
+    end
+
+    # wrap this so we can gracefully handle connection issues
+    def GET(uri)
+      return open(uri)
+    rescue OpenURI::HTTPError
+      $stderr.puts "\n\n    " + ansi("!", :red) + " URI not found (#{uri})"
+      exit 1
+    rescue SocketError
+      $stderr.puts "\n\n    " + ansi("!", :red) + " connection problem."
+      exit 1
     end
   end
 
@@ -49,12 +62,12 @@ module Aurb2
     end
 
     def download_url
-      return DOWNLOAD_URL % [name[0..1], name, name]
+      return Config::DOWNLOAD_URL % [name[0..1], name, name]
     end
 
     def retrieve_attributes
-      info_url = RPC_URL % "info&arg=" + URI.escape(name)
-      json     = JSON.parse(open(info_url).read)
+      info_url = Config::RPC_URL % "info&arg=" + URI.escape(name)
+      json     = JSON.parse(GET(info_url).read)
 
       if json && json["resultcount"] > 0
         @attributes = json["results"]
@@ -65,7 +78,7 @@ module Aurb2
 
     def version
       return 0 if !attributes
-      return attributes["Version"].split(/\W+/).map(&:to_i)
+      return attributes["Version"].split(/\D+/).map(&:to_i)
     end
 
     def <=>(other)
@@ -86,18 +99,18 @@ module Aurb2
         action = argv.shift
 
         case action
-        when "-D", "--download"
+        when "-d", "--download", "download"
           package = argv.shift or print_help
           download(package)
-        when "-S", "--search"
+        when "-s", "--search", "search"
           term = argv.shift or print_help
           search(term)
-        when "-I", "--info"
+        when "-i", "--info", "info"
           package = argv.shift or print_help
           info(package)
-        when "-U", "--updates"
+        when "-u", "--updates", "updates"
           check_updates
-        when "-v", "--version"
+        when "-v", "--version", "version"
           $stdout.puts VERSION
         else
           print_help
@@ -114,28 +127,28 @@ module Aurb2
       $stdout.puts
       $stdout.puts "  where action is one of:"
       $stdout.puts
-      $stdout.puts "    -D, --download PKG       download PKG into #{SAVE_PATH}"
-      $stdout.puts "    -S, --search TERM        search for TERM"
-      $stdout.puts "    -I, --info PKG           print info about PKG"
-      $stdout.puts "    -U, --updates            checks for updates to installed packages"
+      $stdout.puts "    -d, --download PKG       download PKG into #{Config::SAVE_PATH}"
+      $stdout.puts "    -s, --search TERM        search for TERM"
+      $stdout.puts "    -i, --info PKG           print info about PKG"
+      $stdout.puts "    -u, --updates            checks for updates to installed packages"
 
       exit 1
     end
 
     def download(package_name)
-      $stdout.print "----> downloading #{package_name} into #{SAVE_PATH}... "
+      $stdout.print "----> downloading #{package_name} into #{Config::SAVE_PATH}... "
 
       package    = Package.new(package_name)
-      local_path = File.join(SAVE_PATH, package.name) + ".tar.gz"
+      local_path = File.join(Config::SAVE_PATH, package.name) + ".tar.gz"
       tarball    = File.open(local_path, "wb")
-      tarball.write(open(package.download_url).read)
+      tarball.write(GET(package.download_url).read)
       tarball.close
 
       # untar if possible
       if $untar
         File.open(local_path, "rb") do |tarball|
           zliball = Zlib::GzipReader.new(tarball)
-          Archive::Tar::Minitar.unpack(zliball, SAVE_PATH)
+          Archive::Tar::Minitar.unpack(zliball, Config::SAVE_PATH)
         end
 
         File.delete(local_path)
@@ -165,22 +178,22 @@ module Aurb2
         Package.new(line[0], attributes: {"Version" => line[1]})
       }
 
-      info_url = RPC_URL % "multiinfo&arg[]=" + local_aur_packages.map { |package|
+      info_url = Config::RPC_URL % "multiinfo&arg[]=" + local_aur_packages.map { |package|
         URI.escape(package.name)
       }.join("&arg[]=")
-      json     = JSON.parse(open(info_url).read)
+      json     = JSON.parse(GET(info_url).read)
 
       if json && json["resultcount"] > 0
         local_aur_packages.each do |package|
-          hot_package = Package.new(package.name, attributes:
+          latest_package = Package.new(package.name, attributes:
             json["results"].find { |result| result["Name"] == package.name }
           )
 
-          if not (hot_package.attributes && hot_package.attributes.empty?) and package < hot_package
+          if not (latest_package.attributes && latest_package.attributes.empty?) and package < latest_package
             $stdout.puts "   #{ansi("->", :cyan)} %s has an update available (%s -> %s)\n" % [
               package.name,
               ansi(package.attributes["Version"], :red),
-              ansi(hot_package.attributes["Version"], :green)
+              ansi(latest_package.attributes["Version"], :green)
             ]
           else
             $stdout.puts "      #{package.name} is up to date\n"
@@ -192,8 +205,8 @@ module Aurb2
     def search(term)
       $stdout.print "----> searching for #{term}... "
 
-      search_url = RPC_URL % "search&arg=" + URI.escape(term)
-      json       = JSON.parse(open(search_url).read)
+      search_url = Config::RPC_URL % "search&arg=" + URI.escape(term)
+      json       = JSON.parse(GET(search_url).read)
 
       if json && json["resultcount"] > 0
         $stdout.puts "found #{json["resultcount"]} results:\n\n"
@@ -201,8 +214,7 @@ module Aurb2
         json["results"].each do |result|
           package = Package.new(result["Name"], attributes: result)
 
-          $stdout.puts "      [%s] %s %s (%d)\n          %s" % [
-            package.attributes["OutOfDate"] == 1 ? ansi("x", :red) : ansi("v", :green),
+          $stdout.puts "      %s %s (%d)\n          %s" % [
             package.attributes["Name"],
             package.attributes["Version"],
             package.attributes["NumVotes"],
