@@ -15,13 +15,13 @@ module Aurb2
 
   module Config
     # saves pkgbuilds to this dir
-    SAVE_PATH = File.join(ENV["HOME"], "pkgbuilds")
+    SAVE_PATH = ENV["AURB_PATH"] || File.join(ENV["HOME"], "AUR")
 
     # rpc endpoint
     RPC_URL = "https://aur.archlinux.org/rpc.php?type=%s"
 
     # download endpoint
-    DOWNLOAD_URL = "https://aur.archlinux.org/packages/%s/%s/%s.tar.gz"
+    DOWNLOAD_URL = "https://aur.archlinux.org/cgit/aur.git/snapshot/%s.tar.gz"
   end
 
   module Helpers
@@ -62,7 +62,7 @@ module Aurb2
     end
 
     def download_url
-      return Config::DOWNLOAD_URL % [name[0..1], name, name]
+      return Config::DOWNLOAD_URL % name
     end
 
     def retrieve_attributes
@@ -136,6 +136,11 @@ module Aurb2
     end
 
     def download(package_name)
+      if !File.exist?(Config::SAVE_PATH)
+        $stdout.print ansi("Save path doesn't exist.", :red)
+        return
+      end
+
       $stdout.print "----> downloading #{package_name} into #{Config::SAVE_PATH}... "
 
       package    = Package.new(package_name)
