@@ -6,8 +6,7 @@ Aurb can download, search, and look for updates on the AUR.
 
 ## Installation
 
-    $ mv aurb.rb ~/.bin # or anywhere else in your $PATH
-    $ mv ~/.bin/aurb.rb ~/.bin/aurb
+    $ mv aurb.rb ~/.bin/aurb # or anywhere else in your $PATH
     $ chmod +x ~/.bin/aurb
 
 ## Usage
@@ -18,7 +17,7 @@ Download one or more packages:
 
 By default, this will save the package to $HOME/AUR. Edit SAVE_PATH in the script, or set the `AURB_PATH` ENV variable to change this.
 
-Search for one or more packages:
+Search for packages:
 
     $ aurb -s firefox
 
@@ -26,7 +25,7 @@ List all available info for a given package:
 
     $ aurb -i aurbuild
 
-Look for upgrades to packages you have installed from the AUR:
+Look for upgrades to local packages you have ever installed from the AUR:
 
     $ aurb -u
 
