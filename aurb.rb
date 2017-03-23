@@ -121,7 +121,7 @@ module Aurb2
     end
 
     def print_help
-      $stdout.puts "aurb.rb #{VERSION}"
+      $stdout.puts "aurb.rb #{VERSION} (Ruby: #{RUBY_VERSION})"
       $stdout.puts
       $stdout.puts "USAGE: #{$0} [action] [arg] ([action2] [arg2]...)"
       $stdout.puts
@@ -152,8 +152,8 @@ module Aurb2
       # untar if possible
       if $untar
         File.open(local_path, "rb") do |tarball|
-          zliball = Zlib::GzipReader.new(tarball)
-          Archive::Tar::Minitar.unpack(zliball, Config::SAVE_PATH)
+          zlib = Zlib::GzipReader.new(tarball)
+          Archive::Tar::Minitar.unpack(zlib, Config::SAVE_PATH)
         end
 
         File.delete(local_path)
@@ -162,12 +162,16 @@ module Aurb2
       $stdout.puts "success."
     end
 
+    TIME_KEYS = ["FirstSubmitted", "LastModified"].freeze
     def info(package_name)
       $stdout.puts "----> printing information for #{package_name}:\n\n"
 
       package = Package.new(package_name, attributes: true)
       package.attributes.each do |key, value|
         $stdout.print key.rjust(20)
+        if TIME_KEYS.include?(key)
+          value = Time.at(value.to_i).strftime("%d/%m/%Y %H:%M") rescue value
+        end
         $stdout.puts " " + value.to_s
       end if package.attributes
     end
@@ -186,7 +190,7 @@ module Aurb2
       info_url = Config::RPC_URL % "multiinfo&arg[]=" + local_aur_packages.map { |package|
         URI.escape(package.name)
       }.join("&arg[]=")
-      json     = JSON.parse(GET(info_url).read)
+      json = JSON.parse(GET(info_url).read)
 
       if json && json["resultcount"] > 0
         local_aur_packages.each do |package|
