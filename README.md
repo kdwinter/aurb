@@ -1,27 +1,32 @@
 # Aurb
 
-A very simplistic AUR (Arch User Repository) utility.
+A very minimalistic AUR (Arch User Repository) utility.
 
 Aurb can download, search, and look for updates on the AUR.
+It can *not* automatically upgrade or install dependencies for downloaded packages.
 
 ## Installation
 
-    $ mv aurb.rb ~/.bin/aurb # or anywhere else in your $PATH
+    $ mv /path/to/aurb.rb ~/.bin/aurb # or anywhere else in your $PATH
     $ chmod +x ~/.bin/aurb
 
 ## Usage
 
-Download one or more packages:
+Download packages:
 
-    $ aurb -d hon -d ioquake3
+    $ aurb -d i3-gaps -d i-nex
 
-By default, this will save the package to $HOME/AUR. Edit SAVE_PATH in the script, or set the `AURB_PATH` ENV variable to change this.
+By default, this will save the package to $HOME/AUR. Edit SAVE_PATH in the script, or set an `AURB_PATH` ENV variable to change this.
+
+Download and install packages:
+
+    $ aurb --install i3-gaps
 
 Search for packages:
 
     $ aurb -s firefox
 
-List all available info for a given package:
+Print all available info for given packages:
 
     $ aurb -i aurbuild
 

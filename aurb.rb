@@ -11,18 +11,13 @@ rescue LoadError
 end
 
 module Aurb2
-  VERSION = "v2.1.0".freeze
+  VERSION = "v2.2.1".freeze
 
-  module Config
-    # saves pkgbuilds to this dir
-    SAVE_PATH = ENV["AURB_PATH"] || File.join(ENV["HOME"], "AUR")
+  # saves pkgbuilds to this dir
+  SAVE_PATH = ENV["AURB_PATH"] || File.join(ENV["HOME"], "AUR")
 
-    # rpc endpoint
-    RPC_URL = "https://aur.archlinux.org/rpc.php?type=%s"
-
-    # download endpoint
-    DOWNLOAD_URL = "https://aur.archlinux.org/cgit/aur.git/snapshot/%s.tar.gz"
-  end
+  AUR_URL     = "https://aur.archlinux.org"
+  AUR_RPC_URL = "#{AUR_URL}/rpc.php?type=%s"
 
   module Helpers
     COLORS = [:grey, :red, :green, :yellow, :blue, :purple, :cyan, :white]
@@ -30,18 +25,24 @@ module Aurb2
       if $stdout.tty? && ENV["TERM"]
         return "\033[0;#{30+COLORS.index(effect.to_sym)}m#{text}\033[0m"
       end
-      return text
+
+      text
     end
 
     # wrap this so we can gracefully handle connection issues
-    def GET(uri)
-      return open(uri)
+    def http_response_body(uri)
+      open(uri).read
     rescue OpenURI::HTTPError
-      $stderr.puts "\n\n    " + ansi("!", :red) + " URI not found (#{uri})"
+      $stdout.puts "\n    #{ansi("x", :red)} URI not found (#{uri})"
       exit 1
     rescue SocketError
-      $stderr.puts "\n\n    " + ansi("!", :red) + " connection problem."
+      $stdout.puts "\n    #{ansi("x", :red)} connection problem."
       exit 1
+    end
+
+    def execute_command(*command)
+      $stdout.puts "      running `#{command.join(" ")}`"
+      system(*command)
     end
   end
 
@@ -62,23 +63,28 @@ module Aurb2
     end
 
     def download_url
-      return Config::DOWNLOAD_URL % name
+      if Hash(attributes)["URLPath"]
+        "#{AUR_URL}#{attributes["URLPath"]}"
+      end
     end
 
     def retrieve_attributes
-      info_url = Config::RPC_URL % "info&arg=" + URI.escape(name)
-      json     = JSON.parse(GET(info_url).read)
+      info_url = AUR_RPC_URL % "info&arg=" + URI.escape(name)
+      json     = JSON.parse(http_response_body(info_url))
 
       if json && json["resultcount"] > 0
         @attributes = json["results"]
       else
-        $stderr.puts "    #{ansi("!", :yellow)} couldn't retrieve attributes for #{name}."
+        $stdout.puts "\n    #{ansi("!", :yellow)} couldn't retrieve attributes for #{name}."
       end
     end
 
     def version
-      return 0 if !attributes
-      return attributes["Version"].split(/\D+/).map(&:to_i)
+      if Hash(attributes)["Version"]
+        return attributes["Version"].split(/\D+/).map(&:to_i)
+      end
+
+      [0]
     end
 
     def <=>(other)
@@ -99,6 +105,12 @@ module Aurb2
         action = argv.shift
 
         case action
+        when "--install", "install"
+          package = argv.shift or print_help
+          install(package)
+        when "--clean-install"
+          package = argv.shift or print_help
+          install(package, cleanup: true)
         when "-d", "--download", "download"
           package = argv.shift or print_help
           download(package)
@@ -116,7 +128,7 @@ module Aurb2
           print_help
         end
 
-        $stdout.puts "\n\n"
+        $stdout.puts "\n"
       end
     end
 
@@ -127,48 +139,89 @@ module Aurb2
       $stdout.puts
       $stdout.puts "  where action is one of:"
       $stdout.puts
-      $stdout.puts "    -d, --download PKG       download PKG into #{Config::SAVE_PATH}"
+      $stdout.puts "    -d, --download PKG       download PKG into #{SAVE_PATH}"
+      $stdout.puts "        --install PKG        download and install PKG"
+      $stdout.puts "        --clean-install PKG  cleanup previous build(s), download and install PKG"
       $stdout.puts "    -s, --search TERM        search for TERM"
       $stdout.puts "    -i, --info PKG           print info about PKG"
       $stdout.puts "    -u, --updates            checks for updates to installed packages"
+      $stdout.puts
 
       exit 1
     end
 
     def download(package_name)
-      if !File.exist?(Config::SAVE_PATH)
-        $stdout.print ansi("Save path doesn't exist.", :red)
-        return
+      if !File.exist?(SAVE_PATH) || !File.directory?(SAVE_PATH)
+        $stdout.print ansi("Save path doesn't exist, or is not a directory.", :red)
+        return false
       end
 
-      $stdout.print "----> downloading #{package_name} into #{Config::SAVE_PATH}... "
+      $stdout.print "----> downloading #{ansi(package_name, :cyan)} into #{SAVE_PATH}... "
 
-      package    = Package.new(package_name)
-      local_path = File.join(Config::SAVE_PATH, package.name) + ".tar.gz"
-      tarball    = File.open(local_path, "wb")
-      tarball.write(GET(package.download_url).read)
-      tarball.close
+      package    = Package.new(package_name, attributes: true)
+      local_path = File.join(SAVE_PATH, package.name) + ".tar.gz"
 
-      # untar if possible
-      if $untar
-        File.open(local_path, "rb") do |tarball|
-          zlib = Zlib::GzipReader.new(tarball)
-          Archive::Tar::Minitar.unpack(zlib, Config::SAVE_PATH)
+      if package.download_url
+        tarball    = File.open(local_path, "wb")
+        tarball.write(http_response_body(package.download_url))
+        tarball.close
+
+        # untar if possible
+        if $untar
+          File.open(local_path, "rb") do |tarball|
+            zlib = Zlib::GzipReader.new(tarball)
+            Archive::Tar::Minitar.unpack(zlib, SAVE_PATH)
+          end
+
+          File.delete(local_path)
         end
 
-        File.delete(local_path)
+        $stdout.puts "success."
+        true
+      else
+        false
       end
-
-      $stdout.puts "success."
     end
 
-    TIME_KEYS = ["FirstSubmitted", "LastModified"].freeze
+    def install(package_name, cleanup: false)
+      unless $untar
+        $stdout.puts ansi("Please run `gem install archive-tar-minitar` to enable this functionality.", :red)
+        return false
+      end
+
+      $stdout.puts "----> installing #{ansi(package_name, :cyan)}... "
+
+      package    = Package.new(package_name)
+      local_path = File.join(SAVE_PATH, package.name)
+
+      unless File.exist?(local_path) && File.directory?(local_path)
+        download(package_name) or exit 1
+      end
+
+      Dir.chdir(local_path) do
+        execute_command("rm -rf src/ pkg/") if cleanup
+
+        $stdout.print "      edit PKGBUILD before building (#{ansi("RECOMMENDED", :green)})? [Y/n] "
+        answer = $stdin.gets.chomp
+        answer = "Y" if answer.empty?
+        if answer.upcase == "Y"
+          execute_command("#{ENV["EDITOR"] || "vim"} PKGBUILD")
+        end
+
+        execute_command("makepkg -sfi")
+      end
+    rescue Interrupt
+      $stdout.puts "\n    #{ansi("x", :red)} Interrupted by user."
+    end
+
+    TIME_KEYS = %w(FirstSubmitted LastModified).freeze
     def info(package_name)
-      $stdout.puts "----> printing information for #{package_name}:\n\n"
+      $stdout.print "----> showing information for #{ansi(package_name, :cyan)}:"
 
       package = Package.new(package_name, attributes: true)
+      $stdout.puts "\n\n"
       package.attributes.each do |key, value|
-        $stdout.print key.rjust(20)
+        $stdout.print ansi(key.rjust(20), :white)
         if TIME_KEYS.include?(key)
           value = Time.at(value.to_i).strftime("%d/%m/%Y %H:%M") rescue value
         end
@@ -187,10 +240,10 @@ module Aurb2
         Package.new(line[0], attributes: {"Version" => line[1]})
       }
 
-      info_url = Config::RPC_URL % "multiinfo&arg[]=" + local_aur_packages.map { |package|
+      info_url = AUR_RPC_URL % "multiinfo&arg[]=" + local_aur_packages.map { |package|
         URI.escape(package.name)
       }.join("&arg[]=")
-      json = JSON.parse(GET(info_url).read)
+      json = JSON.parse(http_response_body(info_url))
 
       if json && json["resultcount"] > 0
         local_aur_packages.each do |package|
@@ -199,23 +252,23 @@ module Aurb2
           )
 
           if not (latest_package.attributes && latest_package.attributes.empty?) and package < latest_package
-            $stdout.puts "   #{ansi("->", :cyan)} %s has an update available (%s -> %s)\n" % [
-              package.name,
+            $stdout.puts "   -> %s has an update available (%s -> %s)\n" % [
+              ansi(package.name, :cyan),
               ansi(package.attributes["Version"], :red),
               ansi(latest_package.attributes["Version"], :green)
             ]
           else
-            $stdout.puts "      #{package.name} is up to date\n"
+            $stdout.puts "      #{ansi(package.name, :cyan)} #{package.attributes["Version"]} is up to date\n"
           end
         end
       end
     end
 
     def search(term)
-      $stdout.print "----> searching for #{term}... "
+      $stdout.print "----> searching for #{ansi(term, :cyan)}... "
 
-      search_url = Config::RPC_URL % "search&arg=" + URI.escape(term)
-      json       = JSON.parse(GET(search_url).read)
+      search_url = AUR_RPC_URL % "search&arg=" + URI.escape(term)
+      json       = JSON.parse(http_response_body(search_url))
 
       if json && json["resultcount"] > 0
         $stdout.puts "found #{json["resultcount"]} results:\n\n"
@@ -224,14 +277,14 @@ module Aurb2
           package = Package.new(result["Name"], attributes: result)
 
           $stdout.puts "      %s %s (%d)\n          %s" % [
-            package.attributes["Name"],
+            ansi(package.attributes["Name"], :cyan),
             package.attributes["Version"],
             package.attributes["NumVotes"],
             package.attributes["Description"]
           ]
         end
       else
-        $stderr.puts "failed to find any results for #{term}."
+        $stdout.puts "failed to find any results."
       end
     end
   end
