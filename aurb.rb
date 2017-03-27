@@ -1,4 +1,9 @@
 #!/usr/bin/env ruby
+
+if Process.uid == 0
+  abort("Please don't run this script as root. The AUR is considered untrustworthy, and by extension so are the operations based upon it.")
+end
+
 require "open-uri"
 require "json"
 
