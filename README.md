@@ -3,7 +3,7 @@
 A very minimalistic AUR (Arch User Repository) utility.
 
 Aurb can download, search, and look for updates on the AUR.
-It can *not* automatically upgrade or install dependencies for downloaded packages.
+It can *not* automatically upgrade or install AUR dependencies for downloaded packages.
 
 ## Installation
 
