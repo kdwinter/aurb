@@ -42,15 +42,15 @@ module Aurb2
     protected def http_response_body(uri)
       open(uri).read
     rescue OpenURI::HTTPError
-      $stdout.puts "\n    #{color("x", :red)} URI not found (#{uri})"
+      $stdout.puts "\n#{color("x", :red)} URI not found (#{uri})"
       exit 1
     rescue SocketError
-      $stdout.puts "\n    #{color("x", :red)} connection problem."
+      $stdout.puts "\n#{color("x", :red)} Connection problem."
       exit 1
     end
 
     protected def execute_command(*command, use_exec: false)
-      $stdout.puts "      running `#{command.join(" ")}`"
+      $stdout.puts "   Running `#{command.join(" ")}`"
       use_exec ? exec(*command) : system(*command)
     end
   end
@@ -84,8 +84,8 @@ module Aurb2
       if json && json["resultcount"] > 0
         @attributes = json["results"]
       else
-        $stdout.puts "\n    #{color("!", :yellow)} failed to retrieve attributes for #{name}." \
-                     "\n      this usually means the package does not exist."
+        $stdout.puts "\n#{color("!", :yellow)} Failed to retrieve attributes for #{name}." \
+                     "\n  This usually means the package does not exist."
       end
     end
 
@@ -118,27 +118,31 @@ module Aurb2
         when "--install", "install"
           package = argv.shift or print_help
           install(package)
-        when "--clean-install"
+        when "--clean-install", "cleaninstall"
           package = argv.shift or print_help
           install(package, clean_install: true)
         when "-d", "--download", "download"
           package = argv.shift or print_help
           download(package)
+          $stdout.puts "\n"
         when "-s", "--search", "search"
           term = argv.shift or print_help
           search(term)
+          $stdout.puts "\n"
         when "-i", "--info", "info"
           package = argv.shift or print_help
           info(package)
+          $stdout.puts "\n"
         when "-u", "--updates", "updates"
           check_updates
+          $stdout.puts "\n"
+        when "-uc", "--update-count", "updatecount"
+          check_updates(minimal: true)
         when "-v", "--version", "version"
           $stdout.puts VERSION
         else
           print_help
         end
-
-        $stdout.puts "\n"
       end
     end
 
@@ -149,12 +153,13 @@ module Aurb2
       $stdout.puts
       $stdout.puts "  where action is one of:"
       $stdout.puts
-      $stdout.puts "    -d, --download PKG       download PKG into #{SAVE_PATH}"
-      $stdout.puts "        --install PKG        download and install PKG"
-      $stdout.puts "        --clean-install PKG  clean previous build(s), download and install PKG"
-      $stdout.puts "    -s, --search TERM        search for TERM"
-      $stdout.puts "    -i, --info PKG           print info about PKG"
-      $stdout.puts "    -u, --updates            checks for updates to installed packages"
+      $stdout.puts "    -d,  --download PKG      download PKG into #{SAVE_PATH}"
+      $stdout.puts "         --install PKG       download, build, and install PKG"
+      $stdout.puts "         --clean-install PKG clean previous build(s), download and install PKG"
+      $stdout.puts "    -s,  --search TERM       search for TERM"
+      $stdout.puts "    -i,  --info PKG          print info about PKG"
+      $stdout.puts "    -u,  --updates           checks for updates to installed AUR packages"
+      $stdout.puts "    -uc, --update-count      simply prints the amount of AUR packages with updates available"
       $stdout.puts
 
       exit 1
@@ -166,7 +171,7 @@ module Aurb2
         return false
       end
 
-      $stdout.print "----> downloading #{color(package_name, :cyan)} into #{SAVE_PATH}... "
+      $stdout.print "#{color("::", :blue)} Downloading #{color(package_name, :cyan)} into #{SAVE_PATH}... "
 
       package    = Package.new(package_name, attributes: true)
       local_path = File.join(SAVE_PATH, package.name) + ".tar.gz"
@@ -185,7 +190,7 @@ module Aurb2
           File.delete(local_path)
         end
 
-        $stdout.puts "success."
+        $stdout.puts "Success."
         true
       else
         false
@@ -198,7 +203,7 @@ module Aurb2
         return false
       end
 
-      $stdout.puts "----> installing #{color(package_name, :cyan)}... "
+      $stdout.puts "#{color("::", :blue)} Installing #{color(package_name, :cyan)}... "
 
       package    = Package.new(package_name)
       local_path = File.join(SAVE_PATH, package.name)
@@ -210,7 +215,7 @@ module Aurb2
       Dir.chdir(local_path) do
         execute_command("rm", "-rf", "src/ pkg/") if clean_install
 
-        $stdout.print "      edit PKGBUILD before building (#{color("RECOMMENDED", :green)})? [Y/n] "
+        $stdout.print "  Edit PKGBUILD before building (#{color("RECOMMENDED", :green)})? [Y/n] "
         answer = $stdin.gets.chomp
         answer = "Y" if answer.empty?
         if answer.upcase == "Y"
@@ -220,17 +225,17 @@ module Aurb2
         execute_command("makepkg", "-sfi", use_exec: true)
       end
     rescue Interrupt
-      $stdout.puts "\n    #{color("x", :red)} interrupted by user."
+      $stdout.puts "\n  #{color("x", :red)} Interrupted by user."
     end
 
     TIME_KEYS = %w(FirstSubmitted LastModified).freeze
     def info(package_name)
-      $stdout.print "----> showing information for #{color(package_name, :cyan)}:"
+      $stdout.print "#{color("::", :blue)} Showing information for #{color(package_name, :cyan)}:"
 
       package = Package.new(package_name, attributes: true)
       $stdout.puts "\n\n"
       package.attributes.each do |key, value|
-        $stdout.print color(key.rjust(20), :white)
+        $stdout.print color(key.rjust(16), :white)
         if TIME_KEYS.include?(key)
           value = Time.at(value.to_i).strftime("%d/%m/%Y %H:%M") rescue value
         end
@@ -238,8 +243,8 @@ module Aurb2
       end if package.attributes
     end
 
-    def check_updates
-      $stdout.puts "----> checking for updates...\n\n"
+    def check_updates(minimal: false)
+      $stdout.puts "#{color("::", :blue)} Checking for updates...\n\n" unless minimal
 
       local_aur_packages = `pacman -Qm`.split("\n").delete_if { |p|
         # skip packages that are in community by now
@@ -254,6 +259,8 @@ module Aurb2
       }.join("&arg[]=")
       json = JSON.parse(http_response_body(info_url))
 
+      amount_of_packages_with_updates = 0
+
       if json && json["resultcount"] > 0
         local_aur_packages.each do |package|
           latest_package = Package.new(package.name, attributes:
@@ -261,39 +268,43 @@ module Aurb2
           )
 
           if !(latest_package.attributes && latest_package.attributes.empty?) && package < latest_package
-            $stdout.puts "   -> %s has an update available (%s -> %s)\n" % [
+            amount_of_packages_with_updates += 1
+
+            $stdout.puts "> %s has an update available (%s -> %s)\n" % [
               color(package.name, :cyan),
               color(package.attributes["Version"], :red),
               color(latest_package.attributes["Version"], :green)
-            ]
+            ] unless minimal
           else
-            $stdout.puts "      #{color(package.name, :cyan)} #{package.attributes["Version"]} is up to date\n"
+            $stdout.puts "  #{color(package.name, :cyan)} #{package.attributes["Version"]} is up to date\n" unless minimal
           end
         end
       end
+
+      $stdout.puts amount_of_packages_with_updates if minimal
     end
 
     def search(term)
-      $stdout.print "----> searching for #{color(term, :cyan)}... "
+      $stdout.print "#{color("::", :cyan)} Searching for #{color(term, :cyan)}... "
 
       search_url = AUR_RPC_URL % "search&arg=" + URI.escape(term)
       json       = JSON.parse(http_response_body(search_url))
 
       if json && json["resultcount"] > 0
-        $stdout.puts "found #{json["resultcount"]} results:\n\n"
+        $stdout.puts "Found #{json["resultcount"]} results:\n\n"
 
         json["results"].each do |result|
           package = Package.new(result["Name"], attributes: result)
 
-          $stdout.puts "      %s %s (%d)\n          %s" % [
+          $stdout.puts "  %s %s (%d)\n    %s" % [
             color(package.attributes["Name"], :cyan),
-            package.attributes["Version"],
+            color(package.attributes["Version"], :green),
             package.attributes["NumVotes"],
             package.attributes["Description"]
           ]
         end
       else
-        $stdout.puts "failed to find any results."
+        $stdout.puts "Failed to find any results."
       end
     end
   end
