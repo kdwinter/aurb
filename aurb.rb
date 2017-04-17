@@ -10,20 +10,25 @@ end
 
 require "open-uri"
 require "json"
-
-$untar = true
-begin
-  require "zlib"
-  require "minitar"
-rescue LoadError
-  $untar = false
-end
+require "zlib"
+require "fileutils"
+require "bundler"
+Bundler.require
 
 module Aurb2
   VERSION = "v2.2.2".freeze
 
-  # saves pkgbuilds to this dir
-  SAVE_PATH = ENV["AURB_PATH"] || File.join(ENV["HOME"], "AUR")
+  config_path = "#{ENV["HOME"]}/.config/aurb/aurb.conf"
+  unless File.exist?(config_path)
+    FileUtils.mkdir_p(config_path.split("/")[0..-2].join("/"))
+    File.open(config_path, "w+") do |f|
+      f.write("# Directory to save to\n" \
+              "save_path = #{ENV["HOME"]}/AUR\n" \
+              "# Packages to ignore in update checks\n"  \
+              "#ignore_pkg = package1 package2\n")
+    end
+  end
+  CONFIG = ParseConfig.new(config_path)
 
   AUR_URL     = "https://aur.archlinux.org"
   AUR_RPC_URL = "#{AUR_URL}/rpc.php?type=%s"
@@ -147,13 +152,13 @@ module Aurb2
     end
 
     def print_help
-      $stdout.puts "aurb.rb #{VERSION} (Ruby: #{RUBY_VERSION}, minitar: #{$untar ? "yes" : "no"})"
+      $stdout.puts "aurb.rb #{VERSION} (Ruby: #{RUBY_VERSION})"
       $stdout.puts
       $stdout.puts "USAGE: #{$0} [action] [arg] ([action2] [arg2]...)"
       $stdout.puts
       $stdout.puts "  where action is one of:"
       $stdout.puts
-      $stdout.puts "    -d,  --download PKG      download PKG into #{SAVE_PATH}"
+      $stdout.puts "    -d,  --download PKG      download PKG into #{CONFIG["save_path"]}"
       $stdout.puts "         --install PKG       download, build, and install PKG"
       $stdout.puts "         --clean-install PKG clean previous build(s), download and install PKG"
       $stdout.puts "    -s,  --search TERM       search for TERM"
@@ -166,29 +171,26 @@ module Aurb2
     end
 
     def download(package_name)
-      if !File.exist?(SAVE_PATH) || !File.directory?(SAVE_PATH)
+      if !File.exist?(CONFIG["save_path"]) || !File.directory?(CONFIG["save_path"])
         $stdout.print color("Save path doesn't exist, or is not a directory.", :red)
         return false
       end
 
-      $stdout.print "#{color("::", :blue)} Downloading #{color(package_name, :cyan)} into #{SAVE_PATH}... "
+      $stdout.print "#{color("::", :blue)} Downloading #{color(package_name, :cyan)} into #{CONFIG["save_path"]}... "
 
       package    = Package.new(package_name, attributes: true)
-      local_path = File.join(SAVE_PATH, package.name) + ".tar.gz"
+      local_path = File.join(CONFIG["save_path"], package.name) + ".tar.gz"
 
       if package.download_url
         File.open(local_path, "wb") do |tarball|
           tarball.write(http_response_body(package.download_url))
         end
 
-        # untar if possible
-        if $untar
-          File.open(local_path, "rb") do |tarball|
-            Minitar.unpack(Zlib::GzipReader.new(tarball), SAVE_PATH)
-          end
-          # remove the .tar.gz after unpacking
-          File.delete(local_path)
+        File.open(local_path, "rb") do |tarball|
+          Minitar.unpack(Zlib::GzipReader.new(tarball), CONFIG["save_path"])
         end
+        # remove the .tar.gz after unpacking
+        File.delete(local_path)
 
         $stdout.puts "Success."
         true
@@ -198,15 +200,10 @@ module Aurb2
     end
 
     def install(package_name, clean_install: false)
-      unless $untar
-        $stdout.puts color("Please run `gem install minitar` to enable this functionality.", :red)
-        return false
-      end
-
       $stdout.puts "#{color("::", :blue)} Installing #{color(package_name, :cyan)}... "
 
       package    = Package.new(package_name)
-      local_path = File.join(SAVE_PATH, package.name)
+      local_path = File.join(CONFIG["save_path"], package.name)
 
       if !File.exist?(local_path) || !File.directory?(local_path) || clean_install
         download(package_name) or exit 1
@@ -248,7 +245,11 @@ module Aurb2
 
       local_aur_packages = `pacman -Qm`.split("\n").delete_if { |p|
         # skip packages that are in community by now
-        Dir["/var/lib/pacman/sync/community/#{p.split.join("-")}"].any?
+        in_community = Dir["/var/lib/pacman/sync/community/#{p.split.join("-")}"].any?
+        # skip packages that are ignored through config
+        in_ignore_list = CONFIG["ignore_pkg"].to_s.split(" ").include?(p.split[0])
+
+        in_community || in_ignore_list
       }.map { |line|
         package_name, package_version = line.split
         Package.new(package_name, attributes: {"Version" => package_version})
@@ -281,7 +282,7 @@ module Aurb2
         end
       end
 
-      $stdout.puts amount_of_packages_with_updates if minimal
+      $stdout.print amount_of_packages_with_updates if minimal
     end
 
     def search(term)
