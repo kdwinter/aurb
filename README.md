@@ -39,10 +39,6 @@ Look for upgrades to local packages you have ever installed from the AUR:
 
     $ aurb updates
 
-Print the amount of AUR packages with updates available; useful for statusbar scripts:
-
-    $ aurb updatecount
-
 ## License
 
-Public domain.
+See LICENSE.

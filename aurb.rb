@@ -25,11 +25,11 @@ require "fileutils"
 end
 
 config_path = "#{ENV["HOME"]}/.config/aurb/aurb.conf"
-if not File.exist?(config_path)
+if !File.exist?(config_path)
   # create a default config
-  FileUtils.mkdir_p(config_path.split("/")[0..-2].join("/"))
+  FileUtils.mkdir_p(File.dirname(config_path))
   File.open(config_path, "w+") do |config_file|
-    config_file.write(<<-CONFIG.gsub("^ {6}", "").strip)
+    config_file.write(<<-CONFIG.gsub(/^ {6}/, "").strip)
       # Directory to save to
       save_path = #{ENV["HOME"]}/AUR
       # Packages to ignore in update checks
@@ -38,8 +38,8 @@ if not File.exist?(config_path)
   end
 end
 
-VERSION      = "v2.3.1".freeze
-CONFIG       = ParseConfig.new(config_path)
+VERSION      = "v2.3.2".freeze
+CONFIG       = ParseConfig.new(config_path) rescue {"save_path" => "#{ENV["HOME"]}/AUR"}
 AUR_URL      = "https://aur.archlinux.org"
 RPC_ENDPOINT = "#{AUR_URL}/rpc.php?type=%s"
 
@@ -78,6 +78,12 @@ class Package
   include Comparable
   include Helpers
 
+  NUM_VOTES   = "NumVotes".freeze
+  URL_PATH    = "URLPath".freeze
+  NAME        = "Name".freeze
+  VERSION     = "Version".freeze
+  DESCRIPTION = "Description".freeze
+
   attr_reader :name, :attributes
 
   def initialize(name, attributes: nil)
@@ -91,8 +97,8 @@ class Package
   end
 
   def download_url
-    if Hash(attributes)["URLPath"]
-      "#{AUR_URL}#{attributes["URLPath"]}"
+    if Hash(attributes)[URL_PATH]
+      "#{AUR_URL}#{attributes[URL_PATH]}"
     end
   end
 
@@ -102,6 +108,7 @@ class Package
 
     if json && json["resultcount"] > 0
       @attributes = json["results"]
+      @attributes.each_key(&:freeze)
     else
       puts "\n#{color("!", :yellow)} Failed to retrieve attributes for #{name}. " \
            "This usually means the package does not exist."
@@ -109,8 +116,8 @@ class Package
   end
 
   def version
-    if Hash(attributes)["Version"]
-      return attributes["Version"].split(/\D+/).map(&:to_i)
+    if Hash(attributes)[VERSION]
+      return attributes[VERSION].split(/\D+/).map(&:to_i)
     end
     [0]
   end
@@ -157,8 +164,6 @@ class CLI
       end
     when "-u", "--updates", "updates"
       check_updates
-    when "-uc", "--update-count", "updatecount"
-      check_updates(minimal: true)
     when "-v", "--version", "version"
       puts VERSION
     else
@@ -216,8 +221,12 @@ class CLI
     end
 
     if clean_install
-      FileUtils.remove_entry_secure(File.join(local_path, "src"))
-      FileUtils.remove_entry_secure(File.join(local_path, "pkg"))
+      begin
+        FileUtils.remove_entry_secure(File.join(local_path, "src"))
+        FileUtils.remove_entry_secure(File.join(local_path, "pkg"))
+      rescue Errno::ENOENT
+        # Directories don't exist.
+      end
     end
 
     print "   Edit PKGBUILD before building (#{color("RECOMMENDED", :green)})? [Y/n] "
@@ -235,6 +244,7 @@ class CLI
   end
 
   TIME_KEYS = %w(FirstSubmitted LastModified OutOfDate).freeze.map(&:freeze)
+  TIME_FORMAT = "%d/%m/%Y %H:%M".freeze
   def info(package_name)
     print "#{color("::", :blue)} Showing information for #{color(package_name, :cyan)}:"
 
@@ -242,27 +252,31 @@ class CLI
     puts "\n\n"
     package.attributes.each do |key, value|
       print color(key.rjust(16), :white)
+
       if TIME_KEYS.include?(key)
-        value = Time.at(value.to_i).strftime("%d/%m/%Y %H:%M") rescue value
+        value = Time.at(value.to_i).strftime(TIME_FORMAT) rescue value
       end
+
       puts " " + value.to_s
     end if package.attributes
   end
 
-  def check_updates(minimal: false)
-    puts "#{color("::", :blue)} Checking for updates...\n\n" unless minimal
+  def check_updates
+    puts "#{color("::", :blue)} Checking for updates...\n\n"
 
     ignore_list = CONFIG["ignore_pkg"].to_s.split(" ")
-    local_aur_packages = `pacman -Qm`.split("\n").delete_if { |p|
+    local_aur_packages = `pacman -Qm`.split("\n").map(&:split).delete_if { |package_info|
+      name, version  = package_info
+
       # skip packages that are in community by now
-      in_community = Dir["/var/lib/pacman/sync/community/#{p.split.join("-")}"].any?
+      in_community   = Dir["/var/lib/pacman/sync/community/#{name}-#{version}"].any?
       # skip packages that are ignored through config
-      in_ignore_list = ignore_list.include?(p.split[0])
+      in_ignore_list = ignore_list.include?(name)
 
       in_community or in_ignore_list
-    }.map { |line|
-      package_name, package_version = line.split
-      Package.new(package_name, attributes: {"Version" => package_version})
+    }.map { |package_info|
+      name, version = package_info
+      Package.new(name, attributes: {Package::VERSION => version})
     }
 
     info_url = RPC_ENDPOINT % "multiinfo&arg[]=" + local_aur_packages.map { |package|
@@ -270,29 +284,23 @@ class CLI
     }.join("&arg[]=")
     json = JSON.parse(GET(info_url))
 
-    amount_of_packages_with_updates = 0 if minimal
-
     if json && json["resultcount"] > 0
       local_aur_packages.each do |package|
         latest_package = Package.new(package.name, attributes:
-          json["results"].find { |result| result["Name"] == package.name }
+          json["results"].find { |result| result[Package::NAME] == package.name }
         )
 
         if !(latest_package.attributes && latest_package.attributes.empty?) && package < latest_package
-          amount_of_packages_with_updates += 1 if minimal
-
           puts "#{color(">", :yellow)} %s has an update available (%s -> %s)\n" % [
             color(package.name, :cyan),
-            color(package.attributes["Version"], :red),
-            color(latest_package.attributes["Version"], :green)
-          ] unless minimal
+            color(package.attributes[Package::VERSION], :red),
+            color(latest_package.attributes[Package::VERSION], :green)
+          ]
         else
-          puts "  #{color(package.name, :cyan)} #{package.attributes["Version"]} is up to date\n" unless minimal
+          puts "  #{color(package.name, :cyan)} #{package.attributes[Package::VERSION]} is up to date\n"
         end
       end
     end
-
-    puts amount_of_packages_with_updates if minimal
   end
 
   def search(term)
@@ -304,15 +312,20 @@ class CLI
     if json && json["resultcount"] > 0
       puts "Found #{json["resultcount"]} results:\n\n"
 
-      json["results"].each do |result|
-        package = Package.new(result["Name"], attributes: result)
+      json["results"].sort { |a, b|
+        b[Package::NUM_VOTES] <=> a[Package::NUM_VOTES]
+      }.each do |result|
+        package = Package.new(result[Package::NAME], attributes: result)
 
-        puts "  %s %s (%d)\n    %s" % [
-          color(package.attributes["Name"], :cyan),
-          color(package.attributes["Version"], :green),
-          package.attributes["NumVotes"],
-          package.attributes["Description"]
-        ]
+        begin
+          puts "  %s %s (%d)\n    %s" % [
+            color(package.attributes[Package::NAME], :cyan),
+            color(package.attributes[Package::VERSION], :green),
+            package.attributes[Package::NUM_VOTES],
+            package.attributes[Package::DESCRIPTION]
+          ]
+        rescue Errno::EPIPE
+        end
       end
     else
       puts "Failed to find any results."
