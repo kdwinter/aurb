@@ -1,15 +1,16 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 if Process.uid == 0
-  abort("Please don't run this script as root. The AUR is considered untrustworthy, and by extension so are the operations based upon it.")
+  abort "Please don't run this script as root. The AUR is considered untrustworthy, and by extension so are the operations run upon it."
 end
 
 if RUBY_VERSION < "2.1.0"
-  abort("aurb requires Ruby >= 2.1.0.")
+  abort "aurb requires Ruby >= 2.1.0."
 end
 
-if `which pacman`.empty?
-  abort("Are you running this on Arch Linux? Pacman was not found.")
+if not system("which pacman")
+  abort "Are you running this on Arch Linux? Pacman was not found."
 end
 
 require "open-uri"
@@ -38,10 +39,10 @@ if !File.exist?(config_path)
   end
 end
 
-VERSION      = "v2.3.2".freeze
+VERSION      = "v2.3.3".freeze
 CONFIG       = ParseConfig.new(config_path) rescue {"save_path" => "#{ENV["HOME"]}/AUR"}
 AUR_URL      = "https://aur.archlinux.org"
-RPC_ENDPOINT = "#{AUR_URL}/rpc.php?type=%s"
+RPC_ENDPOINT = "#{AUR_URL}/rpc/?v=5&type=%s"
 
 unless File.exist?(CONFIG["save_path"]) && File.writable?(CONFIG["save_path"])
   warn("WARNING: Save path `#{CONFIG["save_path"]}' is not writable. Some actions, " \
@@ -49,7 +50,7 @@ unless File.exist?(CONFIG["save_path"]) && File.writable?(CONFIG["save_path"])
 end
 
 module Helpers
-  COLORS = [:grey, :red, :green, :yellow, :blue, :purple, :cyan, :white].freeze
+  COLORS = %i(grey red green yellow blue purple cyan white).freeze
   protected def color(text, effect)
     if $stdout.tty? && ENV["TERM"]
       return "\033[0;#{30 + COLORS.index(effect.to_sym)}m#{text}\033[0m"
@@ -83,6 +84,7 @@ class Package
   NAME        = "Name".freeze
   VERSION     = "Version".freeze
   DESCRIPTION = "Description".freeze
+  DEPENDS     = "Depends".freeze
 
   attr_reader :name, :attributes
 
@@ -107,7 +109,7 @@ class Package
     json = JSON.parse(GET(info_url))
 
     if json && json["resultcount"] > 0
-      @attributes = json["results"]
+      @attributes = Array(json["results"])[0]
       @attributes.each_key(&:freeze)
     else
       puts "\n#{color("!", :yellow)} Failed to retrieve attributes for #{name}. " \
@@ -122,6 +124,10 @@ class Package
     [0]
   end
 
+  def dependencies
+    Array(attributes[DEPENDS])
+  end
+
   def <=>(other)
     [version.size, other.version.size].max.times do |i|
       cmp = version[i] <=> other.version[i]
@@ -130,7 +136,7 @@ class Package
   end
 end
 
-class CLI
+class App
   include Helpers
 
   def optparse!(*argv)
@@ -185,7 +191,6 @@ class CLI
           -s,  --search TERM        search for TERM
           -i,  --info PKG           print info about PKG
           -u,  --updates            checks for updates to installed AUR packages
-          -uc, --update-count       simply prints the amount of AUR packages with updates available
     HELP
 
     exit 1
@@ -204,6 +209,7 @@ class CLI
       tarball = StringIO.new(GET(package.download_url))
       Minitar.unpack(Zlib::GzipReader.new(tarball), CONFIG["save_path"])
       puts color("Success.", :green)
+
       true
     else
       false
@@ -213,20 +219,32 @@ class CLI
   def install(package_name, clean_install: false)
     puts "#{color("::", :blue)} Installing #{color(package_name, :cyan)}... "
 
-    package = Package.new(package_name)
+    package = Package.new(package_name, attributes: true)
     local_path = File.join(CONFIG["save_path"], package.name)
-
-    if !File.exist?(local_path) || !File.directory?(local_path) || clean_install
-      download(package_name) or exit 1
-    end
 
     if clean_install
       begin
-        FileUtils.remove_entry_secure(File.join(local_path, "src"))
-        FileUtils.remove_entry_secure(File.join(local_path, "pkg"))
+        FileUtils.remove_entry_secure(File.join(local_path, "*"))
       rescue Errno::ENOENT
         # Directories don't exist.
       end
+    end
+
+    if !File.exist?(local_path) || !File.directory?(local_path) || clean_install
+      if package.dependencies.size > 0
+        packages_in_repos = `pacman -Sl`
+
+        # Select only packages that aren't in official repo's, and install them first.
+        deps_in_aur = package.dependencies.reject { |d| !!packages_in_repos[d] }
+        puts "#{color("::", :blue)} Found #{color(deps_in_aur.size, :purple)} AUR " \
+          "dependencies of #{color(package_name, :cyan)}: #{deps_in_aur.join(", ")}"
+
+        deps_in_aur.each do |dependency|
+          install dependency
+        end
+      end
+
+      download(package_name) or exit 1
     end
 
     print "   Edit PKGBUILD before building (#{color("RECOMMENDED", :green)})? [Y/n] "
@@ -256,6 +274,8 @@ class CLI
       if TIME_KEYS.include?(key)
         value = Time.at(value.to_i).strftime(TIME_FORMAT) rescue value
       end
+
+      value = value.join(", ") if value.is_a?(Array)
 
       puts " " + value.to_s
     end if package.attributes
@@ -333,5 +353,4 @@ class CLI
   end
 end
 
-cli = CLI.new
-cli.optparse!(*ARGV.dup)
+App.new.optparse!(*ARGV.dup)
