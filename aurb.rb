@@ -9,7 +9,7 @@ if RUBY_VERSION < "2.1.0"
   abort "aurb requires Ruby >= 2.1.0."
 end
 
-if not system("which pacman")
+if not `which pacman`
   abort "Are you running this on Arch Linux? Pacman was not found."
 end
 
@@ -125,14 +125,16 @@ class Package
   end
 
   def dependencies
-    Array(attributes[DEPENDS])
+    Array(Hash(attributes)[DEPENDS])
   end
 
   def <=>(other)
     [version.size, other.version.size].max.times do |i|
-      cmp = version[i] <=> other.version[i]
+      cmp = version[i].to_i <=> other.version[i].to_i
       return cmp if cmp != 0
     end
+
+    0
   end
 end
 
@@ -231,16 +233,19 @@ class App
     end
 
     if !File.exist?(local_path) || !File.directory?(local_path) || clean_install
-      if package.dependencies.size > 0
-        packages_in_repos = `pacman -Sl`
+      if package.dependencies.any?
+        packages_in_repos  = `pacman -Sl`
+        aur_packages_installed = `pacman -Qm`.split("\n").map { |l| l.split[0] }
 
         # Select only packages that aren't in official repo's, and install them first.
         deps_in_aur = package.dependencies.reject { |d| !!packages_in_repos[d] }
-        puts "#{color("::", :blue)} Found #{color(deps_in_aur.size, :purple)} AUR " \
-          "dependencies of #{color(package_name, :cyan)}: #{deps_in_aur.join(", ")}"
+        if deps_in_aur.any?
+          puts "#{color("==>", :green)} Found #{color(deps_in_aur.size, :blue)} AUR " \
+            "dependencies of #{color(package_name, :cyan)}: #{deps_in_aur.join(", ")}"
 
-        deps_in_aur.each do |dependency|
-          install dependency
+          (deps_in_aur - aur_packages_installed).each do |dependency|
+            install dependency
+          end
         end
       end
 
