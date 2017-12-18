@@ -39,7 +39,7 @@ if !File.exist?(config_path)
   end
 end
 
-VERSION      = "v2.3.3".freeze
+VERSION      = "v2.3.4".freeze
 CONFIG       = ParseConfig.new(config_path) rescue {"save_path" => "#{ENV["HOME"]}/AUR"}
 AUR_URL      = "https://aur.archlinux.org"
 RPC_ENDPOINT = "#{AUR_URL}/rpc/?v=5&type=%s"
@@ -69,9 +69,17 @@ module Helpers
     exit 1
   end
 
-  protected def execute_command(*command)
+  protected def exec_cmd(*command)
     puts color("  -> Running `#{command.join(" ")}`", :grey)
     system(*command)
+  end
+
+  protected def prompt(question)
+    print "   #{question} [Y/n] "
+
+    answer = $stdin.gets.chomp
+    answer = "Y" if answer.empty?
+    answer.upcase == "Y"
   end
 end
 
@@ -252,15 +260,18 @@ class App
       download(package_name) or exit 1
     end
 
-    print "   Edit PKGBUILD before building (#{color("RECOMMENDED", :green)})? [Y/n] "
-    answer = $stdin.gets.chomp
-    answer = "Y" if answer.empty?
-
     Dir.chdir(local_path) do
-      if answer.upcase == "Y"
-        execute_command("#{ENV["EDITOR"] || "vim"} PKGBUILD")
+      if prompt("Edit PKGBUILD before building (#{color("RECOMMENDED", :green)})?")
+        exec_cmd("#{ENV["EDITOR"] || "vim"} PKGBUILD")
       end
-      execute_command("makepkg", clean_install ? "-sfCi" : "-si")
+
+      Dir["*.install"].each do |install_file|
+        if prompt("Edit #{File.basename(install_file)} before building (#{color("RECOMMENDED", :green)})?")
+          exec_cmd("#{ENV["EDITOR"] || "vim"} #{install_file}")
+        end
+      end
+
+      exec_cmd("makepkg", clean_install ? "-sfCi" : "-si")
     end
   rescue Interrupt
     puts "\n  #{color("x", :red)} Interrupted by user."
