@@ -121,6 +121,7 @@ class Package
     if Hash(attributes)[VERSION]
       return attributes[VERSION].split(/\D+/).map(&:to_i)
     end
+
     [0]
   end
 
@@ -244,7 +245,7 @@ class App
             "dependencies of #{color(package_name, :cyan)}: #{deps_in_aur.join(", ")}"
 
           (deps_in_aur - aur_packages_installed).each do |dependency|
-            install dependency
+            install(dependency)
           end
         end
       end
