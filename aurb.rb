@@ -13,11 +13,15 @@ if not `which pacman`
   abort "Are you running this on Arch Linux? Pacman was not found."
 end
 
+if not `which git`
+  abort "Git must be installed for packages to be downloaded from the AUR."
+end
+
 require "open-uri"
 require "json"
 require "zlib"
 require "fileutils"
-%w(minitar parseconfig).each do |gem|
+%w(parseconfig).each do |gem|
   begin
     require gem
   rescue LoadError
@@ -39,7 +43,7 @@ if !File.exist?(config_path)
   end
 end
 
-VERSION      = "v2.3.4".freeze
+VERSION      = "v2.4.0".freeze
 CONFIG       = ParseConfig.new(config_path) rescue {"save_path" => "#{ENV["HOME"]}/AUR"}
 AUR_URL      = "https://aur.archlinux.org"
 RPC_ENDPOINT = "#{AUR_URL}/rpc/?v=5&type=%s"
@@ -103,12 +107,6 @@ class Package
       @attributes = attributes
     elsif attributes
       retrieve_attributes
-    end
-  end
-
-  def download_url
-    if Hash(attributes)[URL_PATH]
-      "#{AUR_URL}#{attributes[URL_PATH]}"
     end
   end
 
@@ -213,18 +211,24 @@ class App
       return false
     end
 
-    print "#{color("::", :blue)} Downloading #{color(package_name, :cyan)} into #{CONFIG["save_path"]}... "
+    puts "#{color("::", :blue)} Downloading #{color(package_name, :cyan)} into #{CONFIG["save_path"]}... "
 
-    package = Package.new(package_name, attributes: true)
-    if package.download_url
-      tarball = StringIO.new(GET(package.download_url))
-      Minitar.unpack(Zlib::GzipReader.new(tarball), CONFIG["save_path"])
-      puts color("Success.", :green)
+    local_path = File.join(CONFIG["save_path"], package_name)
+    git_url = "#{AUR_URL}/#{package_name}.git"
 
-      true
+    if File.exist?(local_path) && File.directory?(local_path)
+      if exec_cmd("cd #{local_path} && git pull")
+        puts color("Successfully updated existing package build files.", :green)
+        return true
+      end
     else
-      false
+      if exec_cmd("git clone #{git_url} #{local_path}")
+        puts color("Successfully downloaded package build files.", :green)
+        return true
+      end
     end
+
+    false
   end
 
   def install(package_name, clean_install: false)
@@ -244,7 +248,7 @@ class App
     if !File.exist?(local_path) || !File.directory?(local_path) || clean_install
       if package.dependencies.any?
         packages_in_repos  = `pacman -Sl`
-        aur_packages_installed = `pacman -Qm`.split("\n").map { |l| l.split[0] }
+        aur_packages_installed = `pacman -Qqm`.split("\n")
 
         # Select only packages that aren't in official repo's, and install them first.
         deps_in_aur = package.dependencies.reject { |d| !!packages_in_repos[d] }
